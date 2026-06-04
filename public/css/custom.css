@@ -1,0 +1,32 @@
+body {
+    font-family: 'Battambang', sans-serif !important;
+}
+
+.sidebar,
+.main-sidebar,
+.nav-sidebar,
+.navbar,
+.content-wrapper,
+.card,
+.card-title,
+.card-body {
+    font-family: 'Battambang', sans-serif !important;
+}
+.nav-sidebar .nav-link {
+    transition: all 0.2s ease-in-out !important;
+}
+
+.nav-sidebar .nav-link:hover {
+    background-color: #006D36 !important;
+    color: #fff !important;
+}
+
+.nav-sidebar .nav-link:hover *,
+.nav-sidebar .nav-link.active * {
+    color: #fff !important;
+}
+
+.nav-sidebar .nav-link.active {
+    background-color: #006D36 !important;
+    color: #fff !important;
+}
