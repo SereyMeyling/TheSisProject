@@ -48,7 +48,7 @@ return [
     */
 
     'google_fonts' => [
-        'allowed' => true,
+        'allowed' => false,
     ],
 
     /*
@@ -190,7 +190,7 @@ return [
     |
     */
 
-    'classes_body' => '',
+    'classes_body' => 'font-khmer',
     'classes_brand' => '',
     'classes_brand_text' => '',
     'classes_content_wrapper' => '',
@@ -314,7 +314,7 @@ return [
         ],
         [
             'text' => 'ដេប៉ាតឺម៉ង់',
-            'url' => '',
+            'url' => 'department',
             'icon' => 'fas fa-sitemap',
 
         ],
@@ -364,6 +364,7 @@ return [
             'text' => 'Support',
             'url' => '',
             'icon' => 'fas fa-life-ring',
+            'classes' => 'support-menu',
 
         ],
 

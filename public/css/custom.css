@@ -1,7 +1,11 @@
-body {
-    font-family: 'Battambang', sans-serif !important;
+body,
+html {
+    font-family: 'Battambang', 'Inter', sans-serif !important;
 }
+:root{
+    --primary-color: #006D36;
 
+}
 .sidebar,
 .main-sidebar,
 .nav-sidebar,
@@ -12,6 +16,7 @@ body {
 .card-body {
     font-family: 'Battambang', sans-serif !important;
 }
+
 .nav-sidebar .nav-link {
     transition: all 0.2s ease-in-out !important;
 }
@@ -27,6 +32,40 @@ body {
 }
 
 .nav-sidebar .nav-link.active {
-    background-color: #006D36 !important;
+    background-color:var(--primary-color) !important;
     color: #fff !important;
+}
+
+/* support button at the bottom */
+.support-menu {
+    margin-top: 70px !important;
+}
+
+/* button and modal color */
+.btn-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.modal-green .modal-header {
+    background-color: var(--primary-color);
+    color: #fff;
+    border-bottom: none;
+    border-radius: calc(0.3rem - 1px) calc(0.3rem - 1px) 0 0;
+}
+
+.modal-green .modal-title {
+    font-weight: 600;
+}
+
+.modal-green .close span {
+    color: #fff;
+    opacity: 1;
+}
+
+.modal-green .modal-footer {
+    border-top: 1px solid #eee;
+}
+
+body {
+    background: #f8faf9;
 }
