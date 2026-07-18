@@ -359,6 +359,7 @@ return [
             'url' => '',
             'icon' => 'fas fa-cogs',
 
+
         ],
         [
             'text' => 'Support',

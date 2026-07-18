@@ -38,9 +38,8 @@ html {
 
 /* support button at the bottom */
 .support-menu {
-    margin-top: 70px !important;
+    margin-top: auto !important;
 }
-
 /* button and modal color */
 .btn-primary {
     background-color: var(--primary-color) !important;
@@ -68,4 +67,35 @@ html {
 
 body {
     background: #f8faf9;
+}
+/* sidebar menu */
+.main-sidebar {
+    overflow: hidden !important;
+}
+
+.sidebar {
+    overflow: hidden !important;
+}
+.main-sidebar .sidebar {
+    height: calc(100vh - 57px);
+}
+.content-wrapper {
+    overflow-y: auto;
+    height: calc(100vh - 57px);
+}
+/* បិទ AdminLTE hover overlay */
+
+body.sidebar-mini.sidebar-collapse .main-sidebar:hover {
+    width: 4.6rem !important;
+}
+
+body.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-sidebar .nav-link {
+    width: 4.6rem !important;
+}
+
+body.sidebar-mini.sidebar-collapse .main-sidebar:hover .nav-link p {
+    display: none !important;
+}
+body.sidebar-mini.sidebar-collapse .nav-sidebar .nav-icon {
+    margin-left: 0 !important;
 }
