@@ -36,8 +36,9 @@ html {
     color: #fff !important;
 }
 
-/* support button at the bottom */
-.support-menu {
+
+/*  button at the bottom */
+.mt-auto {
     margin-top: auto !important;
 }
 /* button and modal color */

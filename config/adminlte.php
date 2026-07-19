@@ -355,17 +355,49 @@ return [
 
         ],
         [
-            'text' => 'ការកំណត់',
+            'text' => 'ការណាត់ជួប',
             'url' => '',
+            'icon' => 'fas fa-calendar-check',
+
+        ],
+        [
+            'text' => 'ការកំណត់ប្រព័ន្ធ',
             'icon' => 'fas fa-cogs',
+            'classes' => 'mt-auto',
+            'submenu' => [
+                [
+                    'text' => 'ការកំណត់ទូទៅ',
+                    'url' => 'settings/general',
+                    'icon' => 'fas fa-sliders-h',
+                ],
+                [
+                    'text' => 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
+                    'url' => 'settings/users',
+                    'icon' => 'fas fa-users',
+                ],
+                [
+                    'text' => 'ការកំណត់វិក្កយបត្រ',
+                    'url' => 'settings/billing',
+                    'icon' => 'fas fa-file-invoice-dollar',
+                ],
+                [
+                    'text' => 'ការកំណត់ QR Code',
+                    'url' => 'settings/qrcode',
+                    'icon' => 'fas fa-qrcode',
+                ],
+                [
+                    'text' => 'ការបម្រុងទុកទិន្នន័យ',
+                    'url' => 'settings/backup',
+                    'icon' => 'fas fa-database',
+                ],
 
-
+            ],
         ],
         [
             'text' => 'Support',
             'url' => '',
             'icon' => 'fas fa-life-ring',
-            'classes' => 'support-menu',
+
 
         ],
 
