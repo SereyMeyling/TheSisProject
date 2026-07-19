@@ -367,27 +367,27 @@ return [
             'submenu' => [
                 [
                     'text' => 'ការកំណត់ទូទៅ',
-                    'url' => 'settings/general',
+                    'url' => '',
                     'icon' => 'fas fa-sliders-h',
                 ],
                 [
                     'text' => 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
-                    'url' => 'settings/users',
+                    'url' => '',
                     'icon' => 'fas fa-users',
                 ],
                 [
                     'text' => 'ការកំណត់វិក្កយបត្រ',
-                    'url' => 'settings/billing',
+                    'url' => '',
                     'icon' => 'fas fa-file-invoice-dollar',
                 ],
                 [
                     'text' => 'ការកំណត់ QR Code',
-                    'url' => 'settings/qrcode',
+                    'url' => '',
                     'icon' => 'fas fa-qrcode',
                 ],
                 [
                     'text' => 'ការបម្រុងទុកទិន្នន័យ',
-                    'url' => 'settings/backup',
+                    'url' => '',
                     'icon' => 'fas fa-database',
                 ],
 

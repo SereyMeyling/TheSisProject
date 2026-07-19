@@ -20,7 +20,8 @@
 
             <div>
                 <small>ដេប៉ាតឺម៉ង់សរុប</small>
-                <h3>{{ $totalDepartment }}</h3>
+
+                <h3 id="totalDepartment">{{ $totalDepartment }}</h3>
             </div>
         </div>
     </div>
@@ -30,75 +31,27 @@
 
 <div class="card">
     <div class="card-body p-0">
-        <div class="toolbar">
-            <form method="GET" action="{{ route('department.index') }}" class="d-flex w-100 justify-content-between">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="search" name="search" class="form-control border-0"
-                        placeholder="ស្វែងរកដេប៉ាតឺម៉ង់" value="{{ request('search') }}">
-                </div>
 
-                <div class="d-flex align-items-center">
-                    {{-- date filter --}}
-                    <input type="date" name="date" class="form-control mr-2" value="{{ request('date') }}">
 
-                    <button type="submit" class="btn btn-light mr-2">
-                        <i class="fas fa-search"></i>
-                    </button>
-
-                    @if(request('search') || request('date'))
-                        <a href="{{ route('department.index') }}" class="btn btn-light">
-                            <i class="fas fa-times"></i>
-                        </a>
-                    @endif
-                </div>
-            </form>
-        </div>
-        <div class="container">
-            <table class="table align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th>លរ</th>
-                        <th>ឈ្មោះ</th>
-                        <th>ការពិពណ៏នា</th>
-                        <th>ថ្ថ្ងៃបង្កើត</th>
-                        <th>សកម្មភាព</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($department as $depart)
-                        <tr>
-                            <td>{{ $depart->department_id }}</td>
-                            <td>{{ $depart->department_name }}</td>
-                            <td>{{ $depart->description }}</td>
-                            <td>{{ $depart->created_at->format('d M, Y') }}</td>
-                            <td>
-                                <div class="action-icons">
-                                    {{-- Edit --}}
-                                    <button class="btn btn-sm btn-outline-secondary btn-edit" data-toggle="modal"
-                                        data-target="#modalEdit" data-id="{{ $depart->department_id }}">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    {{-- Delete --}}
-                                    <button class="btn btn-sm btn-outline-secondary btn-delete" data-toggle="modal"
-                                        data-id="{{ $depart->department_id }}" data-name="{{ $depart->department_name }}"
-                                        data-target="#modalDelete">
-
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            <div class="d-flex justify-content-center">
-                {!! $department->links('pagination::bootstrap-4') !!}
+        <div class="toolbar flex-wrap">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="search" class="form-control border-0"
+                    placeholder="ស្វែងរកដេប៉ាតឺម៉ង់ (ID, ឈ្មោះ, ការពិពណ៌នា)">
             </div>
 
-        </div>
 
+        </div>
     </div>
+
+    <div class="container">
+
+        <div id="departmentTableContainer">
+            @include('form.department.partials.table')
+        </div>
+    </div>
+
+</div>
 
 </div>
 
@@ -213,13 +166,11 @@
 
 @section('css')
 <style>
-    /* Heading */
     .page-title {
         font-weight: 700;
         color: #222;
     }
 
-    /* Add Button */
     .btn-add {
 
         border-radius: 10px;
@@ -228,7 +179,6 @@
 
     }
 
-    /* Statistics */
     .stat-card {
         background: white;
         border-radius: 15px;
@@ -280,7 +230,11 @@
         justify-content: space-between;
         align-items: center;
         padding: 20px;
+        gap: 12px;
+    }
 
+    .filter-group>* {
+        margin-bottom: 6px;
     }
 
     .search-box {
@@ -345,7 +299,6 @@
     }
 
     /* Pagination */
-
     .pagination .page-link {
         border-radius: 8px;
         margin: 0 3px;
@@ -357,14 +310,108 @@
         border-color: #198754;
 
     }
+
+    /* AJAX loading state for the table container */
+    #departmentTableContainer {
+        position: relative;
+        min-height: 120px;
+        transition: opacity .15s ease;
+    }
+
+    #departmentTableContainer.loading {
+        opacity: .45;
+        pointer-events: none;
+    }
+
+    #departmentTableContainer.loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 34px;
+        height: 34px;
+        margin: -17px 0 0 -17px;
+        border: 3px solid #ddd;
+        border-top-color: #198754;
+        border-radius: 50%;
+        animation: dept-spin .6s linear infinite;
+    }
+
+    @keyframes dept-spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 
 @stop
 
 @section('js')
+@parent
 <script>
     $(document).ready(function () {
-        //edit
+
+        const $container = $('#departmentTableContainer');
+        const $search = $('#search');
+        const $filterId = $('#filter_id');
+        const $filterName = $('#filter_name');
+        let debounceTimer;
+
+        function currentParams(page) {
+            return {
+                search: $search.val(),
+                filter_id: $filterId.val(),
+                filter_name: $filterName.val(),
+                page: page || 1,
+            };
+        }
+
+        function loadDepartments(page) {
+            const params = currentParams(page);
+
+            $container.addClass('loading');
+
+            $.ajax({
+                url: "{{ route('department.index') }}",
+                method: 'GET',
+                data: params,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success: function (res) {
+                    $container.html(res.html);
+                    $('#totalDepartment').text(res.total);
+
+                    const qs = $.param(params);
+                    history.replaceState(null, '', "{{ route('department.index') }}?" + qs);
+                },
+                error: function () {
+                    console.error('Failed to load department list.');
+                },
+                complete: function () {
+                    $container.removeClass('loading');
+                }
+            });
+        }
+
+        // ---- search ----
+        $search.on('keyup', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                loadDepartments(1);
+            }, 400);
+        });
+
+
+
+
+        $(document).on('click', '#departmentTableContainer .pagination a', function (e) {
+            e.preventDefault();
+            const href = $(this).attr('href');
+            if (!href) return;
+            const page = new URL(href, window.location.origin).searchParams.get('page') || 1;
+            loadDepartments(page);
+        });
+
+
         $(document).on('click', '.btn-edit', function () {
             let id = $(this).data('id');
             $.get("{{ url('department/edit') }}/" + id, function (data) {
@@ -379,22 +426,12 @@
 
             });
         });
-        //delete
+
         $(document).on('click', '.btn-delete', function () {
             let id = $(this).data('id');
             let name = $(this).data('name');
             $('#deleteDepartmentName').text(name);
             $('#deleteForm').attr('action', "{{ url('department/delete') }}/" + id);
-        });
-        //search
-        $(document).ready(function () {
-            let timer;
-            $('#search').on('keyup', function () {
-                clearTimeout(timer);
-                timer = setTimeout(function () {
-                    $(this).closest('form').submit();
-                }, 500);
-            });
         });
     });
 </script>
