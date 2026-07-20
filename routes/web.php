@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Department\DepartmentController;
+use App\Http\Controllers\Support\SupportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -61,3 +62,9 @@ Route::group(['prefix' => 'department', 'middleware' => ['auth']], function () {
 
 // ------------------ setting --------------------
 // ------------------end setting --------------------
+
+// ------------------ support --------------------
+Route::group(['prefix' => 'support', 'middleware' => ['auth']], function () {
+    Route::get('/', [SupportController::class, 'index'])->name('support.index');
+});
+// ------------------end support --------------------

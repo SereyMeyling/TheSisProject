@@ -395,7 +395,7 @@ return [
         ],
         [
             'text' => 'Support',
-            'url' => '',
+            'url' => 'support',
             'icon' => 'fas fa-life-ring',
 
 
