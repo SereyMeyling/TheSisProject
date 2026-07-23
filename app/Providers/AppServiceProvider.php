@@ -26,23 +26,34 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        //
         Schema::defaultStringLength(191);
-        $setting = GeneralSettings::first();
-        View::share('setting', $setting);
-        if ($setting) {
 
-            Config::set(
-                'adminlte.logo',
-                '<b>' . $setting->system_name . '</b>'
-            );
+        if (Schema::hasTable('general_settings')) {
 
-            Config::set(
-                'adminlte.logo_img',
-                $setting->logo
-                ? 'storage/' . $setting->logo
-                : 'vendor/adminlte/dist/img/logo.jpg'
-            );
+            $setting = GeneralSettings::first();
+
+            View::share('setting', $setting);
+
+            if ($setting) {
+
+                Config::set(
+                    'adminlte.logo',
+                    '<b>' . $setting->system_name . '</b>'
+                );
+
+                Config::set(
+                    'adminlte.logo_img',
+                    $setting->logo
+                    ? 'storage/' . $setting->logo
+                    : 'vendor/adminlte/dist/img/logo.jpg'
+                );
+
+            }
+
+        } else {
+
+            // prevent undefined variable in views
+            View::share('setting', null);
 
         }
     }
