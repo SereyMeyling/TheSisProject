@@ -260,8 +260,8 @@ return [
     'dashboard_url' => 'home',
     'logout_url' => 'logout',
     'login_url' => 'login',
-    'register_url' => 'register',
-    'password_reset_url' => 'password/reset',
+    'register_url' => false,
+    'password_reset_url' => false,
     'password_email_url' => 'password/email',
     'profile_url' => false,
     'disable_darkmode_routes' => false,
@@ -372,7 +372,7 @@ return [
                 ],
                 [
                     'text' => 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
-                    'url' => '',
+                    'url' => 'user',
                     'icon' => 'fas fa-users',
                 ],
                 [

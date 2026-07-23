@@ -1,0 +1,406 @@
+/* =====================================================
+   Hospital Management System — Login Page
+   File: public/css/auth/hospital-login.css
+   Matches the approved reference design (single centered card).
+   ===================================================== */
+
+:root {
+    --hms-green: #006d36;
+    --hms-green-dark: #00592b;
+    --hms-teal: #14a37b;
+    --hms-pink: #c9408f;
+    --hms-pink-light: #fe94ca;
+    --hms-bg: #eef1f4;
+    --hms-text: #1f2937;
+    --hms-text-muted: #8a94a3;
+    --hms-border: #eceff2;
+    --hms-field-bg: #f7f9fb;
+    --hms-danger: #dc2626;
+    --hms-radius-card: 20px;
+    --hms-radius-field: 12px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+body.hms-login-body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--hms-bg);
+    background-image:
+        radial-gradient(circle at 100% 0%, rgba(120, 170, 220, 0.18), transparent 45%),
+        radial-gradient(circle at 0% 100%, rgba(233, 120, 180, 0.16), transparent 45%);
+    font-family: 'Kantumruy Pro', 'Noto Sans Khmer', 'Noto Sans', -apple-system,
+        BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--hms-text);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    overflow-y: auto;
+}
+
+/* ---------- Card ---------- */
+.hms-card {
+    position: relative;
+    width: 100%;
+    max-width: 386px;
+    background: #ffffff;
+    border-radius: var(--hms-radius-card);
+    box-shadow: 0 20px 45px -18px rgba(15, 45, 90, 0.20), 0 4px 14px rgba(15, 45, 90, 0.05);
+    overflow: hidden;
+    padding: 32px 40px 30px;
+    height: auto;
+}
+
+.hms-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--hms-pink-light), var(--hms-pink), var(--hms-pink-light));
+}
+
+/* ---------- Logo & header ---------- */
+.hms-logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+.hms-logo-wrap img {
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+    background: #fff;
+    border: 1px solid var(--hms-border);
+    box-shadow: 0 4px 12px -4px rgba(15, 45, 90, 0.18);
+}
+
+.hms-title {
+    text-align: center;
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.5;
+    color: var(--hms-text);
+    margin: 0 0 30px;
+    padding: 0 6px;
+    margin-bottom: 18px;
+}
+
+/* ---------- Shared auth subtitle (used by 2FA pages) ---------- */
+.hms-auth-subtitle {
+    text-align: center;
+    font-size: 13.5px;
+    color: var(--hms-text-muted);
+    margin: -16px 0 24px;
+    line-height: 1.6;
+}
+
+/* ---------- OTP / verification code input ---------- */
+.hms-otp-input {
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    padding-left: 10px !important;
+    padding: 12px 10px !important;
+}
+.hms-otp-input::placeholder {
+    letter-spacing: normal;
+    font-weight: 400;
+    font-size: 14px;
+}
+
+/* ---------- Secondary link (e.g. "Not you? Log out") ---------- */
+.hms-secondary-action {
+    text-align: center;
+    margin-top: 18px;
+}
+.hms-secondary-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--hms-text-muted);
+    cursor: pointer;
+    text-decoration: none;
+}
+.hms-secondary-link:hover {
+    color: var(--hms-pink);
+    text-decoration: underline;
+}
+
+/* QR code (2FA setup page) */
+.hms-qr-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+.hms-qr-wrap svg {
+    width: 160px;
+    height: 160px;
+}
+.hms-manual-key {
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--hms-text-muted);
+    margin: 0 0 22px;
+    word-break: break-all;
+    margin-bottom: 16px;
+}
+.hms-manual-key code {
+    background: var(--hms-field-bg);
+    padding: 2px 8px;
+    border-radius: 6px;
+    color: var(--hms-text);
+}
+
+/* ---------- Alerts ---------- */
+.hms-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 18px;
+}
+.hms-alert-danger {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+.hms-alert-danger i { margin-top: 2px; }
+.hms-alert ul { margin: 0; padding-left: 16px; }
+
+/* ---------- Form groups ---------- */
+.hms-form-group {
+    margin-bottom: 20px;
+}
+.hms-form-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--hms-text);
+    margin-bottom: 9px;
+}
+.hms-form-group label i {
+    font-size: 12px;
+    color: var(--hms-text-muted);
+}
+
+.hms-input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    border: 1.5px solid var(--hms-border);
+    border-radius: var(--hms-radius-field);
+    background: var(--hms-field-bg);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.hms-input-group:focus-within {
+    border-color: var(--hms-teal);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(20, 163, 123, 0.10);
+}
+.hms-input-group.is-invalid {
+    border-color: var(--hms-danger);
+    background: #fff;
+}
+.hms-input-group.is-invalid:focus-within {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.10);
+}
+
+.hms-input-group input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    padding: 13px 16px;
+    font-size: 14px;
+    color: var(--hms-text);
+    font-family: inherit;
+    min-width: 0;
+    border-radius: var(--hms-radius-field);
+}
+.hms-input-group input::placeholder {
+    color: #a4adb9;
+}
+
+.hms-toggle-password {
+    width: 42px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--hms-text-muted);
+    cursor: pointer;
+    font-size: 15px;
+    flex-shrink: 0;
+    padding-right: 6px;
+}
+.hms-toggle-password:hover {
+    color: var(--hms-text);
+}
+.hms-toggle-password:focus {
+    outline: none;
+}
+
+.hms-field-error {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: var(--hms-danger);
+    margin-top: 6px;
+}
+
+/* ---------- Row: remember + forgot ---------- */
+.hms-form-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.hms-remember {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    -webkit-user-select: none;
+    user-select: none;
+}
+.hms-remember input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--hms-green);
+    cursor: pointer;
+}
+.hms-remember span {
+    font-size: 13.5px;
+    color: var(--hms-text);
+}
+.hms-forgot-link {
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--hms-pink);
+    text-decoration: none;
+}
+.hms-forgot-link:hover {
+    text-decoration: underline;
+    color: var(--hms-pink);
+}
+
+/* ---------- Submit button ---------- */
+.hms-submit-btn {
+    width: 100%;
+    border: none;
+    border-radius: var(--hms-radius-field);
+    padding: 13px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: #fff;
+    background: var(--hms-green);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    box-shadow: 0 10px 20px -10px rgba(0, 109, 54, 0.55);
+    margin-top: 8px;
+
+}
+.hms-submit-btn:hover {
+    background: var(--hms-green-dark);
+    transform: translateY(-1px);
+}
+.hms-submit-btn:active {
+    transform: translateY(0);
+}
+.hms-submit-btn:disabled {
+    opacity: 0.85;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.hms-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2.5px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    display: none;
+    animation: hms-spin 0.7s linear infinite;
+}
+.hms-submit-btn.is-loading .hms-spinner {
+    display: inline-block;
+}
+.hms-submit-btn.is-loading .hms-btn-label {
+    display: none;
+}
+@keyframes hms-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ---------- Footer (outside card) ---------- */
+.hms-page-footer {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 12.5px;
+    color: #b0b7c1;
+}
+.hms-page-footer .hms-footer-links {
+    margin-top: 6px;
+}
+.hms-page-footer .hms-footer-links a {
+    color: #b0b7c1;
+    text-decoration: none;
+}
+.hms-page-footer .hms-footer-links a:hover {
+    color: var(--hms-text-muted);
+    text-decoration: underline;
+}
+.hms-page-footer .hms-footer-links .hms-dot {
+    display: inline-block;
+    margin: 0 8px;
+    color: #d1d6dc;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 480px) {
+    body.hms-login-body {
+        padding: 20px 14px;
+    }
+    .hms-card {
+        padding: 28px 22px 26px;
+        border-radius: 16px;
+    }
+    .hms-title {
+        font-size: 18px;
+    }
+    .hms-logo-wrap img {
+        width: 62px;
+        height: 62px;
+    }
+    .hms-qr-wrap svg {
+        width: 140px;
+        height: 140px;
+    }
+}
