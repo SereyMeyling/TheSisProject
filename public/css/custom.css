@@ -98,7 +98,7 @@ body {
 }
 .content-wrapper {
     overflow-y: auto;
-    height: calc(100vh - 57px);
+    height: calc(100vh - 57px) !important;
 }
 /* បិទ AdminLTE hover overlay */
 
@@ -118,3 +118,11 @@ body.sidebar-mini.sidebar-collapse .nav-sidebar .nav-icon {
 }
 
 
+
+/* submenu */
+
+.nav-treeview > .nav-item > .nav-link {
+    font-size: 13px;
+    padding-left: 35px;
+    color: #c2c7d0;
+}
