@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="km">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -13,7 +14,9 @@
     {{-- Google Fonts: Khmer + Latin support --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
@@ -26,6 +29,7 @@
 
     @stack('styles')
 </head>
+
 <body class="hms-login-body">
 
     <div class="hms-card">
@@ -33,10 +37,15 @@
 
         {{-- Logo --}}
         <div class="hms-logo-wrap">
-            <img src="{{ asset('vendor/adminlte/dist/img/logo.jpg') }}" alt="Hospital Logo">
+            <img src="{{ $setting && $setting->logo
+    ? asset('storage/' . $setting->logo)
+    : asset('vendor/adminlte/dist/img/logo.jpg')
+    }}" alt="Hospital Logo">
+
         </div>
 
-        <h1 class="hms-title">@yield('auth-title', config('adminlte.logo_full_name', 'មន្ទីរសម្រាកព្យាបាលព្រំសន្តិភាព'))</h1>
+        <h1 class="hms-title">{{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }}
+        </h1>
 
         @hasSection('auth-subtitle')
             <p class="hms-auth-subtitle">@yield('auth-subtitle')</p>
@@ -47,7 +56,7 @@
     </div>
 
     <div class="hms-page-footer">
-        <div>&copy; {{ date('Y') }} Build Bright University. All rights reserved.</div>
+        <div>&copy; {{ date('Y') }} {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }} ||  All rights reserved.</div>
         <div class="hms-footer-links">
             <a href="#">Privacy Policy</a>
             <span class="hms-dot">&middot;</span>
@@ -60,4 +69,5 @@
 
     @stack('scripts')
 </body>
+
 </html>

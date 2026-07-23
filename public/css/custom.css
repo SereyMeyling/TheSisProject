@@ -1,3 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@300;400;700&display=swap');
+
+
+body,
+.content-wrapper,
+.main-sidebar,
+.nav-sidebar,
+.card,
+.btn,
+.form-control,
+.table,
+.modal,
+h1,h2,h3,h4,h5,h6,
+p,span,div,label,a {
+    font-family: 'Battambang', sans-serif !important;
+}
 body,
 html {
     font-family: 'Battambang', 'Inter', sans-serif !important;

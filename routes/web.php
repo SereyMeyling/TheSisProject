@@ -1,6 +1,9 @@
 <?php
 
 use App\Http\Controllers\Department\DepartmentController;
+use App\Http\Controllers\Pharmacy\PharmacyController;
+use App\Http\Controllers\Settings\GeneralSettingsController;
+use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
@@ -70,6 +73,9 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth','2fa']], function () {
 // ------------------end patient --------------------
 
 // ------------------ pharmacy --------------------
+Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth']], function () {
+    Route::get('/', [PharmacyController::class, 'index'])->name('pharmacy.index');
+});
 // ------------------end pharmacy --------------------
 
 // ------------------ billing --------------------
@@ -82,8 +88,16 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth','2fa']], function () {
 // ------------------end room --------------------
 
 // ------------------ setting --------------------
-// ------------------end setting --------------------
 
+// ------------------end setting --------------------
+Route::group(['prefix' => 'settings', 'middleware' => ['auth']], function () {
+    Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
+    Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
+
+    Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+    Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
+    Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+});
 // ------------------ support --------------------
 Route::group(['prefix' => 'support', 'middleware' => ['auth','2fa']], function () {
     Route::get('/', [SupportController::class, 'index'])->name('support.index');

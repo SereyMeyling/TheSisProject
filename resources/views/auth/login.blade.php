@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="km">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -8,12 +9,16 @@
     <title>{{ config('adminlte.title', 'Hospital Management System') }} | Login</title>
 
     {{-- Favicon --}}
-    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ optional($setting)->favicon
+    ? asset('storage/' . $setting->favicon)
+    : asset('favicon.ico') }}" type="image/x-icon">
 
     {{-- Google Fonts: Khmer + Latin support --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
 
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="{{ asset('vendor/fontawesome-free/css/all.min.css') }}">
@@ -24,6 +29,7 @@
     {{-- Custom hospital login theme (overrides / extends the above) --}}
     <link rel="stylesheet" href="{{ asset('css/auth/hospital-login.css') }}">
 </head>
+
 <body class="hms-login-body">
 
     <div class="hms-card">
@@ -31,10 +37,14 @@
 
         {{-- Logo --}}
         <div class="hms-logo-wrap">
-            <img src="{{ asset('vendor/adminlte/dist/img/logo.jpg') }}" alt="Hospital Logo">
+            <img src="{{ $setting && $setting->logo
+    ? asset('storage/' . $setting->logo)
+    : asset('vendor/adminlte/dist/img/logo.jpg')
+    }}" alt="Hospital Logo">
+
         </div>
 
-        <h1 class="hms-title">{!! config('adminlte.logo_full_name', 'មន្ទីរសម្រាកព្យាបាលព្រំសន្តិភាព') !!}</h1>
+        <h1 class="hms-title"> {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }}</h1>
 
         {{-- General / session errors (e.g. throttle lockout, custom flashed errors) --}}
         @if (session('error'))
@@ -60,18 +70,10 @@
 
             {{-- Email or Username --}}
             <div class="hms-form-group">
-                <label for="login"><i class="fas fa-user"></i> Email or Username</label>
+                <label for="login"><i class="fas fa-user"></i> អ៊ីម៉ែលឬឈ្មោះអ្នកប្រើប្រាស់​ </label>
                 <div class="hms-input-group @error('login') is-invalid @enderror">
-                    <input
-                        type="text"
-                        id="login"
-                        name="login"
-                        value="{{ old('login') }}"
-                        placeholder="Enter your email or username"
-                        autocomplete="username"
-                        autofocus
-                        required
-                    >
+                    <input type="text" id="login" name="login" value="{{ old('login') }}"
+                        placeholder="Enter your email or username" autocomplete="username" autofocus required>
                 </div>
                 @error('login')
                     <div class="hms-field-error"><i class="fas fa-circle-exclamation"></i> {{ $message }}</div>
@@ -82,15 +84,10 @@
             <div class="hms-form-group">
                 <label for="password"><i class="fas fa-lock"></i> លេខសម្ងាត់</label>
                 <div class="hms-input-group @error('password') is-invalid @enderror">
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        placeholder="••••••••"
-                        autocomplete="current-password"
-                        required
-                    >
-                    <button type="button" class="hms-toggle-password" id="hms-toggle-password" aria-label="Show password" tabindex="-1">
+                    <input type="password" id="password" name="password" placeholder="••••••••"
+                        autocomplete="current-password" required>
+                    <button type="button" class="hms-toggle-password" id="hms-toggle-password"
+                        aria-label="Show password" tabindex="-1">
                         <i class="fas fa-eye"></i>
                     </button>
                 </div>
@@ -107,8 +104,8 @@
                 </label>
 
                 {{-- Password reset routes are disabled in routes/web.php (Auth::routes(['reset' => false])).
-                     This link is a placeholder to match the approved design — enable reset routes
-                     or remove this link before shipping. --}}
+                This link is a placeholder to match the approved design — enable reset routes
+                or remove this link before shipping. --}}
                 <a href="#" class="hms-forgot-link" style="display: none;">ភ្លេចលេខសម្ងាត់?</a>
             </div>
 
@@ -121,7 +118,8 @@
     </div>
 
     <div class="hms-page-footer">
-        <div>&copy; {{ date('Y') }} Build Bright University. All rights reserved.</div>
+        <div>&copy; {{ date('Y') }} {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }}|| All rights
+            reserved.</div>
         <div class="hms-footer-links">
             <a href="#">Privacy Policy</a>
             <span class="hms-dot">&middot;</span>
@@ -193,4 +191,5 @@
         })();
     </script>
 </body>
+
 </html>
