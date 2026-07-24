@@ -60,14 +60,14 @@
 
             {{-- Email or Username --}}
             <div class="hms-form-group">
-                <label for="login"><i class="fas fa-user"></i> Email or Username</label>
+                <label for="login"><i class="fas fa-user"></i>អ៊ីម៉ែល ឬឈ្មោះអ្នកប្រើប្រាស់</label>
                 <div class="hms-input-group @error('login') is-invalid @enderror">
                     <input
                         type="text"
                         id="login"
                         name="login"
                         value="{{ old('login') }}"
-                        placeholder="Enter your email or username"
+                        placeholder="example@gmail.com"
                         autocomplete="username"
                         autofocus
                         required

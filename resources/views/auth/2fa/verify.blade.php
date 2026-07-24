@@ -4,7 +4,7 @@
 
 {{-- Uses the shared hospital name/logo from layouts.auth by default.
      Override here if you want a different heading on this page. --}}
-@section('auth-subtitle', 'Enter your authentication code')
+@section('auth-subtitle', 'សូមបញ្ចូលលេខកូដផ្ទៀងផ្ទាត់')
 
 @section('auth-content')
 
@@ -37,7 +37,7 @@
                     inputmode="numeric"
                     pattern="[0-9]*"
                     autocomplete="one-time-code"
-                    placeholder="6-digit code"
+                    placeholder="បញ្ចូលលេខកូដ ៦ ខ្ទង់"
                     required
                     autofocus
                 >
@@ -45,7 +45,9 @@
         </div>
 
         <button type="submit" class="hms-submit-btn" id="hms-2fa-submit-btn">
-            <span class="hms-btn-label">Verify &nbsp;<i class="fas fa-shield-halved"></i></span>
+            <span class="hms-btn-label">
+                ផ្ទៀងផ្ទាត់ &nbsp;<i class="fas fa-shield-halved"></i>
+            </span>
             <span class="hms-spinner"></span>
         </button>
     </form>
@@ -53,7 +55,9 @@
     <div class="hms-secondary-action">
         <form method="POST" action="{{ route('logout') }}" id="hms-logout-form">
             @csrf
-            <button type="submit" class="hms-secondary-link">Not you? Log out</button>
+            <button type="submit" class="hms-secondary-link">
+                មិនមែនអ្នកមែនទេ? ចាកចេញពីគណនី
+            </button>
         </form>
     </div>
 
