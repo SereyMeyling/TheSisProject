@@ -331,8 +331,8 @@ return [
 
         ],
         [
-            'text' => 'ឪសថស្ថាន',
-            'url' => '',
+            'text' => 'ឱសថស្ថាន',
+            'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
 
         ],
@@ -367,7 +367,7 @@ return [
             'submenu' => [
                 [
                     'text' => 'ការកំណត់ទូទៅ',
-                    'url' => '',
+                    'url' => 'settings/general',
                     'icon' => 'fas fa-sliders-h',
                 ],
                 [
@@ -377,17 +377,17 @@ return [
                 ],
                 [
                     'text' => 'ការកំណត់វិក្កយបត្រ',
-                    'url' => '',
+                    'url' => 'settings/billing',
                     'icon' => 'fas fa-file-invoice-dollar',
                 ],
                 [
                     'text' => 'ការកំណត់ QR Code',
-                    'url' => '',
+                    'url' => 'settings/qrcode',
                     'icon' => 'fas fa-qrcode',
                 ],
                 [
                     'text' => 'ការបម្រុងទុកទិន្នន័យ',
-                    'url' => '',
+                    'url' => 'settings/backup',
                     'icon' => 'fas fa-database',
                 ],
 

@@ -264,11 +264,10 @@
 
                     <h4>☎ 012 888 999</h4>
 
-                    <p>support@hospital.com</p>
+                    <p>    {{ $setting->email ?? 'contact@gmail.com' }}</p>
 
                     <small>
-                        Monday - Friday<br>
-                        8:00 AM - 5:00 PM
+                          {{ $setting->working_hours ?? '07:00 AM - 08:00 PM' }}
                     </small>
 
                 </div>

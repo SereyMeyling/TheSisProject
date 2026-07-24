@@ -11,7 +11,7 @@
                 សូមស្វាគមន៍មកកាន់
             </h1>
             <h2>
-                មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព
+                {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }}
             </h2>
             <p>
                 ប្រព័ន្ធគ្រប់គ្រងមន្ទីរព្យាបាល
@@ -26,7 +26,10 @@
         </div>
 
         <div class="welcome-image">
-            <img src="{{ asset('vendor/adminlte/dist/img/logo.jpg') }}" alt="Clinic">
+            <img src="{{ $setting && $setting->logo
+    ? asset('storage/' . $setting->logo)
+    : asset('vendor/adminlte/dist/img/logo.jpg')
+    }}" alt="Clinic">
         </div>
     </div>
 
@@ -84,19 +87,19 @@
             <i class="fas fa-clock"></i>
             <strong>ម៉ោងធ្វើការ</strong>
             <br>
-            07:00 AM - 08:00 PM
+            {{ $setting->working_hours ?? '07:00 AM - 08:00 PM' }}
         </div>
         <div>
             <i class="fas fa-phone"></i>
             <strong>ទំនាក់ទំនង</strong>
             <br>
-            012 XXX XXX
+            {{ $setting->phone ?? '012 XXX XXX' }}
         </div>
         <div>
             <i class="fas fa-map-marker-alt"></i>
             <strong>ទីតាំង</strong>
             <br>
-            Cambodia
+            {{ $setting->address ?? 'Cambodia' }}
         </div>
     </div>
 </div>
