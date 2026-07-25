@@ -1,14 +1,17 @@
 <?php
 
+use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\Department\DepartmentController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
+use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\RolePermissionController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\TwoFactorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,12 +30,11 @@ Route::get('/', function () {
 
 Auth::routes([
     'register' => false,
-    'reset' => false,
-    'verify' => false,
+    'reset'    => false,
+    'verify'   => false,
 ]);
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
+Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 // ------------------ 2FA (mandatory) --------------------
 Route::middleware(['auth'])->group(function () {
@@ -42,14 +44,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/2fa/verify', [TwoFactorController::class, 'showVerifyForm'])->name('2fa.verify');
     Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify.submit')->middleware('throttle:5,1');
 });
-// ------------------end 2FA --------------------
-
-// ------------------ dashboard --------------------
-// ------------------end dashboard--------------------
+// ------------------ end 2FA --------------------
 
 
-// ------------------ department --------------------
-Route::group(['prefix' => 'department', 'middleware' => ['auth','2fa']], function () {
+// ------------------ Department (Authenticated Users) --------------------
+Route::group(['prefix' => 'department', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [DepartmentController::class, 'index'])->name('department.index');
     Route::post('/store', [DepartmentController::class, 'store'])->name('department.store');
     Route::get('/edit/{id}', [DepartmentController::class, 'edit'])->name('department.edit');
@@ -57,10 +56,9 @@ Route::group(['prefix' => 'department', 'middleware' => ['auth','2fa']], functio
     Route::delete('/delete/{id}', [DepartmentController::class, 'destroy'])->name('department.destroy');
 });
 
-// ------------------end department --------------------
 
-// ------------------ user & role management --------------------
-Route::group(['middleware' => ['auth', '2fa', 'role_or_permission:admin|manage users']], function () {
+// ------------------ Admin Only Routes (Role: admin) --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     // User management routes
     Route::group(['prefix' => 'user'], function () {
         Route::get('/', [UserController::class, 'index'])->name('user.index');
@@ -77,44 +75,46 @@ Route::group(['middleware' => ['auth', '2fa', 'role_or_permission:admin|manage u
         Route::post('/permission/store', [RolePermissionController::class, 'storePermission'])->name('permissions.store-permission');
         Route::post('/{role}/permissions', [RolePermissionController::class, 'assignPermissionsToRole'])->name('roles.assign-permissions');
     });
+
+    // System Settings routes
+    Route::group(['prefix' => 'settings'], function () {
+        Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
+        Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
+
+        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+        Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
+        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+    });
 });
-// ------------------end user & role management --------------------
 
 
-// ------------------ doctor --------------------
-// ------------------end doctor --------------------
-
-// ------------------ patient --------------------
-// ------------------end patient --------------------
-
-// ------------------ pharmacy --------------------
-Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth']], function () {
+// ------------------ Pharmacist & Admin Routes (Role: admin|pharmacist) --------------------
+Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admin|pharmacist']], function () {
     Route::get('/', [PharmacyController::class, 'index'])->name('pharmacy.index');
 });
-// ------------------end pharmacy --------------------
 
-// ------------------ billing --------------------
-// ------------------end billing--------------------
 
-// ------------------ lab --------------------
-// ------------------end lab--------------------
-
-// ------------------ room --------------------
-// ------------------end room --------------------
-
-// ------------------ setting --------------------
-
-// ------------------end setting --------------------
-Route::group(['prefix' => 'settings', 'middleware' => ['auth']], function () {
-    Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
-    Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
-
-    Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
-    Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
-    Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+// ------------------ Cashier & Admin Routes (Role: admin|cashier) --------------------
+Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
+    Route::get('/', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
+    Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');
+    Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
 });
-// ------------------ support --------------------
-Route::group(['prefix' => 'support', 'middleware' => ['auth','2fa']], function () {
+
+
+// ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+    Route::get('/doctor', function () { return view('home'); });
+    Route::get('/patient', function () { return view('home'); });
+    Route::get('/patients', function () { return view('home'); });
+    Route::get('/appointment', function () { return view('home'); });
+    Route::get('/appointments', function () { return view('home'); });
+    Route::get('/lab', function () { return view('home'); });
+});
+
+
+// ------------------ Support (Authenticated Users) --------------------
+Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [SupportController::class, 'index'])->name('support.index');
 });
-// ------------------end support --------------------
