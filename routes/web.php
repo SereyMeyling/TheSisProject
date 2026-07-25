@@ -6,6 +6,7 @@ use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\RolePermissionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\TwoFactorController;
 
@@ -58,12 +59,26 @@ Route::group(['prefix' => 'department', 'middleware' => ['auth','2fa']], functio
 
 // ------------------end department --------------------
 
-// ------------------ user (user management) --------------------
-Route::group(['prefix' => 'user', 'middleware' => ['auth','2fa']], function () {
-    Route::get('/', [UserController::class, 'index'])->name('user.index');
-    Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
+// ------------------ user & role management --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role_or_permission:admin|manage users']], function () {
+    // User management routes
+    Route::group(['prefix' => 'user'], function () {
+        Route::get('/', [UserController::class, 'index'])->name('user.index');
+        Route::post('/store', [UserController::class, 'store'])->name('user.store');
+        Route::put('/{user}/role', [UserController::class, 'updateRole'])->name('user.update-role');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('user.destroy');
+        Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
+    });
+
+    // Role & Permission management routes
+    Route::group(['prefix' => 'roles'], function () {
+        Route::get('/', [RolePermissionController::class, 'index'])->name('roles.index');
+        Route::post('/store', [RolePermissionController::class, 'storeRole'])->name('roles.store-role');
+        Route::post('/permission/store', [RolePermissionController::class, 'storePermission'])->name('permissions.store-permission');
+        Route::post('/{role}/permissions', [RolePermissionController::class, 'assignPermissionsToRole'])->name('roles.assign-permissions');
+    });
 });
-// ------------------end user --------------------
+// ------------------end user & role management --------------------
 
 
 // ------------------ doctor --------------------

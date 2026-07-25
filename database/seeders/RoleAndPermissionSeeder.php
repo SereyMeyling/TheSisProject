@@ -22,10 +22,12 @@ class RoleAndPermissionSeeder extends Seeder
         $pharmacistRole = Role::create(['name' => 'pharmacist']);
 
         // 2. Create Permissions
+        $manageUsersPermission   = Permission::create(['name' => 'manage users']);
         $createDoctorPermission  = Permission::create(['name' => 'create doctors']);
         $createPatientPermission = Permission::create(['name' => 'create patients']);
 
         // 3. Assign Permissions to Roles
+        $adminRole->givePermissionTo($manageUsersPermission);
         $adminRole->givePermissionTo($createDoctorPermission);
         $adminRole->givePermissionTo($createPatientPermission);
     }
