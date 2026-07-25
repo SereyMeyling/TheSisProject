@@ -308,7 +308,7 @@ return [
 
         [
             'text' => 'ផ្ទាំងព័ត៏មាន',
-            'url' => '',
+            'url' => 'home',
             'icon' => 'fas fa-tachometer-alt',
 
         ],
@@ -320,13 +320,13 @@ return [
         ],
         [
             'text' => 'វេជ្ជបណ្ឌិត',
-            'url' => '',
+            'url' => 'doctor',
             'icon' => 'fas fa-user-md',
 
         ],
         [
             'text' => 'អ្នកជម្ងឺ',
-            'url' => '',
+            'url' => 'patient',
             'icon' => 'fas fa-user-injured',
 
         ],
@@ -338,25 +338,25 @@ return [
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',
-            'url' => '',
+            'url' => 'billing',
             'icon' => 'fas fa-file-invoice-dollar',
 
         ],
         [
             'text' => 'មន្ទីរពិសោធន៏',
-            'url' => '',
+            'url' => 'lab',
             'icon' => 'fas fa-flask',
 
         ],
         [
             'text' => 'បន្ទប់',
-            'url' => '',
+            'url' => 'room',
             'icon' => 'fas fa-procedures',
 
         ],
         [
             'text' => 'ការណាត់ជួប',
-            'url' => '',
+            'url' => 'appointment',
             'icon' => 'fas fa-calendar-check',
 
         ],
