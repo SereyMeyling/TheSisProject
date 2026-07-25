@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>403 Forbidden - Access Denied</title>
+    <title>403 - ការចូលប្រើប្រាស់ត្រូវបានបដិសេធ (Access Denied)</title>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Kantumruy+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kantumruy+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Bootstrap 5 CSS -->
@@ -27,7 +27,7 @@
 
         body {
             background-color: var(--bg-color);
-            font-family: 'Inter', 'Kantumruy Pro', sans-serif;
+            font-family: 'Kantumruy Pro', 'Inter', sans-serif;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -41,7 +41,7 @@
             background: var(--card-bg);
             border-radius: 24px;
             padding: 40px 30px;
-            max-width: 520px;
+            max-width: 540px;
             width: 100%;
             text-align: center;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
@@ -78,21 +78,22 @@
             font-weight: 800;
             line-height: 1;
             color: var(--accent-red);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             letter-spacing: -2px;
+            font-family: 'Inter', sans-serif;
         }
 
         .error-subtitle {
             font-size: 22px;
             font-weight: 700;
             color: var(--text-main);
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .error-message {
             font-size: 15px;
             color: var(--text-muted);
-            line-height: 1.6;
+            line-height: 1.7;
             margin-bottom: 30px;
         }
 
@@ -164,11 +165,13 @@
         <!-- 403 Header Code -->
         <div class="error-code">403</div>
 
-        <!-- Subtitle & Message -->
-        <div class="error-subtitle">Access Denied / ការចូលប្រើប្រាស់ត្រូវបានបដិសេធ</div>
+        <!-- Subtitle & Message in Khmer -->
+        <div class="error-subtitle">ការចូលប្រើប្រាស់ត្រូវបានបដិសេធ</div>
+        <div class="text-muted small mb-2">(Access Denied)</div>
+
         <p class="error-message">
-            You do not have permission to access this page.<br>
-            <span class="small">អ្នកគ្មានសិទ្ធិចូលប្រើប្រាស់ទំព័រនេះទេ។ សូមទាក់ទងអ្នកគ្រប់គ្រងប្រព័ន្ធ ប្រសិនបើអ្នកត្រូវការសិទ្ធិចូលប្រើ។</span>
+            អ្នកមិនមានសិទ្ធិចូលប្រើប្រាស់ទំព័រនេះទេ។<br>
+            <span class="text-secondary small">សូមទាក់ទងអ្នកគ្រប់គ្រងប្រព័ន្ធ (Administrator) ប្រសិនបើអ្នកត្រូវការសិទ្ធិចូលប្រើប្រាស់។</span>
         </p>
 
         <!-- Navigation Buttons -->
@@ -183,7 +186,7 @@
 
         <!-- System Branding -->
         <div class="hospital-branding">
-            Hospital Management System &bull; Access Control
+            ប្រព័ន្ធគ្រប់គ្រងមន្ទីរពេទ្យ &bull; Hospital Management System
         </div>
     </div>
 

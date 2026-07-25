@@ -64,7 +64,7 @@ class Handler extends ExceptionHandler
                 return response()->json([
                     'status'  => 403,
                     'error'   => 'Forbidden',
-                    'message' => 'You do not have permission to access this page.',
+                    'message' => 'អ្នកមិនមានសិទ្ធិចូលប្រើប្រាស់ទំព័រនេះទេ។ (You do not have permission to access this page.)',
                 ], 403);
             }
 
