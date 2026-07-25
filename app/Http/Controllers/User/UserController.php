@@ -3,31 +3,29 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRoleRequest;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    /**
+     * Display a paginated listing of users with their assigned roles.
+     *
+     * @param Request $request
+     * @return \Illuminate\Contracts\View\View|\Illuminate\Http\JsonResponse
+     */
     public function index(Request $request)
     {
-        $user = $this->getFilteredUsers($request);
-        $totalUser = User::count();
+        $query = User::with('roles')
+            ->select(['id', 'name', 'email', 'username', 'google2fa_enabled', 'created_at']);
 
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'html' => view('form.user.partials.table', compact('user'))->render(),
-                'total' => $totalUser,
-            ]);
-        }
-
-        return view('form.user.user', compact('user', 'totalUser'));
-    }
-
-    protected function getFilteredUsers(Request $request)
-    {
-        $query = User::query()
-            ->select(['id', 'name', 'email', 'username', 'google2fa_secret', 'google2fa_enabled', 'created_at']);
-
+        // Search filter
         if ($request->filled('search')) {
             $searchTerm = '%' . $request->search . '%';
             $query->where(function ($q) use ($searchTerm) {
@@ -37,12 +35,108 @@ class UserController extends Controller
             });
         }
 
-        return $query->orderBy('name')->paginate(10)->appends($request->query());
+        $users = $query->orderBy('name')->paginate(10)->appends($request->query());
+        $totalUser = User::count();
+        $roles = Role::all();
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html'  => view('form.user.partials.table', compact('users', 'roles'))->render(),
+                'total' => $totalUser,
+            ]);
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'data'    => $users,
+                'total'   => $totalUser,
+            ]);
+        }
+
+        return view('form.user.user', compact('users', 'totalUser', 'roles'));
+    }
+
+    /**
+     * Store a newly created user and assign an initial role.
+     *
+     * @param StoreUserRequest $request
+     * @return RedirectResponse|JsonResponse
+     */
+    public function store(StoreUserRequest $request)
+    {
+        // Hash password and create user record in MySQL
+        $user = User::create([
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'username' => $request->username,
+            'password' => Hash::make($request->password),
+        ]);
+
+        // Assign initial role via spatie/laravel-permission
+        $user->assignRole($request->role);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'User created successfully',
+                'data'    => $user->load('roles'),
+            ], 201);
+        }
+
+        return redirect()->route('user.index')->with('success', 'User created successfully');
+    }
+
+    /**
+     * Update or replace a user's assigned role.
+     *
+     * @param UpdateUserRoleRequest $request
+     * @param User $user
+     * @return RedirectResponse|JsonResponse
+     */
+    public function updateRole(UpdateUserRoleRequest $request, User $user)
+    {
+        // Replace all existing roles with the selected role
+        $user->syncRoles([$request->role]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Role for user '{$user->name}' updated to '{$request->role}'.",
+                'data'    => $user->load('roles'),
+            ]);
+        }
+
+        return redirect()->route('user.index')->with('success', "Role for user '{$user->name}' updated to '{$request->role}'.");
+    }
+
+    /**
+     * Remove the specified user from storage.
+     *
+     * @param Request $request
+     * @param User $user
+     * @return RedirectResponse|JsonResponse
+     */
+    public function destroy(Request $request, User $user)
+    {
+        $userName = $user->name;
+        $user->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "User '{$userName}' has been deleted successfully.",
+            ]);
+        }
+
+        return redirect()->route('user.index')->with('success', "User '{$userName}' has been deleted successfully.");
     }
 
     /**
      * Reset the target user's Two-Factor Authentication enrollment.
-     * Does not delete the user or touch their password.
+     *
+     * @param int $id
+     * @return RedirectResponse
      */
     public function resetTwoFactor($id)
     {
