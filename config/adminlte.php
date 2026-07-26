@@ -334,7 +334,19 @@ return [
             'text' => 'ឱសថស្ថាន',
             'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
+            'submenu' => [
+                [
+                    'text' => 'បញ្ចូលថ្នាំថ្មី',
+                    'url' => 'pharmacy/',
+                    'icon' => 'fas fa-capsules',
+                ],
+                [
+                    'text' => 'ការលក់ថ្នាំ',
+                    'url' => 'pharmacy/sell',
+                    'icon' => 'fas fa-cash-register',
+                ],
 
+            ]
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',

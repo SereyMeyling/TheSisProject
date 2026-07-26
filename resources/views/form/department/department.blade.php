@@ -3,7 +3,7 @@
 @section('title', 'Department')
 
 @section('content')
-
+<div class="toast-container-custom" id="toastContainer"></div>
 <div class="d-flex justify-content-between align-items-center mb-4 ">
 
     <h2 class="page-title mb-0 mt-3"> <i class="fas fa-sitemap"></i> ការគ្រប់គ្រងដេប៉ាតឺម៉ង់</h2>
@@ -172,14 +172,6 @@
         color: #222;
     }
 
-    .btn-add {
-
-        border-radius: 10px;
-        padding: 8px 20px;
-        font-weight: 600;
-
-    }
-
     .stat-card {
         background: white;
         border-radius: 15px;
@@ -234,10 +226,6 @@
         gap: 12px;
     }
 
-    .filter-group>* {
-        margin-bottom: 6px;
-    }
-
     .search-box {
         display: flex;
         align-items: center;
@@ -258,7 +246,6 @@
     }
 
     /* Table */
-
     .table thead th {
         background: #f5f6f7;
         border: none;
@@ -348,7 +335,8 @@
 @stop
 
 @section('js')
-@parent
+<!-- toast -->
+
 <script>
     $(document).ready(function () {
 
@@ -401,9 +389,6 @@
             }, 400);
         });
 
-
-
-
         $(document).on('click', '#departmentTableContainer .pagination a', function (e) {
             e.preventDefault();
             const href = $(this).attr('href');
@@ -434,6 +419,29 @@
             $('#deleteDepartmentName').text(name);
             $('#deleteForm').attr('action', "{{ url('department/delete') }}/" + id);
         });
-    });
+        function showToast(message, type = 'success') {
+            let toast = `
+        <div class="toast-custom ${type}">
+            ${message}
+        </div>
+    `;
+
+            $('#toastContainer').append(toast);
+
+            setTimeout(function () {
+                $('.toast-custom:first').fadeOut(300, function () {
+                    $(this).remove();
+                });
+            }, 3000);
+        }
+
+        @if(session('success'))
+            showToast(@json(session('success')), 'success');
+        @endif
+
+        @if(session('error'))
+            showToast(@json(session('error')), 'error');
+        @endif
+});
 </script>
 @stop

@@ -2,8 +2,6 @@
 
 use App\Models\Setting\GeneralSettings;
 
-
-
 if (!function_exists('setting')) {
     function setting($key, $default = null)
     {

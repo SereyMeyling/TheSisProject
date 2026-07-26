@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
+use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Route;
@@ -48,7 +50,7 @@ Route::middleware(['auth'])->group(function () {
 
 
 // ------------------ department --------------------
-Route::group(['prefix' => 'department', 'middleware' => ['auth','2fa']], function () {
+Route::group(['prefix' => 'department', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [DepartmentController::class, 'index'])->name('department.index');
     Route::post('/store', [DepartmentController::class, 'store'])->name('department.store');
     Route::get('/edit/{id}', [DepartmentController::class, 'edit'])->name('department.edit');
@@ -59,7 +61,7 @@ Route::group(['prefix' => 'department', 'middleware' => ['auth','2fa']], functio
 // ------------------end department --------------------
 
 // ------------------ user (user management) --------------------
-Route::group(['prefix' => 'user', 'middleware' => ['auth','2fa']], function () {
+Route::group(['prefix' => 'user', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [UserController::class, 'index'])->name('user.index');
     Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
 });
@@ -74,8 +76,32 @@ Route::group(['prefix' => 'user', 'middleware' => ['auth','2fa']], function () {
 
 // ------------------ pharmacy --------------------
 Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth']], function () {
+
     Route::get('/', [PharmacyController::class, 'index'])->name('pharmacy.index');
+    Route::get('/export', [PharmacyController::class, 'export'])->name('pharmacy.export');
+    Route::get('/export/names', [PharmacyController::class, 'exportNames'])->name('pharmacy.export.names');
+    Route::get('/export/stock-report', [PharmacyController::class, 'exportStockReport'])->name('pharmacy.export.stockReport');
+    Route::get('/expiring-detail', [PharmacyController::class, 'expiringDetail'])->name('pharmacy.expiring.detail');
+    Route::get('/data', [PharmacyController::class, 'data'])->name('pharmacy.data');
+
+    Route::post('/', [PharmacyController::class, 'store'])->name('pharmacy.store');
+    Route::get('/{medicine}/edit', [PharmacyController::class, 'edit'])->name('pharmacy.edit');
+    Route::put('/{medicine}', [PharmacyController::class, 'update'])->name('pharmacy.update');
+    Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
+    Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
+
+    Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
+
+    // ── Sell (separate page) ──────────────────────────
+    Route::get('/sell', [PharmacySaleController::class, 'index'])->name('pharmacy.sell.index');
+    Route::get('/sell/search', [PharmacySaleController::class, 'search'])->name('pharmacy.sell.search');
+    Route::get('/sell/history', [PharmacySaleController::class, 'history'])->name('pharmacy.sell.history');
+    Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
+    Route::get('/sell/{sale}/pdf', [PharmacySaleController::class, 'exportPdf'])->name('pharmacy.sell.pdf');
+
+    Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
 });
+
 // ------------------end pharmacy --------------------
 
 // ------------------ billing --------------------
@@ -88,8 +114,6 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth']], function () {
 // ------------------end room --------------------
 
 // ------------------ setting --------------------
-
-// ------------------end setting --------------------
 Route::group(['prefix' => 'settings', 'middleware' => ['auth']], function () {
     Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
     Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
@@ -98,8 +122,9 @@ Route::group(['prefix' => 'settings', 'middleware' => ['auth']], function () {
     Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
     Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
 });
+// ------------------end setting --------------------
 // ------------------ support --------------------
-Route::group(['prefix' => 'support', 'middleware' => ['auth','2fa']], function () {
+Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [SupportController::class, 'index'])->name('support.index');
 });
 // ------------------end support --------------------
