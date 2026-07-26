@@ -23,7 +23,7 @@ class UserController extends Controller
     public function index(Request $request)
     {
         $query = User::with('roles')
-            ->select(['id', 'name', 'email', 'username', 'google2fa_enabled', 'created_at']);
+            ->select(['id', 'name', 'email', 'username','google2fa_secret', 'google2fa_enabled', 'created_at']);
 
         // Search filter
         if ($request->filled('search')) {

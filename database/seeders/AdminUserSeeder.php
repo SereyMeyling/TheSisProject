@@ -16,12 +16,17 @@ class AdminUserSeeder extends Seeder
      */
     public function run()
     {
-        User::updateOrCreate(
-            ['email' => 'admin@hospital.com'],
+        $admin = User::updateOrCreate(
+            [
+                'email' => 'admin@hospital.com'
+            ],
             [
                 'name' => 'Administrator',
                 'password' => Hash::make('areyouadmin'),
             ]
         );
+
+        // Assign admin role
+        $admin->assignRole('admin');
     }
 }
