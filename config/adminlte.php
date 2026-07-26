@@ -308,32 +308,31 @@ return [
 
         [
             'text' => 'ផ្ទាំងព័ត៏មាន',
-            'url' => '',
+            'url' => 'home',
             'icon' => 'fas fa-tachometer-alt',
-
         ],
         [
             'text' => 'ដេប៉ាតឺម៉ង់',
             'url' => 'department',
             'icon' => 'fas fa-sitemap',
-
         ],
         [
             'text' => 'វេជ្ជបណ្ឌិត',
-            'url' => '',
+            'url' => 'doctor',
             'icon' => 'fas fa-user-md',
-
+            'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
             'text' => 'អ្នកជម្ងឺ',
-            'url' => '',
+            'url' => 'patient',
             'icon' => 'fas fa-user-injured',
-
+            'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
             'text' => 'ឱសថស្ថាន',
             'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
+<<<<<<< HEAD
             'submenu' => [
                 [
                     'text' => 'បញ្ចូលថ្នាំថ្មី',
@@ -347,70 +346,76 @@ return [
                 ],
 
             ]
+=======
+            'role' => ['admin', 'pharmacist'],
+>>>>>>> 18cb27edb7c9e992a3b4b8469714ef7171fca343
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',
-            'url' => '',
+            'url' => 'billing',
             'icon' => 'fas fa-file-invoice-dollar',
-
+            'role' => ['admin', 'cashier'],
         ],
         [
             'text' => 'មន្ទីរពិសោធន៏',
-            'url' => '',
+            'url' => 'lab',
             'icon' => 'fas fa-flask',
-
+            'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
             'text' => 'បន្ទប់',
-            'url' => '',
+            'url' => 'room',
             'icon' => 'fas fa-procedures',
-
+            'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
             'text' => 'ការណាត់ជួប',
-            'url' => '',
+            'url' => 'appointment',
             'icon' => 'fas fa-calendar-check',
-
+            'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
             'text' => 'ការកំណត់ប្រព័ន្ធ',
             'icon' => 'fas fa-cogs',
             'classes' => 'mt-auto',
+            'role' => 'admin',
             'submenu' => [
                 [
                     'text' => 'ការកំណត់ទូទៅ',
                     'url' => 'settings/general',
                     'icon' => 'fas fa-sliders-h',
+                    'role' => 'admin',
                 ],
                 [
                     'text' => 'ការគ្រប់គ្រងអ្នកប្រើប្រាស់',
                     'url' => 'user',
                     'icon' => 'fas fa-users',
+                    'role' => 'admin',
                 ],
                 [
                     'text' => 'ការកំណត់វិក្កយបត្រ',
                     'url' => 'settings/billing',
                     'icon' => 'fas fa-file-invoice-dollar',
+                    'role' => 'admin',
                 ],
                 [
                     'text' => 'ការកំណត់ QR Code',
                     'url' => 'settings/qrcode',
                     'icon' => 'fas fa-qrcode',
+                    'role' => 'admin',
                 ],
                 [
                     'text' => 'ការបម្រុងទុកទិន្នន័យ',
                     'url' => 'settings/backup',
                     'icon' => 'fas fa-database',
+                    'role' => 'admin',
                 ],
-
             ],
         ],
         [
             'text' => 'Support',
             'url' => 'support',
             'icon' => 'fas fa-life-ring',
-
-
         ],
 
 
