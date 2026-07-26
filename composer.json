@@ -18,13 +18,9 @@
         "laravel/sanctum": "^2.11",
         "laravel/tinker": "^2.5",
         "laravel/ui": "^3.4",
-<<<<<<< HEAD
         "phpoffice/phpspreadsheet": "*",
-        "pragmarx/google2fa": "^9.0"
-=======
         "pragmarx/google2fa": "^9.0",
         "spatie/laravel-permission": "^6.25"
->>>>>>> 18cb27edb7c9e992a3b4b8469714ef7171fca343
     },
     "require-dev": {
         "facade/ignition": "^2.5",

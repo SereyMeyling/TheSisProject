@@ -332,7 +332,6 @@ return [
             'text' => 'ឱសថស្ថាន',
             'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
-<<<<<<< HEAD
             'submenu' => [
                 [
                     'text' => 'បញ្ចូលថ្នាំថ្មី',
@@ -346,9 +345,6 @@ return [
                 ],
 
             ]
-=======
-            'role' => ['admin', 'pharmacist'],
->>>>>>> 18cb27edb7c9e992a3b4b8469714ef7171fca343
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',
