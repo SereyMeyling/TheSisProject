@@ -41,9 +41,16 @@ class PharmacySaleController extends Controller
 
         return response()->json(['data' => $sales]);
     }
-
     public function store(Request $request)
     {
+        $employeeId = Auth::user()->employee_id;
+
+        if (!$employeeId) {
+            return response()->json([
+                'message' => 'គណនីរបស់អ្នកមិនទាន់ភ្ជាប់ជាមួយបុគ្គលិកទេ សូមទាក់ទងអ្នកគ្រប់គ្រង',
+            ], 422);
+        }
+
         $data = $request->validate([
             'patient_id' => 'nullable|exists:patients,patient_id',
             'items' => 'required|array|min:1',
@@ -51,10 +58,10 @@ class PharmacySaleController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $sale = DB::transaction(function () use ($data, $request) {
+        $sale = DB::transaction(function () use ($data, $employeeId) {
             $sale = Sale::create([
                 'patient_id' => $data['patient_id'] ?? null,
-                'employee_id' => Auth::user()->employee_id ?? Auth::id(),
+                'employee_id' => $employeeId,
                 'sale_date' => now(),
                 'total_amount' => 0,
                 'status' => 'COMPLETED',
@@ -78,7 +85,6 @@ class PharmacySaleController extends Controller
             'pdf_url' => route('pharmacy.sell.pdf', $sale->sale_id),
         ]);
     }
-
     public function search(Request $request)
     {
         $term = $request->get('q', '');

@@ -282,6 +282,42 @@ class PharmacyController extends Controller
         ]));
     }
 
+    public function details($medicineId)
+    {
+        $medicine = Medicine::findOrFail($medicineId);
+
+        $batches = MedicineBatch::where('medicine_id', $medicineId)
+            ->orderByDesc('created_at')
+            ->get();
+
+        $movements = MedicineStockMovement::whereIn('batch_id', $batches->pluck('batch_id'))
+            ->where('movement_type', 'OUT')
+            ->orderBy('movement_date')
+            ->get()
+            ->groupBy('batch_id');
+
+        $data = $batches->map(function ($batch) use ($movements) {
+            return [
+                'batch_number' => $batch->batch_number,
+                'date_in' => optional($batch->created_at)->format('d-M-Y'),
+                'quantity_initial' => $batch->quantity_initial,
+                'expiry_date' => $batch->expiry_date ? \Carbon\Carbon::parse($batch->expiry_date)->format('d-M-Y') : '-',
+                'purchase_price' => $batch->purchase_price,
+                'remaining_quantity' => $batch->remaining_quantity,
+                'outs' => ($movements->get($batch->batch_id) ?? collect())->map(fn($m) => [
+                    'date' => \Carbon\Carbon::parse($m->movement_date)->format('d-M-Y'),
+                    'quantity' => $m->quantity,
+                ])->values(),
+            ];
+        });
+
+        return response()->json([
+            'medicine_name' => $medicine->medicine_name,
+            'selling_price' => $medicine->selling_price,
+            'batches' => $data,
+        ]);
+    }
+
     public function update(Request $request, Medicine $medicine)
     {
         $rules = $this->rules();

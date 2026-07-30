@@ -364,7 +364,6 @@ $(function () {
             });
     });
 
-
     // ---- Expiring detail ----
     $("#btnExpiringDetail").on("click", function (e) {
         e.preventDefault();
@@ -419,5 +418,43 @@ $(function () {
                 showErrors("#supplierErrors", xhr);
                 showToast("រក្សាទុកមិនបានសម្រេច", "error");
             });
+    });
+
+    // ---- Detail: open ----
+    $("#medicineTable").on("click", ".btn-detail", function () {
+        const id = $(this).data("id");
+        $.get(`${routes.detailsBase}/${id}/details`)
+            .done((res) => {
+                $("#detail_medicine_name").text(res.medicine_name);
+
+                const rows =
+                    (res.batches || [])
+                        .map((b) => {
+                            const outsHtml = b.outs.length
+                                ? b.outs
+                                      .map(
+                                          (o) =>
+                                              `<div>${o.date}: <span class="text-danger">-${o.quantity}</span></div>`,
+                                      )
+                                      .join("")
+                                : '<span class="text-muted">—</span>';
+
+                            return `<tr>
+                        <td>${b.batch_number}</td>
+                        <td>${b.date_in}</td>
+                        <td class="text-right">${b.quantity_initial}</td>
+                        <td>${b.expiry_date}</td>
+                        <td class="text-right">$${parseFloat(b.purchase_price).toFixed(2)}</td>
+                        <td>${outsHtml}</td>
+                        <td class="text-right"><strong>${b.remaining_quantity}</strong></td>
+                    </tr>`;
+                        })
+                        .join("") ||
+                    '<tr><td colspan="7" class="text-center text-muted">មិនទាន់មានទិន្នន័យ</td></tr>';
+
+                $("#detailBatchesBody").html(rows);
+                $("#modalDetail").modal("show");
+            })
+            .fail(() => showToast("មិនអាចទាញទិន្នន័យលម្អិតបានទេ", "error"));
     });
 });

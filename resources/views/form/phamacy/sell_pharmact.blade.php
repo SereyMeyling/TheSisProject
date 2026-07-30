@@ -22,8 +22,8 @@
                     @csrf
                     <div class="alert alert-danger d-none" id="sellErrors"></div>
                     <div class="form-group">
-                        <label>លេខសម្គាល់អ្នកជំងឺ (ទុកទទេប្រសិនបើអតិថិជនចរណ៍)</label>
-                        <input type="number" name="patient_id" class="form-control" placeholder="Patient ID">
+                        <label>លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ (ទុកទទេប្រសិនបើអតិថិជនចរណ៍)</label>
+                        <input type="text" name="patient_id" class="form-control" placeholder="Patient ID or Code">
                     </div>
                     <table class="table table-sm" id="sellItemsTable">
                         <thead>
@@ -37,7 +37,8 @@
                             <tr>
                                 <td><select class="form-control sell-medicine" required></select></td>
                                 <td><input type="number" class="form-control sell-qty" min="1" required></td>
-                                <td><button type="button" class="btn btn-sm btn-outline-danger btn-remove-row">&times;</button></td>
+                                <td><button type="button"
+                                        class="btn btn-sm btn-outline-danger btn-remove-row">&times;</button></td>
                             </tr>
                         </tbody>
                     </table>
@@ -68,7 +69,9 @@
                         </tr>
                     </thead>
                     <tbody id="saleHistoryBody">
-                        <tr><td colspan="4" class="text-center text-muted">កំពុងផ្ទុក...</td></tr>
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">កំពុងផ្ទុក...</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>

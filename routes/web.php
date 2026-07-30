@@ -95,11 +95,13 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/expiring-detail', [PharmacyController::class, 'expiringDetail'])->name('pharmacy.expiring.detail');
     Route::get('/data', [PharmacyController::class, 'data'])->name('pharmacy.data');
 
+
     Route::post('/', [PharmacyController::class, 'store'])->name('pharmacy.store');
     Route::get('/{medicine}/edit', [PharmacyController::class, 'edit'])->name('pharmacy.edit');
     Route::put('/{medicine}', [PharmacyController::class, 'update'])->name('pharmacy.update');
     Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
     Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
+    Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
 
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
 
