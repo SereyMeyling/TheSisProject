@@ -9,6 +9,8 @@ use App\Models\Pharmacy\MedicineBatch;
 use App\Models\Pharmacy\MedicineStockMovement;
 use App\Models\Pharmacy\Sale;
 use App\Models\Pharmacy\SaleItem;
+use App\Models\Setting\GeneralSettings;
+use App\Models\Setting\InvoiceSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -161,7 +163,16 @@ class PharmacySaleController extends Controller
     public function exportPdf(Sale $sale)
     {
         $sale->load(['items.medicine', 'patient', 'employee']);
-        $pdf = Pdf::loadView('form.phamacy.sale_pdf', compact('sale'))->setPaper('a4', 'portrait');
+
+        $general = GeneralSettings::first();
+        $billing = InvoiceSetting::firstOrCreate(['id' => 1]);
+
+        $pdf = Pdf::loadView('form.phamacy.sale_pdf', compact('sale', 'general', 'billing'))
+            ->setPaper(
+                $billing->print_size === '80mm' ? [0, 0, 226.77, 800] : 'a4',
+                'portrait'
+            );
+
         return $pdf->stream('prescription_' . $sale->sale_id . '.pdf');
     }
 }

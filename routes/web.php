@@ -32,8 +32,8 @@ Route::get('/', function () {
 
 Auth::routes([
     'register' => false,
-    'reset'    => false,
-    'verify'   => false,
+    'reset' => false,
+    'verify' => false,
 ]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -80,7 +80,10 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
+
         Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
+        
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
         Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
     });
@@ -125,12 +128,18 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
 
 // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-    Route::get('/doctor', function () { return view('home'); });
-    Route::get('/patient', function () { return view('home'); });
-    Route::get('/patients', function () { return view('home'); });
-    Route::get('/appointment', function () { return view('home'); });
-    Route::get('/appointments', function () { return view('home'); });
-    Route::get('/lab', function () { return view('home'); });
+    Route::get('/doctor', function () {
+        return view('home'); });
+    Route::get('/patient', function () {
+        return view('home'); });
+    Route::get('/patients', function () {
+        return view('home'); });
+    Route::get('/appointment', function () {
+        return view('home'); });
+    Route::get('/appointments', function () {
+        return view('home'); });
+    Route::get('/lab', function () {
+        return view('home'); });
 });
 
 // ------------------ Support (Authenticated Users) --------------------
