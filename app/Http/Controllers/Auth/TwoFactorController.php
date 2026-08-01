@@ -57,16 +57,18 @@ class TwoFactorController extends Controller
      */
     public function confirmSetup(Request $request)
     {
-        $request->validate(['one_time_password' => 'required|digits:6']);
+        $request->validate([
+            'one_time_password' => 'required|digits:6',
+        ]);
 
         $secret = $request->session()->get('2fa_temp_secret');
         if (! $secret) {
-            return redirect()->route('2fa.setup')->with('error', 'Setup session expired. Scan the QR code again.');
+            return redirect()->route('2fa.setup')->with('error', __('auth2fa.session_expired'));
         }
 
         $google2fa = new Google2FA();
         if (! $google2fa->verifyKey($secret, $request->one_time_password)) {
-            return back()->with('error', 'Invalid code. Please try again.');
+            return back()->with('error', __('auth2fa.invalid_code'));
         }
 
         $user = Auth::user();
@@ -97,13 +99,15 @@ class TwoFactorController extends Controller
 
     public function verify(Request $request)
     {
-        $request->validate(['one_time_password' => 'required|digits:6']);
+        $request->validate([
+            'one_time_password' => 'required|digits:6',
+        ]);
 
         $user = Auth::user();
         $google2fa = new Google2FA();
 
         if (! $google2fa->verifyKey($user->google2fa_secret, $request->one_time_password)) {
-            return back()->with('error', 'Invalid authentication code.');
+            return back()->with('error', __('auth2fa.invalid_code'));
         }
 
         $request->session()->put('2fa_passed', true);

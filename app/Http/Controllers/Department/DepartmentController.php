@@ -36,6 +36,7 @@ class DepartmentController extends Controller
                     ->orWhere('description', 'LIKE', $searchTerm);
             });
         }
+        $query->orderBy('department_id', 'asc');
         return $query->paginate(10)->appends($request->query());
     }
 
@@ -53,14 +54,14 @@ class DepartmentController extends Controller
             'description' => $request->description,
         ]);
 
-       return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានបន្ថែមដោយជោគជ័យ']);
+        return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានបន្ថែមដោយជោគជ័យ']);
     }
 
     public function edit($id)
     {
         $department = Department::find($id);
         if (!$department) {
-           return redirect()->back()->with(['error'=> 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
+            return redirect()->back()->with(['error' => 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
         }
         return response()->json($department);
     }
@@ -69,22 +70,22 @@ class DepartmentController extends Controller
     {
         $department = Department::find($id);
         if (!$department) {
-           return redirect()->back()->with(['error'=> 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
+            return redirect()->back()->with(['error' => 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
         }
         $department->update([
             'department_name' => $request->department_name,
             'description' => $request->description,
         ]);
-      return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានកែប្រែដោយជោគជ័យ']);
+        return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានកែប្រែដោយជោគជ័យ']);
     }
 
     public function destroy($id)
     {
         $department = Department::find($id);
         if (!$department) {
-            return redirect()->back()->with(['error'=> 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
+            return redirect()->back()->with(['error' => 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
         }
         $department->delete();
-       return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានលុបដោយជោគជ័យ']);
+        return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានលុបដោយជោគជ័យ']);
     }
 }

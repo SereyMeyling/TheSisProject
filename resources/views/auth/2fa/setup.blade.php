@@ -3,7 +3,7 @@
 @section('page-title', 'Setup Two-Factor Authentication')
 
 @section('auth-subtitle')
-    Scan the QR code with Google Authenticator, then enter the 6-digit code to confirm.
+    សូមស្កេន QR Code ដោយប្រើកម្មវិធី Google Authenticator បន្ទាប់មកបញ្ចូលលេខកូដផ្ទៀងផ្ទាត់ ៦ ខ្ទង់ ដើម្បីបញ្ជាក់។
 @endsection
 
 @section('auth-content')
@@ -26,7 +26,10 @@
         {!! $qrCodeSvg !!}
     </div>
 
-    <p class="hms-manual-key">Can't scan? Enter this key manually:<br><code>{{ $secret }}</code></p>
+    <p class="hms-manual-key">
+    មិនអាចស្កេន QR Code បានទេ? សូមបញ្ចូលសោសម្ងាត់នេះ<br>
+        <code>{{ $secret }}</code>
+    </p>
 
     <form method="POST" action="{{ route('2fa.setup.confirm') }}" id="hms-2fa-setup-form" novalidate>
         @csrf
@@ -41,7 +44,7 @@
                     inputmode="numeric"
                     pattern="[0-9]*"
                     autocomplete="one-time-code"
-                    placeholder="6-digit code"
+                    placeholder="បញ្ចូលលេខកូដ ៦ ខ្ទង់"
                     required
                     autofocus
                 >
@@ -49,7 +52,9 @@
         </div>
 
         <button type="submit" class="hms-submit-btn" id="hms-2fa-setup-submit-btn">
-            <span class="hms-btn-label">Confirm &amp; Continue &nbsp;<i class="fas fa-shield-halved"></i></span>
+            <span class="hms-btn-label">
+                បញ្ជាក់ការផ្ទៀងផ្ទាត់<i class="fas fa-shield-halved"></i>
+            </span>
             <span class="hms-spinner"></span>
         </button>
     </form>
@@ -57,7 +62,9 @@
     <div class="hms-secondary-action">
         <form method="POST" action="{{ route('logout') }}" id="hms-logout-form">
             @csrf
-            <button type="submit" class="hms-secondary-link">Log out</button>
+            <button type="submit" class="hms-secondary-link">
+                ចាកចេញ
+            </button>
         </form>
     </div>
 
