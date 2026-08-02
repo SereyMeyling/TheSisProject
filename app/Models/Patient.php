@@ -9,6 +9,7 @@ class Patient extends Model
 {
     use HasFactory;
 
+    protected $table = 'patients';
     protected $primaryKey = 'patient_id';
 
     protected $fillable = [
@@ -20,6 +21,21 @@ class Patient extends Model
         'phone',
         'address',
     ];
+
+    protected $casts = [
+        'date_of_birth' => 'date',
+    ];
+
+    public function getAgeAttribute(): int
+    {
+        return $this->date_of_birth ? $this->date_of_birth->age : 0;
+    }
+
+    // HasMany Relationship ទៅកាន់ MedicalRecord
+    public function medicalRecords()
+    {
+        return $this->hasMany(MedicalRecord::class, 'patient_id', 'patient_id');
+    }
 
     public function invoices()
     {
