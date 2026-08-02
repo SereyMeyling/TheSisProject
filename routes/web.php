@@ -15,6 +15,9 @@ use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Patient\PatientController;
+use App\Http\Controllers\MedicalRecord\MedicalRecordController;
+use App\Http\Controllers\Doctor\DoctorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -136,17 +139,29 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
     Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
 });
 
+// ------------------ Admin, Doctor, Nurse & Cashier Routes --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']], function () {
+    // Doctor Route
+    Route::prefix('doctor')->name('doctor.')->group(function () {
+        Route::get('/', [DoctorController::class, 'index'])->name('index');
+        Route::get('/consultation/{id}', [DoctorController::class, 'edit'])->name('consultation');
+        Route::put('/consultation/{id}', [DoctorController::class, 'update'])->name('update');
+    });
+
+    // Patient Routes
+    Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
+    Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+    Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
+    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
+    Route::get('/patients/{id}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+    Route::put('/patients/{id}', [PatientController::class, 'update'])->name('patients.update');
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
+    // Print
+    Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
+
+
 // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-    Route::get('/doctor', function () {
-        return view('home');
-    });
-    Route::get('/patient', function () {
-        return view('home');
-    });
-    Route::get('/patients', function () {
-        return view('home');
-    });
     Route::get('/appointment', function () {
         return view('home');
     });
@@ -162,3 +177,15 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
 Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
     Route::get('/', [SupportController::class, 'index'])->name('support.index');
 });
+
+// ------------------ Medical Record Routes --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+    Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
+    Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
+    Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
+    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
+    Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
+});
+
