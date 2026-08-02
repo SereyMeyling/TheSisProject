@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\SupplierController;
@@ -83,9 +84,18 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
 
         Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
         Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
-        
+
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
-        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+
+    });
+    Route::group(['prefix' => 'settings/backup'], function () {
+        Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
+        Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
+        Route::post('/create', [BackupController::class, 'store'])->name('settingsbackup.store');
+        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
+        Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
+        Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
+        
     });
 });
 
@@ -129,17 +139,23 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
 // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
     Route::get('/doctor', function () {
-        return view('home'); });
+        return view('home');
+    });
     Route::get('/patient', function () {
-        return view('home'); });
+        return view('home');
+    });
     Route::get('/patients', function () {
-        return view('home'); });
+        return view('home');
+    });
     Route::get('/appointment', function () {
-        return view('home'); });
+        return view('home');
+    });
     Route::get('/appointments', function () {
-        return view('home'); });
+        return view('home');
+    });
     Route::get('/lab', function () {
-        return view('home'); });
+        return view('home');
+    });
 });
 
 // ------------------ Support (Authenticated Users) --------------------
