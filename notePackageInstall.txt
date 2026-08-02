@@ -1,0 +1,16 @@
+| Package                  | Install Command                                       |
+| ------------------------ | ----------------------------------------------------- |
+| Laravel AdminLTE         | `composer require jeroennoten/laravel-adminlte:^3.16` |
+| Laravel UI               | `composer require laravel/ui:^3.4`                    |
+| Sanctum                  | `composer require laravel/sanctum:^2.11`              |
+| DomPDF                   | `composer require barryvdh/laravel-dompdf:^2.2`       |
+| PhpSpreadsheet           | `composer require phpoffice/phpspreadsheet`           |
+| Google 2FA               | `composer require pragmarx/google2fa:^9.0`            |
+| Spatie Backup            | `composer require spatie/laravel-backup:^7.8`         |
+| Spatie Permission        | `composer require spatie/laravel-permission:^6.25`    |
+| Bacon QR Code            | `composer require bacon/bacon-qr-code:^3.1`           |
+| Guzzle HTTP              | `composer require guzzlehttp/guzzle:^7.0.1`           |
+| Laravel CORS (Laravel 8) | `composer require fruitcake/laravel-cors:^2.0`        |
+| Tinker                   | `composer require laravel/tinker:^2.5`                |
+|                          |                                                       |
+

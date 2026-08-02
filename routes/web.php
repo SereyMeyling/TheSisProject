@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\SupplierController;
@@ -88,7 +89,16 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
 
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
-        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+
+    });
+    Route::group(['prefix' => 'settings/backup'], function () {
+        Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
+        Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
+        Route::post('/create', [BackupController::class, 'store'])->name('settingsbackup.store');
+        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
+        Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
+        Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
+        
     });
 });
 
@@ -149,6 +159,9 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     // Print
     Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
 
+
+// ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
     Route::get('/appointment', function () {
         return view('home');
     });
