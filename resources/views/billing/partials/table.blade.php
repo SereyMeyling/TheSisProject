@@ -38,27 +38,40 @@
                         @if ($inv->status !== 'paid')
                             <button
                                 type="button"
-                                class="btn btn-sm btn-success btn-pay-now"
+                                class="btn btn-icon btn-success btn-pay-now"
                                 data-id="{{ $inv->id }}"
                                 data-number="{{ $inv->invoice_number }}"
                                 data-patient="{{ $inv->patient_name }}"
                                 data-total="{{ $inv->total_amount }}"
                                 data-paid="{{ $inv->paid_amount }}"
                                 data-balance="{{ $inv->balance }}"
+                                data-toggle="tooltip"
                                 title="ទូទាត់ប្រាក់ (Pay Now)"
                             >
-                                <i class="fas fa-dollar-sign mr-1"></i> បង់ប្រាក់
+                                <i class="fas fa-dollar-sign"></i>
                             </button>
                         @endif
+
+                        {{-- View Detail Button --}}
+                        <button
+                            type="button"
+                            class="btn btn-icon btn-outline-primary btn-view-detail"
+                            data-id="{{ $inv->id }}"
+                            data-toggle="tooltip"
+                            title="មើលព័ត៌មានលម្អិត (View Detail)"
+                        >
+                            <i class="fas fa-eye"></i>
+                        </button>
 
                         {{-- View / Print Receipt Button --}}
                         <button
                             type="button"
-                            class="btn btn-sm btn-outline-info btn-view-receipt"
+                            class="btn btn-icon btn-outline-info btn-view-receipt"
                             data-id="{{ $inv->id }}"
+                            data-toggle="tooltip"
                             title="មើល / បោះពុម្ពវិក្កយបត្រ (View Receipt)"
                         >
-                            <i class="fas fa-print mr-1"></i> វិក្កយបត្រ
+                            <i class="fas fa-print"></i>
                         </button>
                     </div>
                 </td>

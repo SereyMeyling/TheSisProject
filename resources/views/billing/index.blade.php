@@ -132,7 +132,7 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="create_patient_phone" class="font-weight-bold">លេខទូរស័ព្ទ (Phone Number)</label>
-                            <input type="text" name="patient_phone" id="create_patient_phone" class="form-control" placeholder="012 345 678">
+                            <input type="tel"  maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" inputmode="numeric" name="patient_phone" id="create_patient_phone" class="form-control" placeholder="012 345 678">
                         </div>
                         <div class="col-md-6">
                             <label for="create_notes" class="font-weight-bold">ចំណាំ (Notes)</label>
@@ -320,6 +320,60 @@
     </div>
 </div>
 
+{{-- ── 4. VIEW INVOICE DETAIL MODAL ─────────────────────────────────────────────── --}}
+<div class="modal fade" id="modalInvoiceDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-info text-white" style="border-top-left-radius: 16px; border-top-right-radius: 16px;">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-eye mr-2"></i>ព័ត៌មានលម្អិតវិក្កយបត្រ (Invoice Detail)
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row mb-2">
+                    <div class="col-md-6"><span class="text-muted">លេខវិក្កយបត្រ:</span> <strong id="viewInvoiceNumber" class="text-primary"></strong></div>
+                    <div class="col-md-6"><span class="text-muted">ស្ថានភាព:</span> <span id="viewInvoiceStatus"></span></div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-md-6"><span class="text-muted">អ្នកជំងឺ:</span> <strong id="viewPatientName"></strong></div>
+                    <div class="col-md-6"><span class="text-muted">លេខទូរស័ព្ទ:</span> <strong id="viewPatientPhone"></strong></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6"><span class="text-muted">កាលបរិច្ឆេទ:</span> <strong id="viewInvoiceDate"></strong></div>
+                    <div class="col-md-6"><span class="text-muted">ចំណាំ:</span> <strong id="viewNotes"></strong></div>
+                </div>
+
+                <hr>
+                <h6 class="font-weight-bold text-primary mb-2"><i class="fas fa-list mr-1"></i>បញ្ជីសេវាកម្ម (Items)</h6>
+                <table class="table table-bordered table-sm mb-3">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>ប្រភេទ</th>
+                            <th>បរិយាយ</th>
+                            <th class="text-center">ចំនួន</th>
+                            <th class="text-right">តម្លៃ</th>
+                            <th class="text-right">សរុប</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewInvoiceItems"></tbody>
+                </table>
+
+                <div class="row justify-content-end">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between"><span>ប្រាក់សរុប:</span> <strong id="viewInvoiceTotal"></strong></div>
+                        <div class="d-flex justify-content-between text-success"><span>ប្រាក់បានបង់:</span> <strong id="viewInvoicePaid"></strong></div>
+                        <div class="d-flex justify-content-between text-danger border-top pt-1 mt-1"><span>ប្រាក់ជំពាក់:</span> <strong id="viewInvoiceBalance"></strong></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer justify-content-end bg-light">
+                <button type="button" class="btn btn-light border" data-dismiss="modal">បិទ (Close)</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @stop
 
 @section('css')
@@ -364,6 +418,21 @@
     .table td { vertical-align: middle; border-top: 1px solid #eee; }
 
     .action-icons { display: flex; gap: 6px; }
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        font-size: 13px;
+        transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .btn-icon:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 8px rgba(0,0,0,.12);
+    }
 
     #billingTableContainer { position: relative; min-height: 120px; transition: opacity .15s ease; }
     #billingTableContainer.loading { opacity: .45; pointer-events: none; }
@@ -387,6 +456,11 @@
         const $statusFilter = $('#statusFilter');
         let debounceTimer;
 
+        // Initialize tooltips
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
         function currentParams(page) {
             return {
                 search: $search.val(),
@@ -394,6 +468,20 @@
                 page: page || 1,
             };
         }
+
+        // Show success toast notification
+        function showBillingToast(message, duration = 4000) {
+        $('#billingSuccessToastMessage').text(message);
+        $('#billingSuccessToast').removeClass('d-none');
+
+        // Auto-dismiss after `duration` ms
+        clearTimeout(window.__billingToastTimer);
+        window.__billingToastTimer = setTimeout(function () {
+            $('#billingSuccessToast').fadeOut(300, function () {
+                $(this).addClass('d-none').show(); // reset display for next time
+            });
+        }, duration);
+    }
 
         function loadInvoices(page) {
             const params = currentParams(page);
@@ -406,6 +494,7 @@
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
                 success: function (res) {
                     $container.html(res.html);
+                    $('[data-toggle="tooltip"]').tooltip();
                     $('#statTotalInvoices').text(res.totalInvoices);
                     $('#statTotalRevenue').text('$' + res.totalRevenue);
                     $('#statTotalUnpaid').text('$' + res.totalUnpaid);
@@ -532,8 +621,7 @@
                     recalculateGrandTotal();
 
                     loadInvoices(1);
-                    $('#billingSuccessToastMessage').text(res.message || 'Invoice created successfully.');
-                    $('#billingSuccessToast').removeClass('d-none');
+                    showBillingToast(res.message || 'បានបង្កើតវិក្កយបត្រដោយជោគជ័យ!');
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> បង្កើតវិក្កយបត្រ (Save Invoice)');
@@ -596,8 +684,7 @@
                     $('#modalPayInvoice').modal('hide');
 
                     loadInvoices(1);
-                    $('#billingSuccessToastMessage').text(res.message || 'Payment processed successfully.');
-                    $('#billingSuccessToast').removeClass('d-none');
+                    showBillingToast(res.message || 'បានបញ្ចប់ការទូទាត់វិក្កយបត្រដោយជោគជ័យ!');
                 },
                 error: function (xhr) {
                     $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់ (Confirm Payment)');
@@ -624,6 +711,69 @@
                 }
             });
         });
+
+        // Trigger View Invoice Detail Modal
+        $(document).on('click', '.btn-view-detail', function () {
+            const id = $(this).data('id');
+
+            $('#viewInvoiceItems').html(`
+                <tr><td colspan="5" class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>
+            `);
+            $('#modalInvoiceDetail').modal('show');
+
+            $.ajax({
+                url: "{{ url('billing') }}/" + id,
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                success: function (res) {
+                    const inv = res.data;
+
+                    $('#viewInvoiceNumber').text(inv.invoice_number ?? '-');
+                    $('#viewPatientName').text(inv.patient_name ?? '-');
+                    $('#viewPatientPhone').text(inv.patient_phone ?? '-');
+                    $('#viewInvoiceStatus').html(getInvoiceStatusBadge(inv.status));
+                    $('#viewInvoiceDate').text(inv.created_at ? new Date(inv.created_at).toLocaleString() : '-');
+                    $('#viewNotes').text(inv.notes ?? '-');
+
+                    $('#viewInvoiceTotal').text('$' + parseFloat(inv.total_amount).toFixed(2));
+                    $('#viewInvoicePaid').text('$' + parseFloat(inv.paid_amount).toFixed(2));
+                    $('#viewInvoiceBalance').text('$' + parseFloat(inv.balance).toFixed(2));
+
+                    let rows = '';
+                    if (inv.items && inv.items.length > 0) {
+                        inv.items.forEach(function (item) {
+                            rows += `
+                                <tr>
+                                    <td>${item.item_type}</td>
+                                    <td>${item.description}</td>
+                                    <td class="text-center">${item.qty}</td>
+                                    <td class="text-right">$${parseFloat(item.unit_price).toFixed(2)}</td>
+                                    <td class="text-right">$${parseFloat(item.subtotal).toFixed(2)}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        rows = `<tr><td colspan="5" class="text-center text-muted">No items found</td></tr>`;
+                    }
+                    $('#viewInvoiceItems').html(rows);
+                },
+                error: function (xhr) {
+                    $('#viewInvoiceItems').html(`
+                        <tr><td colspan="5" class="text-center text-danger">Failed to load invoice detail</td></tr>
+                    `);
+                    console.error(xhr.responseText);
+                }
+            });
+        });
+
+        // Invoice Status Badge Helper
+        function getInvoiceStatusBadge(status) {
+            let badge = 'secondary';
+            if (status === 'paid') badge = 'success';
+            else if (status === 'partial') badge = 'warning';
+            else if (status === 'unpaid') badge = 'danger';
+            return `<span class="badge badge-${badge}">${status}</span>`;
+        }
 
         // Print Receipt Button Handler
         $('#btnPrintReceipt').on('click', function () {

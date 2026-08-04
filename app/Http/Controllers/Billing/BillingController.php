@@ -100,9 +100,7 @@ class BillingController extends Controller
         DB::beginTransaction();
         try {
             // Generate unique invoice number: INV-YYYYMMDD-XXXX
-            $datePrefix = date('Ymd');
-            $randomStr  = strtoupper(Str::random(4));
-            $invoiceNumber = 'INV-' . $datePrefix . '-' . $randomStr;
+            $invoiceNumber = $this->generateInvoiceNumber();
 
             $totalAmount = 0;
             foreach ($request->items as $item) {
@@ -212,5 +210,25 @@ class BillingController extends Controller
                 'message' => 'Failed to process payment: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Generate the next sequential invoice number for today: INV-YYYYMMDD-001
+     */
+    private function generateInvoiceNumber(): string
+    {
+        $datePrefix = date('Ymd');
+
+        DB::statement(
+            "INSERT INTO invoice_sequences (date_key, last_number, created_at, updated_at)
+            VALUES (?, LAST_INSERT_ID(1), NOW(), NOW())
+            ON DUPLICATE KEY UPDATE last_number = LAST_INSERT_ID(last_number + 1)",
+            [$datePrefix]
+        );
+
+        $nextSequence = (int) DB::getPdo()->lastInsertId();
+        $sequenceStr  = str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+
+        return "INV-{$datePrefix}-{$sequenceStr}";
     }
 }
