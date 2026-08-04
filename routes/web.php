@@ -89,7 +89,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
 
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
-
     });
     Route::group(['prefix' => 'settings/backup'], function () {
         Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
@@ -98,7 +97,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
         Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
         Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
-        
     });
 });
 
@@ -160,32 +158,32 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
 
 
-// ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
-Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-    Route::get('/appointment', function () {
-        return view('home');
+    // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
+    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/appointment', function () {
+            return view('home');
+        });
+        Route::get('/appointments', function () {
+            return view('home');
+        });
+        Route::get('/lab', function () {
+            return view('home');
+        });
     });
-    Route::get('/appointments', function () {
-        return view('home');
+
+    // ------------------ Support (Authenticated Users) --------------------
+    Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
+        Route::get('/', [SupportController::class, 'index'])->name('support.index');
     });
-    Route::get('/lab', function () {
-        return view('home');
+
+    // ------------------ Medical Record Routes --------------------
+    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
+        Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
+        Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
+        Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
+        Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
+        Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
+        Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
     });
 });
-
-// ------------------ Support (Authenticated Users) --------------------
-Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
-    Route::get('/', [SupportController::class, 'index'])->name('support.index');
-});
-
-// ------------------ Medical Record Routes --------------------
-Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-    Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
-    Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
-    Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
-    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
-    Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
-    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
-    Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
-});
-
