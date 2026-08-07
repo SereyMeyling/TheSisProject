@@ -7,7 +7,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4 ">
 
     <h2 class="page-title mb-0 mt-3"> <i class="fas fa-sitemap"></i> ការគ្រប់គ្រងដេប៉ាតឺម៉ង់</h2>
-    <button class="btn btn-success btn-add mt-3" data-toggle="modal" data-target="#modalCreate">
+    <button class="btn btn-primary btn-add mt-3" data-toggle="modal" data-target="#modalCreate">
         <i class="fas fa-plus-circle mr-1"></i>
         បន្ថែម
     </button>
@@ -167,6 +167,7 @@
 
 @section('css')
 <style>
+
     .page-title {
         font-weight: 700;
         color: #222;

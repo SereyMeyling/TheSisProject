@@ -9,11 +9,11 @@
         ឱសថស្ថាន - ស្តុក
     </h2>
     <div>
-        <button class="btn btn-outline-secondary mr-2" data-toggle="modal" data-target="#modalSupplier">
+        <button class="btn btn-outline-green mr-2" data-toggle="modal" data-target="#modalSupplier">
             <i class="fas fa-truck"></i>
             បន្ថែម Supplier
         </button>
-        <button class="btn btn-success btn-add" data-toggle="modal" data-target="#modalCreate">
+        <button class="btn btn-primary btn-add" data-toggle="modal" data-target="#modalCreate">
             <i class="fas fa-plus-circle"></i>
             បន្ថែមថ្នាំ
         </button>
@@ -507,6 +507,12 @@
 @stop
 
 @section('css')
+<style>
+    .btn-outline-green {
+        background-color: #006D36 !important;
+        color: #fff !important;
+    }
+</style>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="{{ asset('css/pharmacy.css') }}">
 @stop

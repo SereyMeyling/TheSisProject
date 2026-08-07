@@ -219,10 +219,10 @@
                         <td>${escapeHtml(b.filename)}</td>
                         <td>${escapeHtml(b.created_at)}</td>
                         <td>
-                            <a href="/settings/backup/download/${encodeURIComponent(b.filename)}" class="btn btn-primary btn-sm">
+                            <a href="/settings/backup/download/${encodeURIComponent(b.filename)}" class="btn btn-outline-primary btn-sm">
                                 <i class="fas fa-download"></i>
                             </a>
-                            <button type="button" class="btn btn-danger btn-sm delete-backup-btn" data-filename="${escapeHtml(b.filename)}">
+                            <button type="button" class="btn btn-outline-danger btn-sm delete-backup-btn" data-filename="${escapeHtml(b.filename)}">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </td>
@@ -245,13 +245,13 @@
                 method: 'POST',
                 data: { _token: '{{ csrf_token() }}' },
                 success: function (res) {
-                    showToast('success', res.message); // <-- replace with your real toast function
+                    showToast('success', res.message);
                     loadBackups();
                 },
                 error: function (xhr) {
                     let msg = xhr.responseJSON?.message ?? 'Backup failed.';
                     let debug = xhr.responseJSON?.debug;
-                    showToast('error', debug ? `${msg} (${debug})` : msg); // <-- replace with your real toast function
+                    showToast('error', debug ? `${msg} (${debug})` : msg); /
                 },
                 complete: function () {
                     $btn.prop('disabled', false).html('<i class="fas fa-database"></i> Create Backup Now');

@@ -8,7 +8,7 @@
     <h2 class="page-title mb-0">
        <i class="fas fa-qrcode"></i> ការកំណត់ QR CODE
     </h2>
-    <button class="btn btn-success px-4">
+    <button class="btn btn-primary px-4">
         <i class="fas fa-save mr-2"></i>
         រក្សាទុក
     </button>

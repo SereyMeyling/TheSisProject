@@ -8,7 +8,7 @@
         <i class="fas fa-cash-register"></i>
         ឱសថស្ថាន - លក់ថ្នាំ
     </h2>
-    <a href="{{ route('pharmacy.index') }}" class="btn btn-outline-secondary">
+    <a href="{{ route('pharmacy.index') }}" class="btn btn-outline-primary">
         <i class="fas fa-boxes"></i> ទៅកាន់ស្តុក
     </a>
 </div>
@@ -42,7 +42,7 @@
                             </tr>
                         </tbody>
                     </table>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddSellRow">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddSellRow">
                         <i class="fas fa-plus"></i> បន្ថែមថ្នាំ
                     </button>
                     <hr>
@@ -81,6 +81,12 @@
 @stop
 
 @section('css')
+<style>
+    .btn-outline-primary {
+        background-color: #006D36 !important;
+        color: #fff !important;
+    }
+</style>
 <link rel="stylesheet" href="{{ asset('css/pharmacy.css') }}">
 @stop
 
