@@ -318,15 +318,27 @@ return [
         ],
         [
             'text' => 'វេជ្ជបណ្ឌិត',
-            'url' => 'doctor',
+            'url'  => 'doctor',
             'icon' => 'fas fa-user-md',
             'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
-            'text' => 'អ្នកជម្ងឺ',
-            'url' => 'patient',
+            'text' => 'គ្រប់គ្រងអ្នកជម្ងឺ',
+            'url' => 'patients',
             'icon' => 'fas fa-user-injured',
             'role' => ['admin', 'doctor', 'nurse'],
+            'submenu' => [
+                [
+                    'text' => 'អ្នកជំងឺ',
+                    'url' => 'patients',
+                    'icon' => 'fas fa-user-injured',
+                ],
+                [
+                    'text' => 'បញ្ចូលអ្នកជម្ងឺថ្មី',
+                    'url' => 'patients/create',
+                    'icon' => 'fas fa-user-plus',
+                ],
+            ]
         ],
         [
             'text' => 'ឱសថស្ថាន',
@@ -353,10 +365,23 @@ return [
             'role' => ['admin', 'cashier'],
         ],
         [
-            'text' => 'មន្ទីរពិសោធន៏',
-            'url' => 'lab',
-            'icon' => 'fas fa-flask',
-            'role' => ['admin', 'doctor', 'nurse'],
+            'text' => 'កំណត់ត្រាវេជ្ជសាស្ត្រ',
+            'icon'    => 'fas fa-notes-medical',
+            'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+            'submenu' => [
+                [
+                    'text' => 'បញ្ចូលលទ្ធផល',
+                    'route' => 'medical-records.create',
+                    'icon' => 'fas fa-vial',
+                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                ],
+                [
+                    'text' => 'មើលលទ្ធផល',
+                    'route' => 'medical-records.index',
+                    'icon' => 'fas fa-eye',
+                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                ]
+            ]
         ],
         [
             'text' => 'បន្ទប់',

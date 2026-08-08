@@ -471,6 +471,39 @@
     </div>
 </div>
 
+{{-- ====== Detail Modal ====== --}}
+<div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-xl modal-mobile-fit">
+        <div class="modal-content modal-purple">
+            <div class="modal-header">
+                <h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>លេខបាច់</th>
+                                <th>ថ្ងៃចូល</th>
+                                <th class="text-right">ចំនួនចូល</th>
+                                <th>ថ្ងៃផុតកំណត់</th>
+                                <th class="text-right">តម្លៃទិញ</th>
+                                <th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th>
+                                <th class="text-right">នៅសល់</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailBatchesBody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @stop
 
 @section('css')
@@ -492,6 +525,7 @@
         expiringDetail: "{{ route('pharmacy.expiring.detail') }}",
         supplierStore: "{{ route('pharmacy.suppliers.store') }}",
         stats: "{{ route('pharmacy.stats') }}",
+        detailsBase: "{{ url('pharmacy') }}",
     };
 </script>
 <script src="{{ asset('js/pharmacy.js') }}"></script>

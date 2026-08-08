@@ -20,6 +20,7 @@
         "laravel/ui": "^3.4",
         "phpoffice/phpspreadsheet": "*",
         "pragmarx/google2fa": "^9.0",
+        "spatie/laravel-backup": "^7.8",
         "spatie/laravel-permission": "^6.25"
     },
     "require-dev": {

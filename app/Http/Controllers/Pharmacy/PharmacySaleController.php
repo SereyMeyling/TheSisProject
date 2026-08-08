@@ -9,6 +9,8 @@ use App\Models\Pharmacy\MedicineBatch;
 use App\Models\Pharmacy\MedicineStockMovement;
 use App\Models\Pharmacy\Sale;
 use App\Models\Pharmacy\SaleItem;
+use App\Models\Setting\GeneralSettings;
+use App\Models\Setting\InvoiceSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -41,9 +43,16 @@ class PharmacySaleController extends Controller
 
         return response()->json(['data' => $sales]);
     }
-
     public function store(Request $request)
     {
+        $employeeId = Auth::user()->employee_id;
+
+        if (!$employeeId) {
+            return response()->json([
+                'message' => 'គណនីរបស់អ្នកមិនទាន់ភ្ជាប់ជាមួយបុគ្គលិកទេ សូមទាក់ទងអ្នកគ្រប់គ្រង',
+            ], 422);
+        }
+
         $data = $request->validate([
             'patient_id' => 'nullable|exists:patients,patient_id',
             'items' => 'required|array|min:1',
@@ -51,10 +60,10 @@ class PharmacySaleController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $sale = DB::transaction(function () use ($data, $request) {
+        $sale = DB::transaction(function () use ($data, $employeeId) {
             $sale = Sale::create([
                 'patient_id' => $data['patient_id'] ?? null,
-                'employee_id' => Auth::user()->employee_id ?? Auth::id(),
+                'employee_id' => $employeeId,
                 'sale_date' => now(),
                 'total_amount' => 0,
                 'status' => 'COMPLETED',
@@ -78,7 +87,6 @@ class PharmacySaleController extends Controller
             'pdf_url' => route('pharmacy.sell.pdf', $sale->sale_id),
         ]);
     }
-
     public function search(Request $request)
     {
         $term = $request->get('q', '');
@@ -155,7 +163,16 @@ class PharmacySaleController extends Controller
     public function exportPdf(Sale $sale)
     {
         $sale->load(['items.medicine', 'patient', 'employee']);
-        $pdf = Pdf::loadView('form.phamacy.sale_pdf', compact('sale'))->setPaper('a4', 'portrait');
+
+        $general = GeneralSettings::first();
+        $billing = InvoiceSetting::firstOrCreate(['id' => 1]);
+
+        $pdf = Pdf::loadView('form.phamacy.sale_pdf', compact('sale', 'general', 'billing'))
+            ->setPaper(
+                $billing->print_size === '80mm' ? [0, 0, 226.77, 800] : 'a4',
+                'portrait'
+            );
+
         return $pdf->stream('prescription_' . $sale->sale_id . '.pdf');
     }
 }
