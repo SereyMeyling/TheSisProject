@@ -1,14 +1,17 @@
 @extends('adminlte::page')
 
-@section('title', 'Pharmacy - Stock')
+@section('title', 'Pharmacy')
 
 @section('content')
+
+<div class="toast-container-custom" id="toastContainer"></div>
+
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-    <h2 class="page-title">
+    <h2 class="page-title mb-0">
         <i class="fas fa-pills"></i>
-        ឱសថស្ថាន - ស្តុក
+        ឱសថស្ថាន
     </h2>
-    <div>
+    <div id="stockActionBtns">
         <button class="btn btn-outline-green mr-2" data-toggle="modal" data-target="#modalSupplier">
             <i class="fas fa-truck"></i>
             បន្ថែម Supplier
@@ -20,107 +23,205 @@
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card stat-card-filter" data-filter="">
-            <div class="icon bg-success-light"><i class="fas fa-pills"></i></div>
-            <div>
-                <small>ថ្នាំសរុប</small>
-                <h3 id="statTotalMedicine">{{ number_format($stats['totalMedicine']) }}</h3>
-                <a href="{{ route('pharmacy.export.names') }}" class="stat-card-link" onclick="event.stopPropagation()">
-                    <i class="fas fa-file-excel"></i> ទាញយកឈ្មោះថ្នាំ
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card stat-card-filter" data-filter="">
-            <div class="icon bg-blue-light"><i class="fas fa-boxes"></i></div>
-            <div>
-                <small>តម្លៃស្តុក</small>
-                <h3 id="statStockValue">${{ number_format($stats['stockValue'], 2) }}</h3>
-                <a href="{{ route('pharmacy.export.stockReport') }}" class="stat-card-link"
-                    onclick="event.stopPropagation()">
-                    <i class="fas fa-file-excel"></i> ទាញយករបាយការណ៍ស្តុក
-                </a>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card stat-card-filter" data-filter="low_stock">
-            <div class="icon bg-warning-light"><i class="fas fa-exclamation-triangle"></i></div>
-            <div>
-                <small>ស្តុកជិតអស់</small>
-                <h3 id="statLowStock">{{ number_format($stats['lowStock']) }}</h3>
-                <a href="{{ route('pharmacy.export') }}" class="stat-card-link">
-                    <i class="fas fa-file-excel"></i>
-                    ទាញយក ស្តុកជិតអស់
-                </a>
-            </div>
+<div class="card shadow-sm">
 
-        </div>
-    </div>
-    <div class="col-lg-3 col-md-6 mb-3">
-        <div class="stat-card stat-card-filter" data-filter="expiring">
-            <div class="icon bg-danger-light"><i class="fas fa-calendar-times"></i></div>
-            <div>
-                <small>ជិតផុតកំណត់ក្នុងរយះពេល​៣០ថ្ងៃ</small>
-                <h3 id="statExpiringSoon">{{ number_format($stats['expiringSoon']) }}</h3>
-                <a href="#" class="stat-card-link" id="btnExpiringDetail" onclick="event.stopPropagation()">
-                    <i class="fas fa-list"></i> មើលលម្អិត
+    <div class="card-header p-0">
+        <ul class="nav nav-tabs" id="pharmacyTab" role="tablist">
+            <li class="nav-item">
+                <a class="nav-link active" id="stock-tab" data-toggle="tab" href="#stockPane" role="tab">
+                    <i class="fas fa-boxes"></i>
+                    ស្តុក
                 </a>
-            </div>
-        </div>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" id="sell-tab" data-toggle="tab" href="#sellPane" role="tab">
+                    <i class="fas fa-cash-register"></i>
+                    លក់ថ្នាំ
+                </a>
+            </li>
+        </ul>
     </div>
-</div>
 
-@if($stats['lowStockList']->isNotEmpty())
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h6 class="mb-0"><i class="fas fa-exclamation-triangle text-warning"></i> ថ្នាំដែលស្តុកជិតអស់</h6>
-            <span class="badge badge-warning">{{ $stats['lowStockList']->count() }}</span>
-        </div>
-        <div class="card-body p-0">
-            <table class="table table-sm mb-0">
-                <thead>
-                    <tr>
-                        <th>ឈ្មោះថ្នាំ</th>
-                        <th class="text-right">ស្តុកនៅសល់</th>
-                        <th class="text-right">កម្រិតជូនដំណឹង</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($stats['lowStockList'] as $item)
-                        <tr class="{{ $item->stock_total == 0 ? 'table-danger' : 'table-warning' }}">
-                            <td>{{ $item->medicine_name }}</td>
-                            <td class="text-right">{{ $item->stock_total }}</td>
-                            <td class="text-right">{{ $item->reorder_level }}</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    </div>
-@endif
-
-<div class="mt-3 card">
     <div class="card-body">
-        <div class="d-flex flex-wrap gap-3 mb-3 small">
-            <span><span class="legend-dot" style="background:#ffc107"></span>ស្តុកជិតអស់ </span>
-            <span><span class="legend-dot" style="background:#dc3545"></span>ជិតផុតកំណត់ </span>
-            <span><span class="legend-dot" style="background:#6f42c1"></span>ស្តុកជិតអស់ + ជិតផុតកំណត់ </span>
-        </div>
-        <div id="activeFilterBar" class="d-none mb-3">
-            <div class="d-flex flex-wrap align-items-center" style="gap:8px">
-                <span class="small text-muted">កំពុងត្រង:</span>
-                <div id="activeFilterChips" class="d-flex flex-wrap" style="gap:6px"></div>
-                <button id="filterClearAll" type="button" class="btn btn-sm btn-outline-danger py-0 px-2">
-                    <i class="fas fa-times mr-1"></i> សម្អាតទាំងអស់
-                </button>
+        <div class="tab-content">
+
+            {{-- ================= STOCK TAB ================= --}}
+            <div class="tab-pane fade show active" id="stockPane" role="tabpanel">
+
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-filter" data-filter="">
+                            <div class="icon bg-success-light"><i class="fas fa-pills"></i></div>
+                            <div>
+                                <small>ថ្នាំសរុប</small>
+                                <h3 id="statTotalMedicine">{{ number_format($stats['totalMedicine']) }}</h3>
+                                <a href="{{ route('pharmacy.export.names') }}" class="stat-card-link"
+                                    onclick="event.stopPropagation()">
+                                    <i class="fas fa-file-excel"></i> ទាញយកឈ្មោះថ្នាំ
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-filter" data-filter="">
+                            <div class="icon bg-blue-light"><i class="fas fa-boxes"></i></div>
+                            <div>
+                                <small>តម្លៃស្តុក</small>
+                                <h3 id="statStockValue">${{ number_format($stats['stockValue'], 2) }}</h3>
+                                <a href="{{ route('pharmacy.export.stockReport') }}" class="stat-card-link"
+                                    onclick="event.stopPropagation()">
+                                    <i class="fas fa-file-excel"></i> ទាញយករបាយការណ៍ស្តុក
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-filter" data-filter="low_stock">
+                            <div class="icon bg-warning-light"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div>
+                                <small>ស្តុកជិតអស់</small>
+                                <h3 id="statLowStock">{{ number_format($stats['lowStock']) }}</h3>
+                                <a href="{{ route('pharmacy.export') }}" class="stat-card-link">
+                                    <i class="fas fa-file-excel"></i>
+                                    ទាញយក ស្តុកជិតអស់
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-3">
+                        <div class="stat-card stat-card-filter" data-filter="expiring">
+                            <div class="icon bg-danger-light"><i class="fas fa-calendar-times"></i></div>
+                            <div>
+                                <small>ជិតផុតកំណត់ក្នុងរយះពេល​៣០ថ្ងៃ</small>
+                                <h3 id="statExpiringSoon">{{ number_format($stats['expiringSoon']) }}</h3>
+                                <a href="#" class="stat-card-link" id="btnExpiringDetail"
+                                    onclick="event.stopPropagation()">
+                                    <i class="fas fa-list"></i> មើលលម្អិត
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                <div class="card">
+                    <div class="card-body">
+
+                        <div class="toolbar flex-wrap px-0">
+                            <div class="search-box">
+                                <i class="fas fa-search"></i>
+                                <input type="text" id="stockSearch" class="form-control border-0"
+                                    placeholder="ស្វែងរកថ្នាំ (ឈ្មោះ, ប្រភេទ, NDC)">
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-3 mb-3 small mt-2">
+                            <span>សម្គាល់៖</span>
+                            <span><span class="legend-dot" style="background:#ffc107"></span>ស្តុកជិតអស់ </span>
+                            <span><span class="legend-dot" style="background:#dc3545"></span>ជិតផុតកំណត់ </span>
+                            <span><span class="legend-dot" style="background:#6f42c1"></span>ស្តុកជិតអស់ + ជិតផុតកំណត់
+                            </span>
+                        </div>
+
+                        <div id="activeFilterBar" class="d-none mb-3">
+                            <div class="d-flex flex-wrap align-items-center" style="gap:8px">
+                                <span class="small text-muted">កំពុងត្រង:</span>
+                                <div id="activeFilterChips" class="d-flex flex-wrap" style="gap:6px"></div>
+                                <button id="filterClearAll" type="button"
+                                    class="btn btn-sm btn-outline-danger py-0 px-2">
+                                    <i class="fas fa-times mr-1"></i> សម្អាតទាំងអស់
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="departmentTableContainer">
+                            @include('form.phamacy.table')
+                        </div>
+
+                    </div>
+                </div>
+
             </div>
-        </div>
-        <div id="departmentTableContainer">
-            @include('form.phamacy.table')
+            {{-- ================= END STOCK TAB ================= --}}
+
+
+            {{-- ================= SELL TAB ================= --}}
+            <div class="tab-pane fade" id="sellPane" role="tabpanel">
+
+                <div class="row">
+                    <div class="col-lg-7 mb-4">
+                        <div class="card">
+                            <div class="card-header"><strong>ព័ត៌មានលក់</strong></div>
+                            <div class="card-body">
+                                <form id="sellForm">
+                                    @csrf
+                                    <div class="alert alert-danger d-none" id="sellErrors"></div>
+                                    <div class="form-group">
+                                        <label>លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ (ទុកទទេប្រសិនបើអតិថិជនចរណ៍)</label>
+                                        <input type="text" name="patient_id" class="form-control"
+                                            placeholder="Patient ID or Code">
+                                    </div>
+                                    <table class="table table-sm" id="sellItemsTable">
+                                        <thead>
+                                            <tr>
+                                                <th>ថ្នាំ</th>
+                                                <th style="width:120px">ចំនួន (គ្រាប់)</th>
+                                                <th style="width:40px"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="sellItemsBody">
+                                            <tr>
+                                                <td><select class="form-control sell-medicine" required></select></td>
+                                                <td><input type="number" class="form-control sell-qty" min="1" required>
+                                                </td>
+                                                <td><button type="button"
+                                                        class="btn btn-sm btn-outline-danger btn-remove-row">&times;</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <button type="button" class="btn btn-sm btn-outline-green" id="btnAddSellRow">
+                                        <i class="fas fa-plus"></i> បន្ថែមថ្នាំ
+                                    </button>
+                                    <hr>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong>សរុប: $<span id="sellTotalPreview">0.00</span></strong>
+                                        <button class="btn btn-primary" type="submit"><i
+                                                class="fas fa-cash-register"></i> លក់</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-5 mb-4">
+                        <div class="card">
+                            <div class="card-header"><strong>ការលក់ថ្មីៗ</strong></div>
+                            <div class="card-body p-0">
+                                <table class="table table-sm mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>ថ្ងៃខែ</th>
+                                            <th>អតិថិជន</th>
+                                            <th class="text-right">សរុប</th>
+                                            <th class="text-center">PDF</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="saleHistoryBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">កំពុងផ្ទុក...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {{-- ================= END SELL TAB ================= --}}
+
         </div>
     </div>
 </div>
@@ -319,7 +420,7 @@
                 <input type="hidden" name="medicine_id" id="restock_medicine_id">
                 <div class="modal-body">
                     <div class="alert alert-danger d-none" id="restockErrors"></div>
-                    <div class="alert alert-info d-none py-2 small" id="restockLastBatchHint"></div>
+                    <div class="alert alert-success d-none py-2 small" id="restockLastBatchHint"></div>
                     <div class="row">
                         <div class="form-group col-md-6">
                             <label>លេខបាច់ (Batch No.)</label>
@@ -358,7 +459,6 @@
 </div>
 
 {{-- ====== ExpiringDetail Modal ====== --}}
-
 <div class="modal fade" id="modalExpiringDetail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-lg modal-mobile-fit">
         <div class="modal-content modal-purple">
@@ -387,7 +487,8 @@
         </div>
     </div>
 </div>
-{{-- ====== supplier Modal ====== --}}
+
+{{-- ====== Supplier Modal ====== --}}
 <div class="modal fade" id="modalSupplier" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-mobile-fit">
         <div class="modal-content modal-purple">
@@ -508,9 +609,145 @@
 
 @section('css')
 <style>
-    .btn-outline-green {
+    .page-title {
+        font-weight: 700;
+        color: #222;
+    }
+
+    .btn-outline-green,
+    .alert-success {
         background-color: #006D36 !important;
         color: #fff !important;
+    }
+
+    .card {
+        border: none;
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, .05);
+    }
+
+
+    .nav-tabs .nav-link {
+        font-weight: 600;
+        padding: 15px 25px;
+        border: none;
+        color: #666;
+    }
+
+    .nav-tabs .nav-link.active {
+        color: #006D36;
+        border-top: 3px solid #006D36;
+        background: #fff;
+    }
+
+
+    .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 0 15px 0;
+        gap: 12px;
+    }
+
+    .search-box {
+        display: flex;
+        align-items: center;
+        background: #f3f5f7;
+        border-radius: 12px;
+        padding: 0 15px;
+        width: 320px;
+    }
+
+    .search-box input {
+        background: none;
+        box-shadow: none;
+    }
+
+    .search-box i {
+        color: #888;
+    }
+
+    #medicineTable_filter {
+        display: none;
+    }
+
+
+    #departmentTableContainer {
+        position: relative;
+        min-height: 120px;
+        transition: opacity .15s ease;
+    }
+
+    #departmentTableContainer.loading {
+        opacity: .45;
+        pointer-events: none;
+    }
+
+
+    @media (max-width: 767.98px) {
+        .modal-mobile-fit {
+            margin: 0;
+            max-width: 100%;
+            height: 100%;
+        }
+
+        .modal-mobile-fit .modal-content {
+            height: 100%;
+            border-radius: 0;
+        }
+
+        .modal-mobile-fit .modal-body {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            max-height: calc(100vh - 120px);
+
+        }
+
+        .modal-mobile-fit .modal-header,
+        .modal-mobile-fit .modal-footer {
+            flex-shrink: 0;
+        }
+
+    }
+
+    /* Pagination */
+    .dataTables_wrapper .dataTables_info {
+        display: none;
+    }
+
+    .dataTables_wrapper .dataTables_paginate {
+        float: none !important;
+        text-align: center !important;
+        margin-top: 12px;
+    }
+
+    .dataTables_wrapper .pagination {
+        justify-content: center;
+    }
+
+    .dataTables_wrapper .pagination .page-link {
+        border-radius: 8px !important;
+        margin: 0 3px !important;
+        color: #198754 !important;
+        border: 1px solid transparent !important;
+    }
+
+    .dataTables_wrapper .pagination .page-item.active .page-link {
+        background: #198754 !important;
+        border-color: #198754 !important;
+        color: #fff !important;
+    }
+
+    .dataTables_wrapper .pagination .page-link:hover {
+        background: #e9f5ee !important;
+        color: #198754 !important;
+        border-color: transparent !important;
+    }
+
+    .dataTables_wrapper .pagination .page-item.disabled .page-link {
+        color: #aaa !important;
+        background: transparent !important;
     }
 </style>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
@@ -518,10 +755,11 @@
 @stop
 
 @section('js')
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script>
+
+    const csrf = "{{ csrf_token() }}";
     const routes = {
+        // stock
         data: "{{ route('pharmacy.data') }}",
         store: "{{ route('pharmacy.store') }}",
         editBase: "{{ url('pharmacy') }}",
@@ -532,8 +770,61 @@
         supplierStore: "{{ route('pharmacy.suppliers.store') }}",
         stats: "{{ route('pharmacy.stats') }}",
         detailsBase: "{{ url('pharmacy') }}",
+        // sell
+        sellSearch: "{{ route('pharmacy.sell.search') }}",
+        sellStore: "{{ route('pharmacy.sell.store') }}",
+        sellHistory: "{{ route('pharmacy.sell.history') }}",
     };
+
+    $(function () {
+
+        const $stockActionBtns = $('#stockActionBtns');
+        let sellScriptLoaded = false;
+        $.extend(true, $.fn.dataTable.defaults, {
+            language: {
+                paginate: {
+                    previous: '‹',
+                    next: '›'
+                }
+            }
+        });
+        $(document).on('shown.bs.tab', '#sell-tab', function () {
+            $stockActionBtns.hide();
+
+            if (!sellScriptLoaded) {
+                sellScriptLoaded = true;
+                const s = document.createElement('script');
+                s.src = "{{ asset('js/pharmacy-sell.js') }}";
+                document.body.appendChild(s);
+            }
+        });
+
+        $(document).on('shown.bs.tab', '#stock-tab', function () {
+            $stockActionBtns.show();
+        });
+
+
+        let stockSearchTimer;
+        $('#stockSearch').on('keyup', function () {
+            clearTimeout(stockSearchTimer);
+            const val = $(this).val();
+            stockSearchTimer = setTimeout(function () {
+                if ($.fn.DataTable.isDataTable('#medicineTable')) {
+                    $('#medicineTable').DataTable().search(val).draw();
+                }
+            }, 400);
+        });
+
+
+        const params = new URLSearchParams(window.location.search);
+        if (params.get('tab') === 'sell') {
+            $('#sell-tab').tab('show');
+        }
+    });
 </script>
+
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="{{ asset('js/pharmacy.js') }}"></script>
 
 @stop

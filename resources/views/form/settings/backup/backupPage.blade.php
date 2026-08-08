@@ -251,7 +251,7 @@
                 error: function (xhr) {
                     let msg = xhr.responseJSON?.message ?? 'Backup failed.';
                     let debug = xhr.responseJSON?.debug;
-                    showToast('error', debug ? `${msg} (${debug})` : msg); /
+                    showToast('error', debug ? `${msg} (${debug})` : msg); 
                 },
                 complete: function () {
                     $btn.prop('disabled', false).html('<i class="fas fa-database"></i> Create Backup Now');
