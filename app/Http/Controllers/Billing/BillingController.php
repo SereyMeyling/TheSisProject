@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Billing;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelInvoiceRequest;
 use App\Http\Requests\ProcessPaymentRequest;
 use App\Http\Requests\StoreInvoiceRequest;
+use App\Http\Requests\UpdateInvoiceRequest;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
 use App\Models\Patient;
+use App\Models\Admission;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,11 +35,25 @@ class BillingController extends Controller
     }
 
     /**
+     * Authorization helper for edit/cancel actions.
+     * Admins always pass; otherwise the specific Spatie permission is required.
+     * (Add 'edit-invoices' / 'cancel-invoices' permissions via the Role &
+     * Permission screen — they are not created automatically here.)
+     */
+    private function authorizeAction(string $permission): void
+    {
+        $user = auth()->user();
+        if (!$user->hasRole('admin') && !$user->hasPermissionTo($permission)) {
+            abort(403, 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ (You do not have permission to perform this action).');
+        }
+    }
+
+    /**
      * Display a listing of invoices with search, filters, and summary stats.
      */
     public function index(Request $request)
     {
-        $query = Invoice::with(['items', 'patient', 'payments']);
+        $query = Invoice::with(['items', 'patient', 'payments', 'admission.room']);
 
         // Search filter: invoice_number, patient_name, patient_phone
         if ($request->filled('search')) {
@@ -48,9 +65,28 @@ class BillingController extends Controller
             });
         }
 
-        // Status filter: unpaid, paid, partial
-        if ($request->filled('status') && in_array($request->status, ['paid', 'unpaid', 'partial'])) {
+        // Status filter: unpaid, paid, partial, cancelled
+        if ($request->filled('status') && in_array($request->status, ['paid', 'unpaid', 'partial', 'cancelled'])) {
             $query->where('status', $request->status);
+        }
+
+        // Visit type filter: opd / ipd
+        if ($request->filled('visit_type')) {
+            if ($request->visit_type === 'opd') {
+                $query->whereNull('admission_id');
+            } elseif ($request->visit_type === 'ipd') {
+                $query->whereNotNull('admission_id');
+            }
+        }
+
+        // From date
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->date_from);
+        }
+
+        // To date
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->date_to);
         }
 
         $invoices = $query->orderBy('created_at', 'desc')->paginate(10)->appends($request->query());
@@ -58,9 +94,14 @@ class BillingController extends Controller
         // Stats summary
         $totalInvoices = Invoice::count();
         $totalRevenue  = Invoice::sum('paid_amount');
-        $totalUnpaid   = Invoice::sum('balance');
+        $totalUnpaid   = Invoice::where('status', '!=', 'cancelled')->sum('balance');
 
         $patients = Patient::select(['patient_id', 'full_name', 'phone', 'patient_code'])->get();
+
+        // Active (currently admitted) admissions, for the IPD invoice picker.
+        $admissions = Admission::with(['patient', 'room'])
+            ->where('status', 'admitted')
+            ->get();
 
         if ($request->ajax()) {
             return response()->json([
@@ -71,15 +112,16 @@ class BillingController extends Controller
             ]);
         }
 
-        return view('billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients'));
+        return view('billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions'));
     }
 
     /**
-     * Show detailed printable invoice receipt.
+     * Show detailed, read-only invoice info (View Detail modal + printable receipt).
      */
     public function show($id)
     {
-        $invoice = Invoice::with(['items', 'patient', 'payments', 'creator'])->findOrFail($id);
+        $invoice = Invoice::with(['items', 'patient', 'payments.processor', 'creator', 'canceller', 'admission.room'])
+            ->findOrFail($id);
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
@@ -92,14 +134,36 @@ class BillingController extends Controller
         return view('billing.show', compact('invoice'));
     }
 
+
+    // Edit an existing invoice (only allowed while unpaid and nothing has been paid against it yet).
+    
+    public function edit($id): JsonResponse
+    {
+        $this->authorizeAction('edit-invoices');
+
+        $invoice = Invoice::with(['items'])->findOrFail($id);
+
+        if (!$invoice->isEditable()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'វិក្កយបត្រនេះលែងអាចកែប្រែបានទៀតហើយ (This invoice can no longer be edited).',
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $invoice,
+        ]);
+    }
+
     /**
-     * Create a new invoice linking patient, items, and fees.
+     * Create a new invoice linking patient (and optionally an admission), items, and fees.
      */
     public function store(StoreInvoiceRequest $request)
     {
         DB::beginTransaction();
         try {
-            // Generate unique invoice number: INV-YYYYMMDD-XXXX
+            // Generate unique invoice number: INV-YYYYMMDD-XXX
             $invoiceNumber = $this->generateInvoiceNumber();
 
             $totalAmount = 0;
@@ -112,6 +176,7 @@ class BillingController extends Controller
             $invoice = Invoice::create([
                 'invoice_number' => $invoiceNumber,
                 'patient_id'     => $request->patient_id,
+                'admission_id'   => $request->admission_id, // null = OPD, set = IPD
                 'patient_name'   => $request->patient_name,
                 'patient_phone'  => $request->patient_phone,
                 'total_amount'   => $totalAmount,
@@ -141,7 +206,7 @@ class BillingController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'វិក្កយបត្រត្រូវបានបង្កើតដោយជោគជ័យ (Invoice created successfully)',
-                    'data'    => $invoice->load(['items', 'patient']),
+                    'data'    => $invoice->load(['items', 'patient', 'admission.room']),
                 ], 201);
             }
 
@@ -155,16 +220,148 @@ class BillingController extends Controller
         }
     }
 
+    // Update an existing invoice (only allowed while unpaid and nothing has been paid against it yet).
+
+    public function update(UpdateInvoiceRequest $request, $id)
+    {
+        $this->authorizeAction('edit-invoices');
+
+        DB::beginTransaction();
+        try {
+            $invoice = Invoice::where('id', $id)->lockForUpdate()->firstOrFail();
+
+            if (!$invoice->isEditable()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'វិក្កយបត្រនេះលែងអាចកែប្រែបានទៀតហើយ (This invoice can no longer be edited — it may have just been paid or cancelled).',
+                ], 422);
+            }
+
+            $totalAmount = 0;
+            foreach ($request->items as $item) {
+                $totalAmount += $item['qty'] * $item['unit_price'];
+            }
+
+            $invoice->update([
+                'patient_name'  => $request->patient_name,
+                'patient_phone' => $request->patient_phone,
+                'notes'         => $request->notes,
+                'total_amount'  => $totalAmount,
+                'balance'       => $totalAmount, // paid_amount is guaranteed 0 here
+            ]);
+
+            // Replace items wholesale — simplest and safest for an unpaid,
+            // not-yet-touched invoice. Avoids diffing add/remove/update.
+            $invoice->items()->delete();
+            foreach ($request->items as $item) {
+                InvoiceItem::create([
+                    'invoice_id'  => $invoice->id,
+                    'item_type'   => $item['item_type'],
+                    'description' => $item['description'],
+                    'qty'         => $item['qty'],
+                    'unit_price'  => $item['unit_price'],
+                    'subtotal'    => $item['qty'] * $item['unit_price'],
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'វិក្កយបត្រត្រូវបានកែប្រែដោយជោគជ័យ (Invoice updated successfully)',
+                'data'    => $invoice->fresh(['items', 'patient', 'admission.room']),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update invoice: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /**
-     * Process payment (Cash, KHQR, or Card) for an invoice.
+     * Cancel an invoice (soft, audit-preserving — never delete).
+     * Only allowed while unpaid and nothing has been paid against it yet.
      */
+    public function cancel(CancelInvoiceRequest $request, $id)
+    {
+        $this->authorizeAction('cancel-invoices');
+
+        DB::beginTransaction();
+        try {
+            $invoice = Invoice::where('id', $id)->lockForUpdate()->firstOrFail();
+
+            if (!$invoice->isCancellable()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'វិក្កយបត្រនេះមិនអាចលុបចោលបានទេ (This invoice cannot be cancelled — it is already paid, partially paid, or already cancelled).',
+                ], 422);
+            }
+
+            $invoice->update([
+                'status'        => 'cancelled',
+                'cancelled_by'  => auth()->id(),
+                'cancelled_at'  => now(),
+                'cancel_reason' => $request->cancel_reason,
+            ]);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'វិក្កយបត្រត្រូវបានលុបចោលដោយជោគជ័យ (Invoice cancelled successfully)',
+                'data'    => $invoice->fresh(['items', 'patient', 'admission.room']),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to cancel invoice: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
+    // Process payment for an invoice
     public function processPayment(ProcessPaymentRequest $request, $id)
     {
         DB::beginTransaction();
         try {
-            $invoice = Invoice::findOrFail($id);
+            // lockForUpdate() blocks any other transaction from reading this
+            // row until we commit/rollback — the second concurrent request
+            // waits here, then sees the balance the first request just wrote.
+            $invoice = Invoice::where('id', $id)->lockForUpdate()->firstOrFail();
+
+            if ($invoice->isCancelled()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'វិក្កយបត្រនេះត្រូវបានលុបចោល មិនអាចទទួលការទូទាត់បានទេ (This invoice is cancelled and cannot accept payment).',
+                ], 422);
+            }
 
             $paymentAmount = (float) $request->amount;
+
+            // Authoritative overpayment guard, re-checked against the
+            // locked (fresh) balance rather than the balance the client
+            // last saw when the form was rendered.
+            if ($paymentAmount > (float) $invoice->balance) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ចំនួនប្រាក់ទូទាត់លើសពីសមតុល្យនៅសល់ (Amount exceeds the remaining balance).',
+                ], 422);
+            }
+
             $newPaid = $invoice->paid_amount + $paymentAmount;
             $newBalance = max(0, $invoice->total_amount - $newPaid);
 
@@ -198,11 +395,14 @@ class BillingController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => 'ការទូទាត់ត្រូវបានបញ្ជាក់ដោយជោគជ័យ (Payment processed successfully)',
-                    'invoice' => $invoice->fresh(['items', 'payments', 'patient']),
+                    'invoice' => $invoice->fresh(['items', 'payments', 'patient', 'admission.room']),
                 ]);
             }
 
             return redirect()->route('billing.index')->with('success', 'Payment processed successfully.');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json([
@@ -212,9 +412,7 @@ class BillingController extends Controller
         }
     }
 
-    /**
-     * Generate the next sequential invoice number for today: INV-YYYYMMDD-001
-     */
+    // useful helper to generate a unique invoice number in the format INV-YYYYMMDD-XXX
     private function generateInvoiceNumber(): string
     {
         $datePrefix = date('Ymd');

@@ -1,0 +1,322 @@
+
+    /*
+     * Billing & Invoice Management — Hospital ERP theme
+     * --erp-primary drives every action/toggle/pagination color.
+     * --erp-green / --erp-red are reserved strictly for financial status signals
+     * (paid vs unpaid), so they are never reused for buttons or toggles.
+     */
+
+    :root {
+        --erp-primary: #006D36;
+        --erp-primary-dark: #00522a;
+        --erp-primary-tint: #e6f2ec;
+
+        --erp-gray-50: #f8f9fa;
+        --erp-gray-100: #f1f2f4;
+        --erp-gray-200: #e5e7ea;
+        --erp-gray-400: #b8bcc4;
+        --erp-gray-600: #6b7280;
+        --erp-gray-800: #33383f;
+
+        --erp-green: #1e8a4c;
+        --erp-green-tint: #e7f5ed;
+        --erp-red: #c0392b;
+        --erp-red-tint: #fbeceb;
+
+        --erp-radius: 10px;
+        --erp-radius-sm: 6px;
+        --erp-border: 1px solid var(--erp-gray-200);
+    }
+
+    /* Payment Method Buttons */
+    #labelMethodCash.active,
+    #labelMethodKHQR.active,
+    #labelMethodCard.active {
+        background-color: #006D36 !important;
+        border-color: #006D36 !important;
+        color: #fff !important;
+    }
+
+    /* Hover / Focus */
+    #labelMethodCash:hover,
+    #labelMethodKHQR:hover,
+    #labelMethodCard:hover,
+    #labelMethodCash:focus,
+    #labelMethodKHQR:focus,
+    #labelMethodCard:focus {
+        background-color: #006D36 !important;
+        border-color: #006D36 !important;
+        color: #fff !important;
+        box-shadow: none !important;
+    }
+
+    /* IPD Visit Type - Selected */
+    #labelVisitIPD.active,
+    #labelVisitIPD:hover,
+    #labelVisitIPD:focus {
+        background-color: #006D36 !important;
+        border-color: #006D36 !important;
+        color: #fff !important;
+    }
+
+    /* Keep IPD selected state green */
+    #labelVisitIPD.active input {
+        accent-color: #006D36;
+    }
+
+    /* ── Page header ─────────────────────────────────────────────── */
+    .page-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .page-title {
+        font-weight: 600;
+        font-size: 1.35rem;
+        color: var(--erp-gray-800);
+    }
+    .page-subtitle {
+        font-size: .8rem;
+        color: var(--erp-gray-600);
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+
+    /* ── Stat cards ──────────────────────────────────────────────── */
+    .stat-card {
+        background: #fff;
+        border: var(--erp-border);
+        border-radius: var(--erp-radius);
+        padding: 18px 20px;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+    .stat-card h3 { margin: 0; font-weight: 600; font-size: 1.5rem; color: var(--erp-gray-800); }
+    .stat-label {
+        display: block;
+        font-size: .75rem;
+        color: var(--erp-gray-600);
+        text-transform: uppercase;
+        letter-spacing: .02em;
+        margin-bottom: 2px;
+    }
+    .icon {
+        width: 44px; height: 44px;
+        border-radius: var(--erp-radius-sm);
+        display: flex; justify-content: center; align-items: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .icon-neutral  { background: var(--erp-primary-tint); color: var(--erp-primary); }
+    .icon-positive { background: var(--erp-green-tint); color: var(--erp-green); }
+    .icon-negative { background: var(--erp-red-tint);   color: var(--erp-red); }
+    .text-value-positive { color: var(--erp-green) !important; }
+    .text-value-negative { color: var(--erp-red) !important; }
+
+    /* ── Card / table shell ──────────────────────────────────────── */
+    .card {
+        border: var(--erp-border);
+        border-radius: var(--erp-radius);
+        box-shadow: none;
+    }
+    .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-bottom: var(--erp-border);
+    }
+    .toolbar-filters { gap: 10px; row-gap: 10px; }
+    .toolbar .custom-select,
+    .toolbar .form-control { font-size: .875rem; }
+
+    .search-box {
+        display: flex; align-items: center;
+        background: var(--erp-gray-50);
+        border: var(--erp-border);
+        border-radius: var(--erp-radius-sm);
+        padding: 0 12px;
+        width: 300px;
+    }
+    .search-box input { background: none; box-shadow: none; font-size: .875rem; }
+    .search-box i { color: var(--erp-gray-600); font-size: .8rem; }
+
+    .table { margin-bottom: 0; }
+    .table thead th {
+        background: var(--erp-gray-50);
+        border-top: none;
+        border-bottom: var(--erp-border);
+        color: var(--erp-gray-600);
+        font-size: .72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        padding: .65rem .75rem;
+    }
+    .table td {
+        vertical-align: middle;
+        border-top: var(--erp-border);
+        font-size: .875rem;
+        padding: .65rem .75rem;
+        color: var(--erp-gray-800);
+    }
+    .table-bordered { border: var(--erp-border); }
+    .table-bordered th, .table-bordered td { border: var(--erp-border); }
+
+    .action-icons { display: flex; gap: 6px; }
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--erp-radius-sm);
+        font-size: 12.5px;
+    }
+    .btn-icon.btn-outline-primary   { color: var(--erp-primary); border-color: var(--erp-gray-200); }
+    .btn-icon.btn-outline-primary:hover   { background: var(--erp-primary); border-color: var(--erp-primary); color: #fff; }
+    .btn-icon.btn-outline-success   { color: var(--erp-green); border-color: var(--erp-gray-200); }
+    .btn-icon.btn-outline-success:hover   { background: var(--erp-green); border-color: var(--erp-green); color: #fff; }
+    .btn-icon.btn-outline-danger    { color: var(--erp-red); border-color: var(--erp-gray-200); }
+    .btn-icon.btn-outline-danger:hover    { background: var(--erp-red); border-color: var(--erp-red); color: #fff; }
+    .btn-icon.btn-outline-warning   { color: #a3690c; border-color: var(--erp-gray-200); }
+    .btn-icon.btn-outline-warning:hover   { background: #a3690c; border-color: #a3690c; color: #fff; }
+    .btn-icon.btn-outline-secondary { color: var(--erp-gray-600); border-color: var(--erp-gray-200); }
+    .btn-icon.btn-outline-secondary:hover { background: var(--erp-gray-600); border-color: var(--erp-gray-600); color: #fff; }
+
+    #billingTableContainer { position: relative; min-height: 120px; transition: opacity .15s ease; }
+    #billingTableContainer.loading { opacity: .45; pointer-events: none; }
+
+    /* IPD accent badge (detail modal) — same brand color as primary actions */
+    .badge-purple { background-color: var(--erp-primary); color: #fff; font-weight: 500; }
+
+    /* ── Status badges (table) ───────────────────────────────────── */
+    .badge-status {
+        font-weight: 500;
+        font-size: .72rem;
+        border-radius: var(--erp-radius-sm);
+    }
+    .badge-status-paid      { background: var(--erp-green-tint); color: var(--erp-green); }
+    .badge-status-partial   { background: #fdf3e2; color: #a3690c; }
+    .badge-status-unpaid    { background: var(--erp-red-tint);   color: var(--erp-red); }
+    .badge-status-cancelled { background: var(--erp-gray-100);   color: var(--erp-gray-600); }
+
+    /* ── Pagination ──────────────────────────────────────────────── */
+    .pagination-wrapper .page-link {
+        color: var(--erp-gray-800);
+        border-color: var(--erp-gray-200);
+        font-size: .82rem;
+    }
+    .pagination-wrapper .page-link:hover {
+        color: var(--erp-primary);
+        background-color: var(--erp-primary-tint);
+        border-color: var(--erp-gray-200);
+    }
+    .pagination-wrapper .page-item.active .page-link {
+        background-color: var(--erp-primary);
+        border-color: var(--erp-primary);
+    }
+    .pagination-wrapper .page-item.disabled .page-link { color: var(--erp-gray-400); }
+
+    /* ── Buttons ─────────────────────────────────────────────────── */
+    .btn { font-size: .875rem; font-weight: 500; border-radius: var(--erp-radius-sm); }
+
+    .btn-primary {
+        background-color: var(--erp-primary);
+        border-color: var(--erp-primary);
+    }
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: var(--erp-primary-dark);
+        border-color: var(--erp-primary-dark);
+    }
+    .btn-outline-primary { color: var(--erp-primary); border-color: var(--erp-primary); }
+    .btn-outline-primary:hover { background-color: var(--erp-primary); border-color: var(--erp-primary); color: #fff; }
+
+    /* Covers every toggle group (OPD/IPD, Payment Method) in one rule —
+       no per-button ID overrides needed. */
+    .btn-group-toggle .btn-outline-primary.active,
+    .btn-group-toggle .btn-outline-secondary.active {
+        background-color: var(--erp-primary);
+        border-color: var(--erp-primary);
+        color: #fff;
+    }
+
+    /* ── Forms ───────────────────────────────────────────────────── */
+    .field-label { font-weight: 600; font-size: .82rem; color: var(--erp-gray-800); margin-bottom: 6px; }
+    .form-control, .custom-select { font-size: .875rem; border-color: var(--erp-gray-200); }
+    .form-control:focus, .custom-select:focus {
+        border-color: var(--erp-primary);
+        box-shadow: 0 0 0 .15rem rgba(0, 109, 54, .15);
+    }
+    .section-heading {
+        font-weight: 600;
+        font-size: .85rem;
+        color: var(--erp-primary-dark);
+        text-transform: uppercase;
+        letter-spacing: .02em;
+    }
+    .section-heading-muted {
+        font-weight: 600;
+        font-size: .72rem;
+        color: var(--erp-gray-600);
+        text-transform: uppercase;
+        letter-spacing: .03em;
+        margin-bottom: 8px;
+    }
+
+    .total-box {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 14px;
+        background: var(--erp-gray-50);
+        border: var(--erp-border);
+        border-radius: var(--erp-radius-sm);
+    }
+    .total-label { font-weight: 600; font-size: .85rem; color: var(--erp-gray-800); }
+    .total-value { font-weight: 700; font-size: 1.25rem; color: var(--erp-primary-dark); }
+
+    .summary-box {
+        padding: 14px 16px;
+        background: var(--erp-gray-50);
+        border: var(--erp-border);
+        border-radius: var(--erp-radius-sm);
+    }
+    .summary-row { display: flex; justify-content: space-between; padding: 3px 0; font-size: .875rem; }
+    .summary-row-highlight { border-top: var(--erp-border); margin-top: 4px; padding-top: 8px; }
+
+    .khqr-box {
+        text-align: center;
+        padding: 18px;
+        margin-bottom: 16px;
+        border: var(--erp-border);
+        border-radius: var(--erp-radius-sm);
+        background: #fff;
+    }
+
+    /* ── Modals ──────────────────────────────────────────────────── */
+    .modal-content { border: none; border-radius: var(--erp-radius); }
+    .modal-header-clean {
+        background: #fff;
+        border-bottom: var(--erp-border);
+        padding: 1rem 1.5rem;
+    }
+    .modal-header-clean .modal-title {
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: var(--erp-gray-800);
+    }
+    .modal-header-danger { background: var(--erp-red-tint); }
+    .modal-header-danger .modal-title { color: var(--erp-red); }
+    .modal-footer { border-top: var(--erp-border); padding: 1rem 1.5rem; }
+
+    /* Print styles */
+    @media print {
+        body * { visibility: hidden; }
+        #receiptPrintArea, #receiptPrintArea * { visibility: visible; }
+        #receiptPrintArea { position: absolute; left: 0; top: 0; width: 100%; }
+    }

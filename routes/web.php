@@ -82,14 +82,22 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
 
     // System Settings routes
     Route::group(['prefix' => 'settings'], function () {
-        Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
-        Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
+    Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
+    Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
 
-        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
-        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
+    Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+    Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
 
-        Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
+    Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
+    Route::post('/qrcode', [SettingsController::class, 'qrcodeUpdate'])->name('settingsqrcode.update');
+
+    Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
     });
+
+    // Payment (used from billing page)
+    Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
+    Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
+    
     Route::group(['prefix' => 'settings/backup'], function () {
         Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
         Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
@@ -134,6 +142,12 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
     Route::get('/', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');
+
+    Route::get('/{id}/edit', [BillingController::class, 'edit'])->name('billing.edit');
+    Route::put('/{id}', [BillingController::class, 'update'])->name('billing.update');
+
+    Route::post('/{id}/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+
     Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
 });
 
