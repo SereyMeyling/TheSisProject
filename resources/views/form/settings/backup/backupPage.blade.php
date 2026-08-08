@@ -8,8 +8,7 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
         <h2 class="page-title">
-            <i class="fas fa-database"></i>
-            ការបម្រុងទុកទិន្នន័យ
+         
         </h2>
     </div>
 
@@ -251,7 +250,7 @@
                 error: function (xhr) {
                     let msg = xhr.responseJSON?.message ?? 'Backup failed.';
                     let debug = xhr.responseJSON?.debug;
-                    showToast('error', debug ? `${msg} (${debug})` : msg); 
+                    showToast('error', debug ? `${msg} (${debug})` : msg);
                 },
                 complete: function () {
                     $btn.prop('disabled', false).html('<i class="fas fa-database"></i> Create Backup Now');

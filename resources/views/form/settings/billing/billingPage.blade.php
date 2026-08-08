@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        <i class="fas fa-file-invoice-dollar"></i> ការកំណត់វិក្កយបត្រ
+        
     </h2>
     <button class="btn btn-primary px-4" id="btnSaveSettings">
         <i class="fas fa-save mr-2"></i>

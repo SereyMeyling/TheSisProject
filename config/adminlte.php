@@ -308,7 +308,7 @@ return [
 
         [
             'text' => 'ផ្ទាំងព័ត៏មាន',
-            'url' => 'home',
+            'url' => 'dashboard',
             'icon' => 'fas fa-tachometer-alt',
         ],
         [
@@ -342,9 +342,9 @@ return [
         ],
         [
             'text' => 'ឱសថស្ថាន',
-            'url' => 'pharmacy/',
+            'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
-            
+
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',

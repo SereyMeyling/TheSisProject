@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        <i class="fas fa-sliders-h"></i> ការកំណត់ទូទៅ
+     
     </h2>
     <button type="submit" form="generalSettingsForm" class="btn btn-primary px-4">
         <i class="fas fa-save mr-2"></i>
@@ -171,7 +171,7 @@
         object-fit: contain;
     }
 
-    
+
 </style>
 @stop
 

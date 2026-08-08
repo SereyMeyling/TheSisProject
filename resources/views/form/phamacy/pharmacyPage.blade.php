@@ -8,8 +8,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        <i class="fas fa-pills"></i>
-        ឱសថស្ថាន
+       
     </h2>
     <div id="stockActionBtns">
         <button class="btn btn-outline-green mr-2" data-toggle="modal" data-target="#modalSupplier">
