@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Billing\BillingController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
@@ -62,6 +63,8 @@ Route::group(['prefix' => 'department', 'middleware' => ['auth', '2fa']], functi
 
 // ------------------ Admin Only Routes (Role: admin) --------------------
 Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
+    //dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // User management routes
     Route::group(['prefix' => 'user'], function () {
