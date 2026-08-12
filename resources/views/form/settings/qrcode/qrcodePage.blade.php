@@ -235,6 +235,7 @@
 
                             <div class="form-group">
                                 <label>ប្រភេទគណនី</label>
+                                <span class="text-danger">*</span>
 
                                 <select name="account_type" class="form-control">
                                     <option value="individual"
@@ -251,7 +252,8 @@
 
                             <div class="form-group">
                                 <label>ធនាគារ</label>
-                                <select name="bank_name" class="form-control">
+                                <span class="text-danger">*</span>
+                                <select name="bank_name" class="form-control" required>
                                     @foreach (['ABA BANK', 'ACLEDA', 'WING', 'TRUE MONEY', 'BAKONG'] as $bank)
                                         <option value="{{ $bank }}"
                                             {{ optional($qrSetting)->bank_name == $bank ? 'selected' : '' }}>
@@ -289,15 +291,17 @@
 
                             <div class="form-group">
                                 <label>ឈ្មោះគណនី</label>
+                                <span class="text-danger">*</span>
 
-                                <input type="text" name="account_name" class="form-control"
+                                <input type="text" name="account_name" class="form-control" required
                                     value="{{ optional($qrSetting)->account_name }}" placeholder="ឈ្មោះមន្ទីរពេទ្យ">
                             </div>
 
                             <div class="form-group">
                                 <label>លេខគណនី</label>
+                                <span class="text-danger">*</span>
 
-                                <input type="text" name="account_number" class="form-control"
+                                <input type="text" name="account_number" class="form-control" required
                                     value="{{ optional($qrSetting)->account_number }}">
                             </div>
 

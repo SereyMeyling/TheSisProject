@@ -315,7 +315,7 @@
                                 <input type="radio" name="payment_method" value="khqr" autocomplete="off">
                                 <i class="fas fa-qrcode mr-1"></i> KHQR Code
                             </label>
-                            <label class="btn btn-outline-primary" id="labelMethodCard">
+                            <label class="btn btn-outline-primary" id="labelMethodCard" style ="display: none;">
                                 <input type="radio" name="payment_method" value="card" autocomplete="off">
                                 <i class="fas fa-credit-card mr-1"></i> Card
                             </label>
