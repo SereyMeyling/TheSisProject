@@ -3,18 +3,10 @@
 @section('title', 'QR Code Settings')
 
 @section('content_header')
-    <div class="d-flex flex-wrap justify-content-between align-items-center">
-        <div>
-            <h1 class="page-title mb-0">
-                <i class="fas fa-qrcode text-dark mr-2"></i>
-                ការកំណត់ QR Code
-            </h1>
-            <small class="text-muted">
-                កំណត់វិធីទទួលការទូទាត់សម្រាប់ Billing
-            </small>
-        </div>
-
-        <button type="submit" form="qrSettingForm" class="btn btn-primary px-4 mt-2 mt-md-0">
+    <div class="d-flex justify-content-end">
+        <button type="submit"
+                form="qrSettingForm"
+                class="btn btn-primary px-4 mt-2">
             <i class="fas fa-save mr-2"></i>
             រក្សាទុក
         </button>
@@ -23,15 +15,12 @@
 
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-    <h2 class="page-title mb-0">
-       <i class="fas fa-qrcode"></i> ការកំណត់ QR CODE
-    </h2>
-    <button class="btn btn-primary px-4">
-        <i class="fas fa-save mr-2"></i>
-        រក្សាទុក
-    </button>
-</div>
+    <form id="qrSettingForm"
+        action="{{ route('settingsqrcode.update') }}"
+        method="POST"
+        enctype="multipart/form-data">
+
+        @csrf
 
         {{-- QR SETUP MODE --}}
         <div class="card border-0 shadow-sm settings-card mb-4">

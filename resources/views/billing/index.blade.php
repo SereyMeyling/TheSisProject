@@ -4,13 +4,15 @@
 
 @section('content')
 
-<div class="page-header-row mb-4">
-    <div>
-        <h2 class="page-title mb-0">ការគ្រប់គ្រងការទូទាត់ប្រាក់ និងវិក្កយបត្រ</h2>
-        <p class="page-subtitle mb-0">Billing &amp; Invoice Management</p>
-    </div>
-    <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCreateInvoice">
-        <i class="fas fa-plus mr-1"></i> បង្កើតវិក្កយបត្រថ្មី (Create Invoice)
+<div class="d-flex justify-content-end mb-4 pt-2">
+    <button
+        type="button"
+        class="btn btn-primary px-4 py-2 shadow-sm rounded"
+        data-toggle="modal"
+        data-target="#modalCreateInvoice"
+    >
+        <i class="fas fa-plus mr-2"></i>
+        បង្កើតវិក្កយបត្រថ្មី
     </button>
 </div>
 

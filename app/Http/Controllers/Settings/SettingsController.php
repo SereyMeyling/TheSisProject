@@ -59,10 +59,10 @@ class SettingsController extends Controller
 
             // Bakong
             'account_type' => 'nullable|in:individual,merchant',
-            'bank_name' => 'nullable|string|max:100',
+            'bank_name' => 'required|string|max:100',
             'bakong_account_id' => 'nullable|string|max:100',
-            'account_name' => 'nullable|string|max:150',
-            'account_number' => 'nullable|string|max:100',
+            'account_name' => 'required|string|max:150',
+            'account_number' => 'required|string|max:100',
             'merchant_city' => 'nullable|string|max:100',
             'merchant_id' => 'nullable|string|max:50',
             'mobile_number' => 'nullable|string|max:20',
@@ -70,6 +70,21 @@ class SettingsController extends Controller
 
             // Logo
             'logo' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:2048',
+        ], [
+            'account_name.required' => 'សូមបញ្ចូលឈ្មោះគណនី។',
+            'account_name.string' => 'ឈ្មោះគណនីត្រូវតែជាអក្សរ។',
+            'account_name.max' => 'ឈ្មោះគណនីមិនអាចលើស 150 តួអក្សរ។',
+
+            'account_number.required' => 'សូមបញ្ចូលលេខគណនី។',
+            'bank_name.required' => 'សូមជ្រើសរើសធនាគារ។',
+
+            'manual_qr_image.image' => 'QR Code ត្រូវតែជារូបភាព។',
+            'manual_qr_image.mimes' => 'QR Code ត្រូវតែជា PNG, JPG, JPEG ឬ WEBP។',
+            'manual_qr_image.max' => 'QR Code មិនអាចលើស 2MB។',
+
+            'logo.image' => 'Logo ត្រូវតែជារូបភាព។',
+            'logo.mimes' => 'Logo ត្រូវតែជា PNG, JPG, JPEG ឬ WEBP។',
+            'logo.max' => 'Logo មិនអាចលើស 2MB។',
         ]);
 
         if ($validator->fails()) {
