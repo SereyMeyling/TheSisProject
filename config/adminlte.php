@@ -327,18 +327,6 @@ return [
             'url' => 'patients',
             'icon' => 'fas fa-user-injured',
             'role' => ['admin', 'doctor', 'nurse'],
-            'submenu' => [
-                [
-                    'text' => 'អ្នកជំងឺ',
-                    'url' => 'patients',
-                    'icon' => 'fas fa-user-injured',
-                ],
-                [
-                    'text' => 'បញ្ចូលអ្នកជម្ងឺថ្មី',
-                    'url' => 'patients/create',
-                    'icon' => 'fas fa-user-plus',
-                ],
-            ]
         ],
         [
             'text' => 'ឱសថស្ថាន',
