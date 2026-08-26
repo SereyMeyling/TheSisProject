@@ -53,6 +53,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'view-invoices',
                 'create-invoices',
                 'process-payments',
+                'cancel-invoices',
+
             ],
             'Lab & Appointments' => [
                 'view-appointments',
@@ -106,7 +108,7 @@ class RoleAndPermissionSeeder extends Seeder
                 'view-patients',
                 'view-invoices',
                 'create-invoices',
-                'process-payments',
+                'process-payments', 
             ],
         ];
 

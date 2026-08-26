@@ -6,9 +6,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        <i class="fas fa-file-invoice-dollar"></i> ការកំណត់វិក្កយបត្រ
+        
     </h2>
-    <button class="btn btn-success px-4" id="btnSaveSettings">
+    <button class="btn btn-primary px-4" id="btnSaveSettings">
         <i class="fas fa-save mr-2"></i>
         រក្សាទុក
     </button>
@@ -296,4 +296,8 @@
         });
     });
 </script>
+<<<<<<< HEAD
 @stop
+=======
+@stop
+>>>>>>> 382ac7ff47eb62993950f185918ff554de86bda7

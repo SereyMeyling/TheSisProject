@@ -6,9 +6,9 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        <i class="fas fa-sliders-h"></i> ការកំណត់ទូទៅ
+     
     </h2>
-    <button type="submit" form="generalSettingsForm" class="btn btn-success px-4">
+    <button type="submit" form="generalSettingsForm" class="btn btn-primary px-4">
         <i class="fas fa-save mr-2"></i>
         រក្សាទុក
     </button>
@@ -26,7 +26,6 @@
 
                     <div class="form-group">
                         <label>ឈ្មោះប្រព័ន្ធ</label>
-                        
                         <input name="system_name" value="{{ old('system_name', $setting->system_name) }}" class="form-control">
                     </div>
 
@@ -171,11 +170,7 @@
         object-fit: contain;
     }
 
-    .btn-success {
-        border-radius: 10px;
-        font-weight: 600;
-        padding: 10px 25px;
-    }
+
 </style>
 @stop
 

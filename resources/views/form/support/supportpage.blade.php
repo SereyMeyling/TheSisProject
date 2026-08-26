@@ -17,7 +17,7 @@
             </div>
 
             <div class="col-md-4 text-md-right mt-3 mt-md-0">
-                <button class="btn btn-success">
+                <button class="btn btn-primary">
                     <i class="fas fa-phone"></i>
                     ជំនួយការបន្ទាន់
                 </button>
@@ -27,24 +27,17 @@
     </div>
 
     <div class="row">
-
         <!-- Developers -->
-
         <div class="col-lg-8">
-
             <div class="card shadow-sm border-0">
-
                 <div class="card-header bg-white">
                     <h5 class="mb-0">
                         <i class="fas fa-users text-success"></i>
                         ក្រុមអភិវឌ្ឍន៏
                     </h5>
                 </div>
-
                 <div class="card-body">
-
                     <div class="row">
-
                         <!-- Developer -->
                         <div class="col-md-6 mb-4">
                             <div class="developer-card">
@@ -58,25 +51,17 @@
                                     <i class="fas fa-phone"></i>
                                     012 345 678
                                 </p>
-
                                 <p>
                                     <i class="fas fa-envelope"></i>
                                     meyling@gmail.com
                                 </p>
-
                                 <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
-
                                     Copy Phone
-
                                 </button>
-
                             </div>
-
                         </div>
                         <!-- Developer -->
-
                         <div class="col-md-6 mb-4">
-
                             <div class="developer-card">
                                 <img src={{ asset('images/supportteam/chandany.png') }} alt="Developer 1">
                                 <h5>ចាន់ ដានី</h5>
@@ -88,25 +73,17 @@
                                     <i class="fas fa-phone"></i>
                                     012 345 678
                                 </p>
-
                                 <p>
                                     <i class="fas fa-envelope"></i>
                                     dany@gmail.com
                                 </p>
-
                                 <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
-
                                     Copy Phone
-
                                 </button>
-
                             </div>
-
                         </div>
                         <!-- Developer -->
-
                         <div class="col-md-6 mb-4">
-
                             <div class="developer-card">
                                 <img src={{ asset('images/supportteam/deounthavy.png') }} alt="Developer 1">
                                 <h5>ឌឿន ថាវី</h5>
@@ -118,25 +95,17 @@
                                     <i class="fas fa-phone"></i>
                                     012 345 678
                                 </p>
-
                                 <p>
                                     <i class="fas fa-envelope"></i>
                                     thavy@gmail.com
                                 </p>
-
                                 <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
-
                                     Copy Phone
-
                                 </button>
-
                             </div>
-
                         </div>
                         <!-- Developer -->
-
                         <div class="col-md-6 mb-4">
-
                             <div class="developer-card">
                                 <img src={{ asset('images/supportteam/namvanna.png') }} alt="Developer 1">
                                 <h5>ណាំ វណ្ណា</h5>
@@ -148,25 +117,17 @@
                                     <i class="fas fa-phone"></i>
                                     012 345 678
                                 </p>
-
                                 <p>
                                     <i class="fas fa-envelope"></i>
                                     vanna@gmail.com
                                 </p>
-
                                 <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
-
                                     Copy Phone
-
                                 </button>
-
                             </div>
-
                         </div>
                         <!-- Developer -->
-
                         <div class="col-md-6 mb-4">
-
                             <div class="developer-card">
                                 <img src={{ asset('images/supportteam/phenchentra.png') }} alt="Developer 1">
                                 <h5>ផេន ចិត្រ្តា</h5>
@@ -178,49 +139,27 @@
                                     <i class="fas fa-phone"></i>
                                     012 345 678
                                 </p>
-
                                 <p>
                                     <i class="fas fa-envelope"></i>
                                     chentra@gmail.com
                                 </p>
-
                                 <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
-
                                     Copy Phone
-
                                 </button>
-
                             </div>
-
                         </div>
-
-
-                        <!-- Copy this card 4 more times -->
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
         <!-- Right -->
-
         <div class="col-lg-4">
-
             <div class="card shadow-sm border-0 mb-4">
-
                 <div class="card-header bg-success text-white">
-
                     ព័ត៏មានប្រព័ន្ធ
-
                 </div>
-
                 <div class="card-body">
-
                     <table class="table table-borderless table-sm">
-
                         <tr>
                             <td>ជំនាន់</td>
                             <td>1.0.0</td>
@@ -245,106 +184,59 @@
                             <td>Server</td>
                             <td>Ubuntu</td>
                         </tr>
-
                     </table>
-
                 </div>
-
             </div>
-
             <div class="card border-0 shadow-sm">
-
                 <div class="card-header bg-danger text-white">
-
                     Emergency Contact
 
                 </div>
-
                 <div class="card-body">
-
                     <h4>☎ 012 888 999</h4>
-
-                    <p>    {{ $setting->email ?? 'contact@gmail.com' }}</p>
-
+                    <p> {{ $setting->email ?? 'contact@gmail.com' }}</p>
                     <small>
-                          {{ $setting->working_hours ?? '07:00 AM - 08:00 PM' }}
+                        {{ $setting->working_hours ?? '07:00 AM - 08:00 PM' }}
                     </small>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
 
     <!-- FAQ -->
-
     <div class="card shadow-sm border-0 mt-4">
-
         <div class="card-header bg-white">
-
             សំណួរញឹកញាប់ (FAQ)
-
         </div>
-
         <div class="card-body">
-
             <div id="faq">
-
                 <div class="card">
-
                     <div class="card-header">
-
                         <a class="card-link" data-toggle="collapse" href="#q1">
-
                             ខ្ញុំភ្លេចលេខសម្ងាត់សម្រាប់ចូល
-
                         </a>
-
                     </div>
-
-                    <div id="q1" class="collapse show" data-parent="#faq">
-
+                    <div id="q1" class="collapse" data-parent="#faq">
                         <div class="card-body">
                             សូមទាក់ទងអ្នកគ្រប់គ្រងប្រព័ន្ធរបស់អ្នកដើម្បីកំណត់លេខសម្ងាត់របស់អ្នកឡើងវិញ។
-
                         </div>
-
                     </div>
-
                 </div>
-
                 <div class="card">
-
                     <div class="card-header">
-
                         <a class="collapsed card-link" data-toggle="collapse" href="#q2">
-
                             មិនអាចប្រើប្រាស់ព្រីនបាន
-
                         </a>
-
                     </div>
-
                     <div id="q2" class="collapse" data-parent="#faq">
-
                         <div class="card-body">
-
                             សូមចាប់ផ្តើមព្រីនឡើងវិញ ហើយព្យាយាមម្តងទៀត។
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
 @stop
 @section('css')
@@ -391,23 +283,32 @@
     .card-header {
         font-weight: 600;
     }
+
+    .bg-success,
+    .badge-success {
+        background-color: #006D36 !important;
+    }
+
+    .btn-outline-success,
+    {
+    background-color: #006D36 !important;
+    color: #fff;
+    }
+
+    .text-success {
+        color: #006D36 !important;
+    }
 </style>
 @stop
 @section('js')
 @parent
 <script>
     $('.copy-phone').click(function () {
-
         let phone = $(this).data('copy');
-
         navigator.clipboard.writeText(phone);
-
         $(this).html('<i class="fas fa-check"></i> Copied');
-
         let btn = $(this);
-
         setTimeout(function () {
-
             btn.html('Copy Phone');
 
         }, 2000);

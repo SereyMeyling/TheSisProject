@@ -308,7 +308,7 @@ return [
 
         [
             'text' => 'ផ្ទាំងព័ត៏មាន',
-            'url' => 'home',
+            'url' => 'dashboard',
             'icon' => 'fas fa-tachometer-alt',
         ],
         [
@@ -318,13 +318,13 @@ return [
         ],
         [
             'text' => 'វេជ្ជបណ្ឌិត',
-            'url' => 'doctor',
+            'url'  => 'doctor',
             'icon' => 'fas fa-user-md',
             'role' => ['admin', 'doctor', 'nurse'],
         ],
         [
-            'text' => 'អ្នកជម្ងឺ',
-            'url' => 'patient',
+            'text' => 'គ្រប់គ្រងអ្នកជម្ងឺ',
+            'url' => 'patients',
             'icon' => 'fas fa-user-injured',
             'role' => ['admin', 'doctor', 'nurse'],
         ],
@@ -332,19 +332,6 @@ return [
             'text' => 'ឱសថស្ថាន',
             'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
-            'submenu' => [
-                [
-                    'text' => 'បញ្ចូលថ្នាំថ្មី',
-                    'url' => 'pharmacy/',
-                    'icon' => 'fas fa-capsules',
-                ],
-                [
-                    'text' => 'ការលក់ថ្នាំ',
-                    'url' => 'pharmacy/sell',
-                    'icon' => 'fas fa-cash-register',
-                ],
-
-            ]
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',
@@ -353,10 +340,23 @@ return [
             'role' => ['admin', 'cashier'],
         ],
         [
-            'text' => 'មន្ទីរពិសោធន៏',
-            'url' => 'lab',
-            'icon' => 'fas fa-flask',
-            'role' => ['admin', 'doctor', 'nurse'],
+            'text' => 'កំណត់ត្រាវេជ្ជសាស្ត្រ',
+            'icon'    => 'fas fa-notes-medical',
+            'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+            'submenu' => [
+                [
+                    'text' => 'បញ្ចូលលទ្ធផល',
+                    'route' => 'medical-records.create',
+                    'icon' => 'fas fa-vial',
+                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                ],
+                [
+                    'text' => 'មើលលទ្ធផល',
+                    'route' => 'medical-records.index',
+                    'icon' => 'fas fa-eye',
+                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                ]
+            ]
         ],
         [
             'text' => 'បន្ទប់',
