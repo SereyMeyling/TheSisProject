@@ -30,6 +30,12 @@ class RoleAndPermissionSeeder extends Seeder
                 'manage-roles',
                 'reset-2fa',
             ],
+            'Employee Management' => [
+                'view-employees',
+                'create-employees',
+                'edit-employees',
+                'delete-employees',
+            ],
             'Patient Management' => [
                 'view-patients',
                 'create-patients',

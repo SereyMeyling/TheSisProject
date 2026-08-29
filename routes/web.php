@@ -7,6 +7,7 @@ use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
+use App\Http\Controllers\Pharmacy\PrescriptionController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
@@ -14,11 +15,15 @@ use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Employee\EmployeeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\MedicalRecord\MedicalRecordController;
 use App\Http\Controllers\Doctor\DoctorController;
+use App\Http\Controllers\Appointment\AppointmentController;
+use App\Http\Controllers\Room\RoomController;
+use App\Http\Controllers\Laboratory\LabController;
 
 /*
 |--------------------------------------------------------------------------
@@ -73,6 +78,15 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::put('/{user}/role', [UserController::class, 'updateRole'])->name('user.update-role');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('user.destroy');
         Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
+    });
+
+    // Employee management routes
+    Route::group(['prefix' => 'employee'], function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('employee.index');
+        Route::post('/store', [EmployeeController::class, 'store'])->name('employee.store');
+        Route::get('/edit/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
+        Route::put('/update/{id}', [EmployeeController::class, 'update'])->name('employee.update');
+        Route::delete('/delete/{id}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
     });
 
     // Role & Permission management routes
@@ -138,6 +152,11 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/sell/{sale}/pdf', [PharmacySaleController::class, 'exportPdf'])->name('pharmacy.sell.pdf');
 
     Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
+
+    // Prescriptions
+    Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
+    Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
+    Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
 });
 
 // ------------------ Cashier & Admin Routes (Role: admin|cashier) --------------------
@@ -176,16 +195,29 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
 
 
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
-    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/appointment', function () {
-            return view('home');
-        });
-        Route::get('/appointments', function () {
-            return view('home');
-        });
-        Route::get('/lab', function () {
-            return view('home');
-        });
+    Route::group(['prefix' => 'room', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/', [RoomController::class, 'index'])->name('room.index');
+        Route::post('/store', [RoomController::class, 'store'])->name('room.store');
+        Route::get('/edit/{id}', [RoomController::class, 'edit'])->name('room.edit');
+        Route::put('/update/{id}', [RoomController::class, 'update'])->name('room.update');
+        Route::delete('/delete/{id}', [RoomController::class, 'destroy'])->name('room.destroy');
+    });
+
+    Route::group(['prefix' => 'appointment', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/', [AppointmentController::class, 'index'])->name('appointment.index');
+        Route::post('/store', [AppointmentController::class, 'store'])->name('appointment.store');
+        Route::get('/edit/{id}', [AppointmentController::class, 'edit'])->name('appointment.edit');
+        Route::put('/update/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
+        Route::delete('/delete/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
+    });
+
+    Route::group(['prefix' => 'lab', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|lab_technician']], function () {
+        Route::get('/', [LabController::class, 'index'])->name('lab.index');
+        Route::post('/orders/store', [LabController::class, 'storeOrder'])->name('lab.orders.store');
+        Route::post('/orders/{id}/results', [LabController::class, 'storeResults'])->name('lab.orders.results');
+        Route::post('/tests/store', [LabController::class, 'storeTest'])->name('lab.tests.store');
+        Route::put('/tests/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
+        Route::delete('/tests/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
     });
 
     // ------------------ Support (Authenticated Users) --------------------

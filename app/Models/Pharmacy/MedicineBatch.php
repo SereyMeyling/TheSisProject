@@ -17,6 +17,7 @@ class MedicineBatch extends Model
         'expiry_date',
         'quantity_initial',
         'remaining_quantity',
+        'quantity_remaining',
         'purchase_price',
     ];
 

@@ -13,13 +13,24 @@ class DoctorController extends Controller
         $this->middleware(['auth', 'role:admin|doctor']);
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $waitingPatients = MedicalRecord::with(['patient', 'doctor'])
-            ->latest('visit_date')
-            ->paginate(10);
+        $query = MedicalRecord::with(['patient', 'doctor']);
 
-        return view('form.doctor.index', compact('waitingPatients'));
+        if ($request->filled('search')) {
+            $term = '%' . $request->search . '%';
+            $query->whereHas('patient', function ($q) use ($term) {
+                $q->where('full_name', 'LIKE', $term)
+                  ->orWhere('patient_code', 'LIKE', $term);
+            });
+        }
+
+        $waitingPatients = $query->latest('visit_date')->paginate(10)->appends($request->query());
+
+        $totalWaiting = MedicalRecord::whereNull('status_destination')->orWhere('status_destination', '')->count();
+        $totalToday   = MedicalRecord::whereDate('visit_date', today())->count();
+
+        return view('form.doctor.index', compact('waitingPatients', 'totalWaiting', 'totalToday'));
     }
 
     public function edit($id)
