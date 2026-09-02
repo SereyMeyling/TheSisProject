@@ -88,6 +88,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
     Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
 
+<<<<<<< HEAD
     Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
     Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
 
@@ -100,7 +101,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     // Payment (used from billing page)
     Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
     Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
-    
+
     Route::group(['prefix' => 'settings/backup'], function () {
         Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
         Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
@@ -108,6 +109,13 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
         Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
         Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
+=======
+        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
+
+        Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
+        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
+>>>>>>> origin/manage_role
     });
 });
 
@@ -154,6 +162,7 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
     Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
 });
 
+<<<<<<< HEAD
 // ------------------ Admin, Doctor, Nurse & Cashier Routes --------------------
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']], function () {
     // Doctor Route
@@ -203,4 +212,25 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
         Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
         Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
     });
+=======
+// ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+    Route::get('/doctor', function () {
+        return view('home'); });
+    Route::get('/patient', function () {
+        return view('home'); });
+    Route::get('/patients', function () {
+        return view('home'); });
+    Route::get('/appointment', function () {
+        return view('home'); });
+    Route::get('/appointments', function () {
+        return view('home'); });
+    Route::get('/lab', function () {
+        return view('home'); });
+});
+
+// ------------------ Support (Authenticated Users) --------------------
+Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
+    Route::get('/', [SupportController::class, 'index'])->name('support.index');
+>>>>>>> origin/manage_role
 });

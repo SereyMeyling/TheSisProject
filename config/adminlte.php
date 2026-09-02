@@ -332,7 +332,6 @@ return [
             'text' => 'ឱសថស្ថាន',
             'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
-
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',

@@ -26,7 +26,6 @@
 
                     <div class="form-group">
                         <label>ឈ្មោះប្រព័ន្ធ</label>
-
                         <input name="system_name" value="{{ old('system_name', $setting->system_name) }}" class="form-control">
                     </div>
 
