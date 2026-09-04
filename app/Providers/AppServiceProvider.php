@@ -30,7 +30,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
-        
+
 
         try {
             if (Schema::hasTable('general_settings')) {

@@ -337,19 +337,6 @@ return [
         [
             'text' => 'ឱសថស្ថាន',
             'icon' => 'fas fa-pills',
-            'role' => ['admin', 'pharmacist', 'doctor'],
-            'submenu' => [
-                [
-                    'text' => 'ស្តុក & ថ្នាំពេទ្យ',
-                    'url'  => 'pharmacy',
-                    'icon' => 'fas fa-boxes',
-                ],
-                [
-                    'text' => 'គ្រប់គ្រងវេជ្ជបញ្ជា',
-                    'url'  => 'pharmacy/prescriptions',
-                    'icon' => 'fas fa-file-prescription',
-                ],
-            ]
         ],
         [
             'text' => 'ការទូទាត់ប្រាក់',
