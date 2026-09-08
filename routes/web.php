@@ -183,13 +183,13 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
     Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
         Route::get('/appointment', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/appointments', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/lab', function () {
-            return view('home');
+            return view('form.home.home');
         });
     });
 
@@ -211,22 +211,22 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
     Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
         Route::get('/doctor', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/patient', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/patients', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/appointment', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/appointments', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/lab', function () {
-            return view('home');
+            return view('form.home.home');
         });
     });
 
