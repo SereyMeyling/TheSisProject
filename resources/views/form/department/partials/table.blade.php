@@ -1,4 +1,3 @@
-
 <table class="table align-middle mb-0">
     <thead>
         <tr>
@@ -18,17 +17,33 @@
                 <td>{{ $depart->created_at->format('d M, Y') }}</td>
                 <td>
                     <div class="action-icons">
-                        {{-- Edit --}}
-                        <button class="btn btn-sm btn-outline-primary btn-edit" data-toggle="modal"
-                            data-target="#modalEdit" data-id="{{ $depart->department_id }}">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        {{-- Delete --}}
-                        <button class="btn btn-sm btn-outline-danger  btn-delete" data-toggle="modal"
-                            data-id="{{ $depart->department_id }}" data-name="{{ $depart->department_name }}"
-                            data-target="#modalDelete">
-                            <i class="fas fa-trash"></i>
-                        </button>
+                        <div class="dropdown">
+                            {{-- Three dots button --}}
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+
+                            {{-- Dropdown menu --}}
+                            <div class="dropdown-menu dropdown-menu-right">
+
+                                {{-- Edit --}}
+                                <button type="button" class="dropdown-item btn-edit" data-toggle="modal"
+                                    data-target="#modalEdit" data-id="{{ $depart->department_id }}">
+                                    <i class="fas fa-edit text-primary mr-2"></i>
+                                    កែប្រែ
+                                </button>
+
+                                {{-- Delete --}}
+                                <button type="button" class="dropdown-item btn-delete" data-toggle="modal"
+                                    data-target="#modalDelete" data-id="{{ $depart->department_id }}"
+                                    data-name="{{ $depart->department_name }}">
+                                    <i class="fas fa-trash text-danger mr-2"></i>
+                                    លុប
+                                </button>
+
+                            </div>
+                        </div>
                     </div>
                 </td>
             </tr>

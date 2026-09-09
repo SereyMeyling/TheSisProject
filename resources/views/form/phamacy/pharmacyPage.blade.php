@@ -261,7 +261,13 @@
                         </div>
                         <div class="form-group col-md-4">
                             <label>ឯកតាទិញចូល (box / vial / bottle...)</label>
-                            <input type="text" name="unit" class="form-control" placeholder="box" required>
+                            <select name="unit" class="form-control" required>
+                                <option value="">ជ្រើសរើសឯកតា</option>
+                                <option value="box">box</option>
+                                <option value="vial">vial</option>
+                                <option value="bottle">bottle</option>
+                                <option value="tube">tube</option>
+                            </select>
                         </div>
                         <div class="form-group col-md-4">
                             <label>ទម្រង់ដូស</label>
@@ -626,40 +632,15 @@
         box-shadow: 0 8px 30px rgba(0, 0, 0, .05);
     }
 
-{{-- ====== Detail Modal ====== --}}
-<div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-xl modal-mobile-fit">
-        <div class="modal-content modal-purple">
-            <div class="modal-header">
-                <h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>លេខបាច់</th>
-                                <th>ថ្ងៃចូល</th>
-                                <th class="text-right">ចំនួនចូល</th>
-                                <th>ថ្ងៃផុតកំណត់</th>
-                                <th class="text-right">តម្លៃទិញ</th>
-                                <th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th>
-                                <th class="text-right">នៅសល់</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailBatchesBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button>
-            </div>
-        </div>
-    </div>
-</div>
+        {
+            {
+            --======Detail Modal======--
+        }
+    }
 
-    .nav-tabs .nav-link {
+    <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable modal-xl modal-mobile-fit"><div class="modal-content modal-purple"><div class="modal-header"><h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5><button type="button" class="close" data-dismiss="modal"><span>&times;
+
+    </span></button></div><div class="modal-body p-0"><div class="table-responsive"><table class="table table-sm table-bordered mb-0"><thead class="thead-light"><tr><th>លេខបាច់</th><th>ថ្ងៃចូល</th><th class="text-right">ចំនួនចូល</th><th>ថ្ងៃផុតកំណត់</th><th class="text-right">តម្លៃទិញ</th><th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th><th class="text-right">នៅសល់</th></tr></thead><tbody id="detailBatchesBody"></tbody></table></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button></div></div></div></div>.nav-tabs .nav-link {
         font-weight: 600;
         padding: 15px 25px;
         border: none;

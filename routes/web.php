@@ -7,7 +7,9 @@ use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\Room\RoomController;
 use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -142,6 +144,8 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
     Route::get('/sell/{sale}/pdf', [PharmacySaleController::class, 'exportPdf'])->name('pharmacy.sell.pdf');
 
+    Route::get('patients/search', [PharmacySaleController::class, 'searchPatients'])
+        ->name('pharmacy.patients.search');
     Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
 });
 
@@ -185,9 +189,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
         Route::get('/appointment', function () {
             return view('form.home.home');
         });
-        Route::get('/appointments', function () {
-            return view('form.home.home');
-        });
         Route::get('/lab', function () {
             return view('form.home.home');
         });
@@ -210,28 +211,45 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     });
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
     Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/doctor', function () {
-            return view('form.home.home');
-        });
-        Route::get('/patient', function () {
-            return view('form.home.home');
-        });
-        Route::get('/patients', function () {
-            return view('form.home.home');
-        });
-        Route::get('/appointment', function () {
-            return view('form.home.home');
-        });
-        Route::get('/appointments', function () {
-            return view('form.home.home');
-        });
-        Route::get('/lab', function () {
-            return view('form.home.home');
-        });
+        // Route::get('/doctor', function () {
+        //     return view('form.home.home');
+        // });
+        // Route::get('/patient', function () {
+        //     return view('form.home.home');
+        // });
+        // Route::get('/patients', function () {
+        //     return view('form.home.home');
+        // });
+        // Route::get('/appointment', function () {
+        //     return view('form.home.home');
+        // });
+        // Route::get('/appointments', function () {
+        //     return view('form.home.home');
+        // });
+        // Route::get('/lab', function () {
+        //     return view('form.home.home');
+        // });
     });
 
     // ------------------ Support (Authenticated Users) --------------------
     Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
         Route::get('/', [SupportController::class, 'index'])->name('support.index');
+    });
+
+    // ------------------ Profile (Any Authenticated User) --------------------
+    Route::group(['middleware' => ['auth', '2fa']], function () {
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+        Route::get('/profile/avatar/{user}', [ProfileController::class, 'avatar'])->name('profile.avatar');
+    });
+
+
+    // ------------------ Room Management (Role: admin|doctor|nurse) --------------------
+    Route::group(['prefix' => 'room', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/', [RoomController::class, 'index'])->name('room.index');
+        Route::post('/', [RoomController::class, 'store'])->name('room.store');
+        Route::put('/{room}', [RoomController::class, 'update'])->name('room.update');
+        Route::delete('/{room}', [RoomController::class, 'destroy'])->name('room.destroy');
     });
 });

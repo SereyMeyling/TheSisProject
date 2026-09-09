@@ -15,8 +15,12 @@
                     <span class="stat-trend up"><i class="fas fa-arrow-up"></i> 12%</span>
                 </div>
                 <div class="stat-label">អ្នកជំងឺសរុប</div>
-                <div class="stat-value">1,240</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($totalPatients) }}</div>
+                <span class="stat-trend {{ $totalPatientsTrend >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $totalPatientsTrend >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($totalPatientsTrend) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -27,8 +31,12 @@
                     <span class="stat-trend up"><i class="fas fa-arrow-up"></i> 3%</span>
                 </div>
                 <div class="stat-label">អ្នកជំងឺថ្មី</div>
-                <div class="stat-value">48</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($newPatientsThisMonth) }}</div>
+                <span class="stat-trend {{ $newPatientsThisMonth >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $newPatientsThisMonth >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($newPatientsThisMonth) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -39,8 +47,12 @@
                     <span class="stat-trend down"><i class="fas fa-arrow-down"></i> 2%</span>
                 </div>
                 <div class="stat-label">ថ្នាំសរុប</div>
-                <div class="stat-value">8,421</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($totalMedicines) }}</div>
+                <span class="stat-trend {{ $totalMedicines >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $totalMedicines >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($totalMedicines) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -51,8 +63,12 @@
                     <span class="stat-trend up"><i class="fas fa-arrow-up"></i> 18%</span>
                 </div>
                 <div class="stat-label">ចំណូលប្រចាំថ្ងៃ</div>
-                <div class="stat-value">$124k</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($dailyIncome) }}</div>
+                <span class="stat-trend {{ $dailyIncome >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $dailyIncome >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($dailyIncome) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -63,8 +79,12 @@
                     <span class="stat-trend up"><i class="fas fa-arrow-up"></i> 5%</span>
                 </div>
                 <div class="stat-label">ចំណាយប្រចាំថ្ងៃ</div>
-                <div class="stat-value">$84k</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($dailyExpense) }}</div>
+                <span class="stat-trend {{ $dailyExpense >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $dailyExpense >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($dailyExpense) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -75,8 +95,12 @@
                     <span class="stat-trend up"><i class="fas fa-arrow-up"></i> 24%</span>
                 </div>
                 <div class="stat-label">ប្រាក់ចំណេញ</div>
-                <div class="stat-value">$40k</div>
-                <button type="button" class="btn-export">នាំចេញ<br>របាយការណ៍ PDF</button>
+                <div class="stat-value">{{ number_format($profitTrend) }}</div>
+                <span class="stat-trend {{ $profitTrend >= 0 ? 'up' : 'down' }}">
+                    <i class="fas fa-arrow-{{ $profitTrend >= 0 ? 'up' : 'down' }}"></i>
+                    {{ abs($profitTrend) }}%
+                </span>
+                <button type="button" class="btn-export">ទាញយក<br>របាយការណ៍ Excel</button>
             </div>
         </div>
 
@@ -111,22 +135,22 @@
                 <div class="today-row">
                     <span class="today-icon bg-soft-green"><i class="fas fa-calendar-check"></i></span>
                     <div class="today-text">
-                        <div class="today-value">124</div>
+                        <div class="today-value">{{ $todayAppointments }}</div>
                         <div class="today-label">ការណាត់ជួប</div>
                     </div>
                 </div>
                 <div class="today-row">
                     <span class="today-icon bg-soft-red"><i class="fas fa-notes-medical"></i></span>
                     <div class="today-text">
-                        <div class="today-value">08</div>
+                        <div class="today-value">{{ $emergencyCases }}</div>
                         <div class="today-label">ករណីបន្ទាន់</div>
                     </div>
                 </div>
                 <div class="today-row">
                     <span class="today-icon bg-soft-blue"><i class="fas fa-bed"></i></span>
                     <div class="today-text">
-                        <div class="today-value">12</div>
-                        <div class="today-label">ព្រួងគែ</div>
+                        <div class="today-value">{{ $availableRooms }}</div>
+                        <div class="today-label">បន្ទប់ទំនេរ</div>
                     </div>
                 </div>
 
@@ -139,16 +163,17 @@
                 <h3 class="panel-title text-left mb-2">ចំនួនគ្រែ</h3>
                 <div class="donut-holder">
                     <canvas id="occupancyChart" width="150" height="150"></canvas>
-                    <div class="donut-center">78%<span>កំពុងប្រើ</span></div>
+                    <div class="donut-center">{{ $occupancyPercent }}%<span>កំពុងប្រើ</span></div>
                 </div>
                 <div class="donut-stats mt-auto">
                     <div class="donut-stat">
                         <div class="donut-stat-label">សរុប</div>
-                        <div class="donut-stat-value">6,540</div>
+                        <div class="donut-stat-value">{{ number_format($totalRooms) }}</div>
+
                     </div>
                     <div class="donut-stat">
                         <div class="donut-stat-label">នៅសល់</div>
-                        <div class="donut-stat-value text-danger">12</div>
+                        <div class="donut-stat-value text-danger">{{ $availableRooms }}</div>
                     </div>
                 </div>
             </div>
@@ -172,32 +197,18 @@
             <div class="panel h-100">
                 <h3 class="panel-title mb-3">អ្នកជំងឺនៅរដ្ឋបាលតាមផ្នែក</h3>
 
-                <div class="dept-row">
-                    <span class="dept-icon bg-soft-rose"><i class="fas fa-heartbeat"></i></span>
-                    <div class="dept-text">
-                        <div class="dept-name">Cardiology</div>
-                        <div class="dept-sub">342 Patients Active</div>
+                @forelse($departmentBreakdown as $dept)
+                    <div class="dept-row">
+                        <span class="dept-icon bg-soft-rose"><i class="fas fa-heartbeat"></i></span>
+                        <div class="dept-text">
+                            <div class="dept-name">{{ $dept['name'] }}</div>
+                            <div class="dept-sub">{{ $dept['total'] }} Patients Active</div>
+                        </div>
+                        <div class="dept-percent">{{ $dept['percent'] }}%</div>
                     </div>
-                    <div class="dept-percent">42%</div>
-                </div>
-
-                <div class="dept-row">
-                    <span class="dept-icon bg-soft-pink"><i class="fas fa-baby"></i></span>
-                    <div class="dept-text">
-                        <div class="dept-name">Pediatrics</div>
-                        <div class="dept-sub">156 Patients Active</div>
-                    </div>
-                    <div class="dept-percent">24%</div>
-                </div>
-
-                <div class="dept-row">
-                    <span class="dept-icon bg-soft-blue"><i class="fas fa-brain"></i></span>
-                    <div class="dept-text">
-                        <div class="dept-name">Neurology</div>
-                        <div class="dept-sub">88 Patients Active</div>
-                    </div>
-                    <div class="dept-percent">18%</div>
-                </div>
+                @empty
+                    <p class="text-muted small">មិនទាន់មានទិន្នន័យ (ត្រូវកំណត់ department ទៅបន្ទប់សិន)</p>
+                @endforelse
             </div>
         </div>
 
@@ -219,7 +230,8 @@
         --danger: #E8506B;
     }
 
-    body, .dash-wrap {
+    body,
+    .dash-wrap {
         color: var(--ink);
     }
 
@@ -247,12 +259,35 @@
         font-size: 14px;
     }
 
-    .icon-violet { background: #EEE9FE; color: #7C4DFF; }
-    .icon-blue   { background: #E4F0FF; color: #2F80ED; }
-    .icon-pink   { background: #FDE9F3; color: #E0559C; }
-    .icon-teal   { background: #E1F6EF; color: #14A97F; }
-    .icon-rose   { background: #FCE9EC; color: #E0556B; }
-    .icon-green  { background: var(--primary-soft); color: var(--primary-color); }
+    .icon-violet {
+        background: #EEE9FE;
+        color: #7C4DFF;
+    }
+
+    .icon-blue {
+        background: #E4F0FF;
+        color: #2F80ED;
+    }
+
+    .icon-pink {
+        background: #FDE9F3;
+        color: #E0559C;
+    }
+
+    .icon-teal {
+        background: #E1F6EF;
+        color: #14A97F;
+    }
+
+    .icon-rose {
+        background: #FCE9EC;
+        color: #E0556B;
+    }
+
+    .icon-green {
+        background: var(--primary-soft);
+        color: var(--primary-color);
+    }
 
     .stat-trend {
         font-size: 11px;
@@ -260,8 +295,16 @@
         padding: 3px 8px;
         border-radius: 20px;
     }
-    .stat-trend.up   { background: #E4F7EC; color: #1BA860; }
-    .stat-trend.down { background: #FDE9EA; color: #E0455A; }
+
+    .stat-trend.up {
+        background: #E4F7EC;
+        color: #1BA860;
+    }
+
+    .stat-trend.down {
+        background: #FDE9EA;
+        color: #E0455A;
+    }
 
     .stat-label {
         font-size: 12px;
@@ -323,7 +366,7 @@
     .range-btn.active {
         background: #fff;
         color: var(--ink);
-        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        box-shadow: 0 1px 4px rgba(0, 0, 0, .08);
     }
 
     .chart-holder {
@@ -347,8 +390,14 @@
         display: inline-block;
         margin-right: 5px;
     }
-    .dot-green { background: var(--primary-color); }
-    .dot-pink  { background: #E0559C; }
+
+    .dot-green {
+        background: var(--primary-color);
+    }
+
+    .dot-pink {
+        background: #E0559C;
+    }
 
     /* ---- today's summary ---- */
     .today-row {
@@ -358,7 +407,10 @@
         padding: 10px 0;
         border-bottom: 1px solid var(--border);
     }
-    .today-row:last-of-type { border-bottom: none; }
+
+    .today-row:last-of-type {
+        border-bottom: none;
+    }
 
     .today-icon {
         width: 38px;
@@ -370,12 +422,30 @@
         font-size: 15px;
     }
 
-    .bg-soft-green { background: var(--primary-soft); color: var(--primary-color); }
-    .bg-soft-red   { background: #FDE9EA; color: #E0455A; }
-    .bg-soft-blue  { background: #E4F0FF; color: #2F80ED; }
+    .bg-soft-green {
+        background: var(--primary-soft);
+        color: var(--primary-color);
+    }
 
-    .today-value { font-weight: 700; font-size: 15px; }
-    .today-label { font-size: 12px; color: var(--muted); }
+    .bg-soft-red {
+        background: #FDE9EA;
+        color: #E0455A;
+    }
+
+    .bg-soft-blue {
+        background: #E4F0FF;
+        color: #2F80ED;
+    }
+
+    .today-value {
+        font-weight: 700;
+        font-size: 15px;
+    }
+
+    .today-label {
+        font-size: 12px;
+        color: var(--muted);
+    }
 
     .btn-view-more {
         margin-top: 14px;
@@ -427,8 +497,15 @@
         padding: 8px 4px;
     }
 
-    .donut-stat-label { font-size: 11px; color: var(--muted); }
-    .donut-stat-value { font-size: 14px; font-weight: 700; }
+    .donut-stat-label {
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .donut-stat-value {
+        font-size: 14px;
+        font-weight: 700;
+    }
 
     /* ---- department list ---- */
     .dept-row {
@@ -438,7 +515,10 @@
         padding: 10px 0;
         border-bottom: 1px solid var(--border);
     }
-    .dept-row:last-child { border-bottom: none; }
+
+    .dept-row:last-child {
+        border-bottom: none;
+    }
 
     .dept-icon {
         width: 38px;
@@ -451,13 +531,35 @@
         flex-shrink: 0;
     }
 
-    .bg-soft-rose { background: #FCE9EC; color: #E0556B; }
-    .bg-soft-pink { background: #FDE9F3; color: #E0559C; }
+    .bg-soft-rose {
+        background: #FCE9EC;
+        color: #E0556B;
+    }
 
-    .dept-text { flex: 1; min-width: 0; }
-    .dept-name { font-weight: 700; font-size: 13px; }
-    .dept-sub  { font-size: 11px; color: var(--muted); }
-    .dept-percent { font-weight: 700; font-size: 13px; }
+    .bg-soft-pink {
+        background: #FDE9F3;
+        color: #E0559C;
+    }
+
+    .dept-text {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .dept-name {
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .dept-sub {
+        font-size: 11px;
+        color: var(--muted);
+    }
+
+    .dept-percent {
+        font-weight: 700;
+        font-size: 13px;
+    }
 </style>
 @stop
 
@@ -465,11 +567,16 @@
 @parent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
 <script>
+    const ieLabels = @json($months);
+    const ieIncome = @json($incomeByMonth);
+    const ieExpense = @json($expenseByMonth);
+    const weeklyData = @json($weeklyAdmissions);
+    const occupancyPercent = {{ $occupancyPercent }};
     $(document).ready(function () {
 
         // ----- income / expense (area line) -----
         const ieCtx = document.getElementById('incomeExpenseChart');
-        const ieLabels = ['មករា','កុម្ភៈ','មីនា','មេសា','ឧសភា','មិថុនា'];
+        const ieLabels = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា'];
         const ieChart = new Chart(ieCtx, {
             type: 'line',
             data: {

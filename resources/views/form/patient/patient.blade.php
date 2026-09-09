@@ -49,17 +49,17 @@
         </div>
         <div class="row">
             <div class="col-lg-9">
-                
+
                 {{-- Navigation Tabs --}}
                 <ul class="nav nav-tabs mb-3 border-bottom-0" id="patientTab" role="tablist">
                     <li class="nav-item mr-2">
-                        <a class="nav-link active font-weight-bold px-4 py-2 rounded-top border text-success bg-white shadow-sm" 
+                        <a class="nav-link active font-weight-bold px-4 py-2 rounded-top border text-success bg-white shadow-sm"
                            id="list-tab" data-toggle="tab" href="#patient-list" role="tab" aria-controls="patient-list" aria-selected="true">
                             <i class="fas fa-list mr-1"></i> បញ្ជីអ្នកជំងឺ
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link font-weight-bold px-4 py-2 rounded-top border text-secondary bg-light" 
+                        <a class="nav-link font-weight-bold px-4 py-2 rounded-top border text-secondary bg-light"
                            id="create-tab" data-toggle="tab" href="#patient-create" role="tab" aria-controls="patient-create" aria-selected="false">
                             <i class="fas fa-user-plus mr-1"></i> ចុះឈ្មោះអ្នកជំងឺថ្មី
                         </a>
@@ -261,6 +261,7 @@
 @stop
 @section('css')
     <style>
+
         .border-light-gray {
             border: 1px solid #e9ecef !important;
         }

@@ -8,15 +8,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
 use Laravel\Sanctum\HasApiTokens;
-
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
-    use HasRoles;
-      use HasApiTokens, HasFactory, Notifiable, HasRoles;
-
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -28,8 +24,11 @@ class User extends Authenticatable
         'email',
         'username',
         'password',
-        'google2fa_secret',
-        'google2fa_enabled',
+        'phone',
+        'avatar',
+        'avatar_mime',
+        'department_id',
+        'specialization',
     ];
 
     /**
@@ -50,17 +49,13 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'google2fa_secret' => 'encrypted', // encrypted at rest automatically
+        'google2fa_secret' => 'encrypted',
         'google2fa_enabled' => 'boolean',
     ];
 
     /**
      * Clear this user's 2FA enrollment so they are forced back through
-     * the /2fa/setup flow on next login. Does NOT touch name, email,
-     * username, or password. Only columns that actually exist on the
-     * users table are written to, so this stays safe across schema
-     * variations (e.g. if two_factor_enabled / two_factor_confirmed_at
-     * are added later).
+     * the /2fa/setup flow on next login.
      *
      * @return void
      */
@@ -83,5 +78,27 @@ class User extends Authenticatable
         }
 
         $this->save();
+    }
+
+    public function adminlte_image()
+    {
+        return $this->avatar
+            ? route('profile.avatar', $this->id)
+            : asset('vendor/adminlte/dist/img/user2-160x160.jpg');
+    }
+
+    public function adminlte_desc()
+    {
+        return $this->department->department_name ?? ($this->getRoleNames()->first() ?? '');
+    }
+
+    public function adminlte_profile_url()
+    {
+        return route('profile.edit');
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
     }
 }

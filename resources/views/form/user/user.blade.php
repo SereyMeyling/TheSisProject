@@ -171,7 +171,7 @@
                 </div>
                 <div class="modal-footer justify-content-between bg-light">
                     <button type="button" class="btn btn-light border px-4" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-success px-4" id="btnSubmitCreateUser">
+                    <button type="submit" class="btn btn-primary px-4" id="btnSubmitCreateUser">
                         <i class="fas fa-save mr-1"></i> រក្សាទុក (Create User)
                     </button>
                 </div>
@@ -198,6 +198,9 @@
         gap: 18px;
         box-shadow: 0 5px 18px rgba(0, 0, 0, .05);
 
+    }
+    .bg-success{
+        background-color: #006D36 !important;
     }
 
     .stat-card h3 {

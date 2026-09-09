@@ -136,9 +136,9 @@ return [
     'usermenu_enabled' => true,
     'usermenu_header' => false,
     'usermenu_header_class' => 'bg-primary',
-    'usermenu_image' => false,
+    'usermenu_image' => true,
     'usermenu_desc' => false,
-    'usermenu_profile_url' => false,
+    'usermenu_profile_url' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -318,7 +318,7 @@ return [
         ],
         [
             'text' => 'វេជ្ជបណ្ឌិត',
-            'url'  => 'doctor',
+            'url' => 'doctor',
             'icon' => 'fas fa-user-md',
             'role' => ['admin', 'doctor', 'nurse'],
         ],
@@ -341,20 +341,20 @@ return [
         ],
         [
             'text' => 'កំណត់ត្រាវេជ្ជសាស្ត្រ',
-            'icon'    => 'fas fa-notes-medical',
-            'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+            'icon' => 'fas fa-notes-medical',
+            'role' => ['admin', 'doctor', 'nurse', 'cashier'],
             'submenu' => [
                 [
                     'text' => 'បញ្ចូលលទ្ធផល',
                     'route' => 'medical-records.create',
                     'icon' => 'fas fa-vial',
-                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                    'role' => ['admin', 'doctor', 'nurse', 'cashier'],
                 ],
                 [
                     'text' => 'មើលលទ្ធផល',
                     'route' => 'medical-records.index',
                     'icon' => 'fas fa-eye',
-                    'role'    => ['admin', 'doctor', 'nurse', 'cashier'],
+                    'role' => ['admin', 'doctor', 'nurse', 'cashier'],
                 ]
             ]
         ],
