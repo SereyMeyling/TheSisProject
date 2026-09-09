@@ -7,6 +7,7 @@ use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
+use App\Http\Controllers\Pharmacy\PrescriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\Room\RoomController;
@@ -228,24 +229,24 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     });
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
     Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        // Route::get('/doctor', function () {
-        //     return view('form.home.home');
-        // });
-        // Route::get('/patient', function () {
-        //     return view('form.home.home');
-        // });
-        // Route::get('/patients', function () {
-        //     return view('form.home.home');
-        // });
-        // Route::get('/appointment', function () {
-        //     return view('form.home.home');
-        // });
-        // Route::get('/appointments', function () {
-        //     return view('form.home.home');
-        // });
-        // Route::get('/lab', function () {
-        //     return view('form.home.home');
-        // });
+        Route::get('/doctor', function () {
+            return view('form.home.home');
+        });
+        Route::get('/patient', function () {
+            return view('form.home.home');
+        });
+        Route::get('/patients', function () {
+            return view('form.home.home');
+        });
+        Route::get('/appointment', function () {
+            return view('form.home.home');
+        });
+        Route::get('/appointments', function () {
+            return view('form.home.home');
+        });
+        Route::get('/lab', function () {
+            return view('form.home.home');
+        });
     });
 
     // ------------------ Support (Authenticated Users) --------------------
