@@ -5,9 +5,9 @@
 @section('content_header')
     <div class="d-flex justify-content-between align-items-center">
         <h1 class="m-0 text-dark font-weight-bold" style="font-size: 1.4rem;">
-            <i class="fas fa-file-medical text-success mr-2"></i> បញ្ជីកំណត់ត្រាវេជ្ជសាស្ត្រ (Medical Records)
+
         </h1>
-        <a href="{{ route('medical-records.create') }}" class="btn btn-success px-3 rounded-pill shadow-sm" style="background-color: #00695c;">
+        <a href="{{ route('medical-records.create') }}" class="btn btn-primary px-3 rounded-pill shadow-sm" style="background-color: #00695c;">
             <i class="fas fa-plus mr-1"></i> បង្កើត Record ថ្មី
         </a>
     </div>

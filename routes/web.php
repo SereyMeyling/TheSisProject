@@ -200,29 +200,16 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
 
 
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
-    Route::group(['prefix' => 'room', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/', [RoomController::class, 'index'])->name('room.index');
-        Route::post('/store', [RoomController::class, 'store'])->name('room.store');
-        Route::get('/edit/{id}', [RoomController::class, 'edit'])->name('room.edit');
-        Route::put('/update/{id}', [RoomController::class, 'update'])->name('room.update');
-        Route::delete('/delete/{id}', [RoomController::class, 'destroy'])->name('room.destroy');
-    });
-
-    Route::group(['prefix' => 'appointment', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/', [AppointmentController::class, 'index'])->name('appointment.index');
-        Route::post('/store', [AppointmentController::class, 'store'])->name('appointment.store');
-        Route::get('/edit/{id}', [AppointmentController::class, 'edit'])->name('appointment.edit');
-        Route::put('/update/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
-        Route::delete('/delete/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
-    });
-
-    Route::group(['prefix' => 'lab', 'middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|lab_technician']], function () {
-        Route::get('/', [LabController::class, 'index'])->name('lab.index');
-        Route::post('/orders/store', [LabController::class, 'storeOrder'])->name('lab.orders.store');
-        Route::post('/orders/{id}/results', [LabController::class, 'storeResults'])->name('lab.orders.results');
-        Route::post('/tests/store', [LabController::class, 'storeTest'])->name('lab.tests.store');
-        Route::put('/tests/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
-        Route::delete('/tests/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
+    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+        Route::get('/appointment', function () {
+            return view('form.home.home');
+        });
+        Route::get('/appointments', function () {
+            return view('form.home.home');
+        });
+        Route::get('/lab', function () {
+            return view('form.home.home');
+        });
     });
 
     // ------------------ Support (Authenticated Users) --------------------
@@ -243,22 +230,22 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
     Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
         Route::get('/doctor', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/patient', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/patients', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/appointment', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/appointments', function () {
-            return view('home');
+            return view('form.home.home');
         });
         Route::get('/lab', function () {
-            return view('home');
+            return view('form.home.home');
         });
     });
 

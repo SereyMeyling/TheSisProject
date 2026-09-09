@@ -4,19 +4,14 @@
 
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="page-title mb-0 mt-3">ការគ្រប់គ្រងអ្នកប្រើប្រាស់</h2>
-    <button type="button" class="btn btn-success mt-3" data-toggle="modal" data-target="#modalCreateUser">
-        <i class="fas fa-user-plus mr-1"></i> បង្កើតអ្នកប្រើប្រាស់ថ្មី
-    </button>
-</div>
+
 <div id="userSuccessToast" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert">
     <i class="fas fa-check-circle mr-2"></i><span id="userSuccessToastMessage"></span>
     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
         <span aria-hidden="true">&times;</span>
     </button>
 </div>
-<div class="row mb-4">
+<div class="row mb-4 mt-3">
     <div class="col-md-3">
         <div class="stat-card">
             <div class="icon bg-light-success">
@@ -43,7 +38,7 @@
                 <input type="text" id="search" class="form-control border-0"
                     placeholder="ស្វែងរកអ្នកប្រើប្រាស់ (ឈ្មោះ, អ៊ីមែល, Username)">
             </div>
-            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalCreateUser">
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCreateUser">
                 <i class="fas fa-user-plus mr-1"></i> បង្កើតអ្នកប្រើប្រាស់ថ្មី
             </button>
         </div>
