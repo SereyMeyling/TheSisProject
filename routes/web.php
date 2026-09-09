@@ -29,11 +29,6 @@ use App\Http\Controllers\Laboratory\LabController;
 |--------------------------------------------------------------------------
 | Web Routes
 |--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
 */
 
 Route::get('/', function () {
@@ -42,13 +37,13 @@ Route::get('/', function () {
 
 Auth::routes([
     'register' => false,
-    'reset' => false,
-    'verify' => false,
+    'reset'    => false,
+    'verify'   => false,
 ]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-// ------------------ 2FA (mandatory) --------------------
+// ------------------ 2FA (mandatory for logged in users) --------------------
 Route::middleware(['auth'])->group(function () {
     Route::get('/2fa/setup', [TwoFactorController::class, 'showSetupForm'])->name('2fa.setup');
     Route::post('/2fa/setup', [TwoFactorController::class, 'confirmSetup'])->name('2fa.setup.confirm')->middleware('throttle:5,1');
@@ -57,21 +52,31 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/2fa/verify', [TwoFactorController::class, 'verify'])->name('2fa.verify.submit')->middleware('throttle:5,1');
 });
 
-// ------------------ Department --------------------
-Route::group(['prefix' => 'department', 'middleware' => ['auth', '2fa']], function () {
-    Route::get('/', [DepartmentController::class, 'index'])->name('department.index');
-    Route::post('/store', [DepartmentController::class, 'store'])->name('department.store');
-    Route::get('/edit/{id}', [DepartmentController::class, 'edit'])->name('department.edit');
-    Route::put('/update/{id}', [DepartmentController::class, 'update'])->name('department.update');
-    Route::delete('/delete/{id}', [DepartmentController::class, 'destroy'])->name('department.destroy');
-});
-
-// ------------------ Admin Only Routes (Role: admin) --------------------
-Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
-    //dashboard
+// ------------------ All Authenticated Roles --------------------
+Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // User management routes
+    Route::group(['prefix' => 'support'], function () {
+        Route::get('/', [SupportController::class, 'index'])->name('support.index');
+    });
+});
+
+// =========================================================================
+// 1. ADMIN ONLY ROUTES (Role: admin)
+// System settings, backups, user & employee management, department setup
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
+
+    // Department Setup
+    Route::group(['prefix' => 'department'], function () {
+        Route::get('/', [DepartmentController::class, 'index'])->name('department.index');
+        Route::post('/store', [DepartmentController::class, 'store'])->name('department.store');
+        Route::get('/edit/{id}', [DepartmentController::class, 'edit'])->name('department.edit');
+        Route::put('/update/{id}', [DepartmentController::class, 'update'])->name('department.update');
+        Route::delete('/delete/{id}', [DepartmentController::class, 'destroy'])->name('department.destroy');
+    });
+
+    // User Management
     Route::group(['prefix' => 'user'], function () {
         Route::get('/', [UserController::class, 'index'])->name('user.index');
         Route::post('/store', [UserController::class, 'store'])->name('user.store');
@@ -80,7 +85,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
     });
 
-    // Employee management routes
+    // Employee Management
     Route::group(['prefix' => 'employee'], function () {
         Route::get('/', [EmployeeController::class, 'index'])->name('employee.index');
         Route::post('/store', [EmployeeController::class, 'store'])->name('employee.store');
@@ -89,7 +94,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::delete('/delete/{id}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
     });
 
-    // Role & Permission management routes
+    // Role & Permission Management
     Route::group(['prefix' => 'roles'], function () {
         Route::get('/', [RolePermissionController::class, 'index'])->name('roles.index');
         Route::post('/store', [RolePermissionController::class, 'storeRole'])->name('roles.store-role');
@@ -97,7 +102,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{role}/permissions', [RolePermissionController::class, 'assignPermissionsToRole'])->name('roles.assign-permissions');
     });
 
-    // System Settings routes
+    // System Settings & Backup
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
@@ -111,10 +116,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
     });
 
-    // Payment (used from billing page)
-    Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
-    Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
-
     Route::group(['prefix' => 'settings/backup'], function () {
         Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
         Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
@@ -122,69 +123,29 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
         Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
         Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
-        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
-        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
-
-        Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
-        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
     });
 });
 
-// ------------------ Pharmacist & Admin Routes (Role: admin|pharmacist) --------------------
-Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admin|pharmacist']], function () {
-    Route::get('/', [PharmacyController::class, 'index'])->name('pharmacy.index');
-    Route::get('/export', [PharmacyController::class, 'export'])->name('pharmacy.export');
-    Route::get('/export/names', [PharmacyController::class, 'exportNames'])->name('pharmacy.export.names');
-    Route::get('/export/stock-report', [PharmacyController::class, 'exportStockReport'])->name('pharmacy.export.stockReport');
-    Route::get('/expiring-detail', [PharmacyController::class, 'expiringDetail'])->name('pharmacy.expiring.detail');
-    Route::get('/data', [PharmacyController::class, 'data'])->name('pharmacy.data');
-
-
-    Route::post('/', [PharmacyController::class, 'store'])->name('pharmacy.store');
-    Route::get('/{medicine}/edit', [PharmacyController::class, 'edit'])->name('pharmacy.edit');
-    Route::put('/{medicine}', [PharmacyController::class, 'update'])->name('pharmacy.update');
-    Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
-    Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
-    Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
-
-    Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
-
-    // Sell
-    Route::get('/sell', [PharmacySaleController::class, 'index'])->name('pharmacy.sell.index');
-    Route::get('/sell/search', [PharmacySaleController::class, 'search'])->name('pharmacy.sell.search');
-    Route::get('/sell/history', [PharmacySaleController::class, 'history'])->name('pharmacy.sell.history');
-    Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
-    Route::get('/sell/{sale}/pdf', [PharmacySaleController::class, 'exportPdf'])->name('pharmacy.sell.pdf');
-
-    Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
-
-    // Prescriptions
-    Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
-    Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
-    Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
-});
-
-// ------------------ Cashier & Admin Routes (Role: admin|cashier) --------------------
-Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
-    Route::get('/', [BillingController::class, 'index'])->name('billing.index');
-    Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
-    Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');
-
-    Route::get('/{id}/edit', [BillingController::class, 'edit'])->name('billing.edit');
-    Route::put('/{id}', [BillingController::class, 'update'])->name('billing.update');
-
-    Route::post('/{id}/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
-
-    Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
-});
-
-// ------------------ Admin, Doctor, Nurse & Cashier Routes --------------------
-Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']], function () {
-    // Doctor Route
+// =========================================================================
+// 2. DOCTOR CONSULTATION ROUTES (Role: doctor)
+// Medical diagnoses and treatments reserved strictly for doctors
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:doctor']], function () {
     Route::prefix('doctor')->name('doctor.')->group(function () {
-        Route::get('/', [DoctorController::class, 'index'])->name('index');
         Route::get('/consultation/{id}', [DoctorController::class, 'edit'])->name('consultation');
         Route::put('/consultation/{id}', [DoctorController::class, 'update'])->name('update');
+    });
+});
+
+// =========================================================================
+// 3. CLINICAL STAFF ROUTES (Role: admin|doctor|nurse)
+// Patients, Medical Records, Appointments, Inpatient Rooms, Laboratory
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
+
+    // Doctor directory list
+    Route::prefix('doctor')->name('doctor.')->group(function () {
+        Route::get('/', [DoctorController::class, 'index'])->name('index');
     });
 
     // Patient Routes
@@ -195,62 +156,91 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
     Route::get('/patients/{id}/edit', [PatientController::class, 'edit'])->name('patients.edit');
     Route::put('/patients/{id}', [PatientController::class, 'update'])->name('patients.update');
     Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
-    // Print
     Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
 
+    // Medical Records & Vitals
+    Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
+    Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
+    Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
+    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
+    Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
 
-    // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
-    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/appointment', function () {
-            return view('form.home.home');
-        });
-        Route::get('/appointments', function () {
-            return view('form.home.home');
-        });
-        Route::get('/lab', function () {
-            return view('form.home.home');
-        });
-    });
+    // Room & Inpatient Admissions
+    Route::get('/room', [RoomController::class, 'index'])->name('room.index');
+    Route::post('/room/store', [RoomController::class, 'store'])->name('room.store');
+    Route::get('/room/edit/{id}', [RoomController::class, 'edit'])->name('room.edit');
+    Route::put('/room/update/{id}', [RoomController::class, 'update'])->name('room.update');
+    Route::delete('/room/delete/{id}', [RoomController::class, 'destroy'])->name('room.destroy');
 
-    // ------------------ Support (Authenticated Users) --------------------
-    Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
-        Route::get('/', [SupportController::class, 'index'])->name('support.index');
-    });
+    // Appointments
+    Route::get('/appointment', [AppointmentController::class, 'index'])->name('appointment.index');
+    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+    Route::post('/appointment/store', [AppointmentController::class, 'store'])->name('appointment.store');
+    Route::get('/appointment/edit/{id}', [AppointmentController::class, 'edit'])->name('appointment.edit');
+    Route::put('/appointment/update/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
+    Route::delete('/appointment/delete/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
 
-    // ------------------ Medical Record Routes --------------------
-    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
-        Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
-        Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
-        Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
-        Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
-        Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
-        Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
-    });
-    // ------------------ Doctor, Nurse & Admin Routes (Role: admin|doctor|nurse) --------------------
-    Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
-        Route::get('/doctor', function () {
-            return view('form.home.home');
-        });
-        Route::get('/patient', function () {
-            return view('form.home.home');
-        });
-        Route::get('/patients', function () {
-            return view('form.home.home');
-        });
-        Route::get('/appointment', function () {
-            return view('form.home.home');
-        });
-        Route::get('/appointments', function () {
-            return view('form.home.home');
-        });
-        Route::get('/lab', function () {
-            return view('form.home.home');
-        });
-    });
+    // Laboratory & Test Orders
+    Route::get('/lab', [LabController::class, 'index'])->name('lab.index');
+    Route::post('/lab/orders/store', [LabController::class, 'storeOrder'])->name('lab.orders.store');
+    Route::post('/lab/orders/{id}/results', [LabController::class, 'storeResults'])->name('lab.results.store');
+    Route::post('/lab/tests/store', [LabController::class, 'storeTest'])->name('lab.tests.store');
+    Route::put('/lab/tests/update/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
+    Route::delete('/lab/tests/delete/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
+});
 
-    // ------------------ Support (Authenticated Users) --------------------
-    Route::group(['prefix' => 'support', 'middleware' => ['auth', '2fa']], function () {
-        Route::get('/', [SupportController::class, 'index'])->name('support.index');
-    });
+// =========================================================================
+// 4. PHARMACY STAFF ROUTES (Role: admin|pharmacist)
+// Medicines, stock batches, supplier management, prescription dispensing
+// =========================================================================
+Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admin|pharmacist']], function () {
+    Route::get('/', [PharmacyController::class, 'index'])->name('pharmacy.index');
+    Route::get('/export', [PharmacyController::class, 'export'])->name('pharmacy.export');
+    Route::get('/export/names', [PharmacyController::class, 'exportNames'])->name('pharmacy.export.names');
+    Route::get('/export/stock-report', [PharmacyController::class, 'exportStockReport'])->name('pharmacy.export.stockReport');
+    Route::get('/expiring-detail', [PharmacyController::class, 'expiringDetail'])->name('pharmacy.expiring.detail');
+    Route::get('/data', [PharmacyController::class, 'data'])->name('pharmacy.data');
+
+    Route::post('/', [PharmacyController::class, 'store'])->name('pharmacy.store');
+    Route::get('/{medicine}/edit', [PharmacyController::class, 'edit'])->name('pharmacy.edit');
+    Route::put('/{medicine}', [PharmacyController::class, 'update'])->name('pharmacy.update');
+    Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
+    Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
+    Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
+
+    Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
+
+    // Pharmacy Point-of-Sale / Direct Sales
+    Route::get('/sell', [PharmacySaleController::class, 'index'])->name('pharmacy.sell.index');
+    Route::get('/sell/search', [PharmacySaleController::class, 'search'])->name('pharmacy.sell.search');
+    Route::get('/sell/history', [PharmacySaleController::class, 'history'])->name('pharmacy.sell.history');
+    Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
+    Route::get('/sell/{sale}/pdf', [PharmacySaleController::class, 'exportPdf'])->name('pharmacy.sell.pdf');
+
+    Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
+
+    // Prescription Dispensing
+    Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
+    Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
+    Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
+});
+
+// =========================================================================
+// 5. CASHIER ROUTES (Role: cashier)
+// Billing management, payment collection, KHQR, receipts
+// =========================================================================
+Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:cashier']], function () {
+    Route::get('/', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
+    Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');
+    Route::get('/{id}/edit', [BillingController::class, 'edit'])->name('billing.edit');
+    Route::put('/{id}', [BillingController::class, 'update'])->name('billing.update');
+    Route::post('/{id}/cancel', [BillingController::class, 'cancel'])->name('billing.cancel');
+    Route::post('/{id}/pay', [BillingController::class, 'processPayment'])->name('billing.pay');
+
+    // KHQR & Payment status
+    Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
+    Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
 });

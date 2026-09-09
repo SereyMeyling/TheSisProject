@@ -29,6 +29,8 @@ class RoleAndPermissionSeeder extends Seeder
                 'delete-users',
                 'manage-roles',
                 'reset-2fa',
+                'manage-system-settings',
+                'manage-backups',
             ],
             'Employee Management' => [
                 'view-employees',
@@ -36,37 +38,49 @@ class RoleAndPermissionSeeder extends Seeder
                 'edit-employees',
                 'delete-employees',
             ],
-            'Patient Management' => [
+            'Hospital Setup' => [
+                'manage-departments',
+                'manage-rooms',
+            ],
+            'Patient & Medical Records' => [
                 'view-patients',
                 'create-patients',
                 'edit-patients',
                 'delete-patients',
+                'view-medical-records',
+                'create-medical-records',
+                'edit-medical-records',
+                'enter-diagnoses',
+                'record-vitals',
             ],
-            'Doctor Management' => [
+            'Clinical & Prescriptions' => [
                 'view-doctors',
-                'create-doctors',
-                'edit-doctors',
-                'delete-doctors',
+                'create-consultations',
+                'write-prescriptions',
+                'create-lab-orders',
+                'view-lab-results',
+                'manage-lab-tests',
+            ],
+            'Appointments & Rooms' => [
+                'view-appointments',
+                'create-appointments',
+                'manage-inpatient-rooms',
             ],
             'Pharmacy Management' => [
                 'view-medicines',
                 'create-medicines',
                 'edit-medicines',
                 'delete-medicines',
+                'restock-medicines',
                 'dispense-medicines',
+                'view-stock-alerts',
             ],
             'Billing & Payments' => [
                 'view-invoices',
                 'create-invoices',
                 'process-payments',
                 'cancel-invoices',
-
-            ],
-            'Lab & Appointments' => [
-                'view-appointments',
-                'create-appointments',
-                'view-lab-results',
-                'create-lab-orders',
+                'print-receipts',
             ],
         ];
 
@@ -82,47 +96,78 @@ class RoleAndPermissionSeeder extends Seeder
 
         // 3. Define Roles & Permission Assignments
         $rolesWithPermissions = [
+            'admin' => [
+                'manage-users',
+                'view-users',
+                'create-users',
+                'edit-users',
+                'delete-users',
+                'manage-roles',
+                'reset-2fa',
+                'manage-system-settings',
+                'manage-backups',
+                'view-employees',
+                'create-employees',
+                'edit-employees',
+                'delete-employees',
+                'manage-departments',
+                'manage-rooms',
+                'view-patients',
+                'view-doctors',
+                'view-appointments',
+                'view-lab-results',
+                'view-medicines',
+                'view-invoices',
+            ],
             'doctor' => [
                 'view-patients',
+                'create-patients',
                 'edit-patients',
+                'view-medical-records',
+                'create-medical-records',
+                'edit-medical-records',
+                'enter-diagnoses',
+                'record-vitals',
                 'view-doctors',
-                'edit-doctors',
-                'view-medicines',
+                'create-consultations',
+                'write-prescriptions',
+                'create-lab-orders',
+                'view-lab-results',
                 'view-appointments',
                 'create-appointments',
-                'view-lab-results',
-                'create-lab-orders',
+                'manage-inpatient-rooms',
             ],
             'nurse' => [
                 'view-patients',
                 'create-patients',
                 'edit-patients',
+                'view-medical-records',
+                'record-vitals',
                 'view-doctors',
                 'view-appointments',
                 'create-appointments',
                 'view-lab-results',
+                'manage-inpatient-rooms',
             ],
             'pharmacist' => [
-                'view-patients',
                 'view-medicines',
                 'create-medicines',
                 'edit-medicines',
                 'delete-medicines',
+                'restock-medicines',
                 'dispense-medicines',
+                'view-stock-alerts',
             ],
             'cashier' => [
-                'view-patients',
                 'view-invoices',
                 'create-invoices',
-                'process-payments', 
+                'process-payments',
+                'cancel-invoices',
+                'print-receipts',
             ],
         ];
 
-        // Create 'admin' role and assign ALL permissions
-        $adminRole = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
-        $adminRole->syncPermissions(Permission::all());
-
-        // Create other roles and sync their respective permissions
+        // Create or update each role and sync permissions
         foreach ($rolesWithPermissions as $roleName => $permissions) {
             $role = Role::firstOrCreate(['name' => $roleName, 'guard_name' => 'web']);
             $role->syncPermissions($permissions);
