@@ -45,13 +45,7 @@ class PharmacySaleController extends Controller
     }
     public function store(Request $request)
     {
-        $employeeId = Auth::user()->employee_id;
-
-        if (!$employeeId) {
-            return response()->json([
-                'message' => 'គណនីរបស់អ្នកមិនទាន់ភ្ជាប់ជាមួយបុគ្គលិកទេ សូមទាក់ទងអ្នកគ្រប់គ្រង',
-            ], 422);
-        }
+        $employeeId = Auth::user()->employee_id ?? null;
 
         $data = $request->validate([
             'patient_id' => 'nullable|exists:patients,patient_id',
@@ -63,7 +57,7 @@ class PharmacySaleController extends Controller
         $sale = DB::transaction(function () use ($data, $employeeId) {
             $sale = Sale::create([
                 'patient_id' => $data['patient_id'] ?? null,
-                'employee_id' => $employeeId,
+                'employee_id' => $employeeId, // now nullable, no longer blocks the sale
                 'sale_date' => now(),
                 'total_amount' => 0,
                 'status' => 'COMPLETED',
@@ -87,25 +81,6 @@ class PharmacySaleController extends Controller
             'pdf_url' => route('pharmacy.sell.pdf', $sale->sale_id),
         ]);
     }
-    public function search(Request $request)
-    {
-        $term = $request->get('q', '');
-
-        $medicines = Medicine::where('is_active', true)
-            ->where('medicine_name', 'like', "%{$term}%")
-            ->select('medicine_id', 'medicine_name', 'strength', 'selling_price', 'unit')
-            ->selectSub(
-                MedicineBatch::selectRaw('COALESCE(SUM(remaining_quantity), 0)')
-                    ->whereColumn('medicine_batches.medicine_id', 'medicines.medicine_id'),
-                'stock_total'
-            )
-            ->having('stock_total', '>', 0)
-            ->limit(20)
-            ->get();
-
-        return response()->json($medicines);
-    }
-
 
     protected function sellOneMedicine(Sale $sale, int $medicineId, int $quantity): float
     {
@@ -174,5 +149,37 @@ class PharmacySaleController extends Controller
             );
 
         return $pdf->stream('prescription_' . $sale->sale_id . '.pdf');
+    }
+    public function search(Request $request)
+    {
+        $term = $request->get('q', '');
+
+        $medicines = Medicine::where('is_active', true)
+            ->where('medicine_name', 'like', "%{$term}%")
+            ->select('medicine_id', 'medicine_name', 'strength', 'selling_price', 'unit')
+            ->selectSub(
+                MedicineBatch::selectRaw('COALESCE(SUM(remaining_quantity), 0)')
+                    ->whereColumn('medicine_batches.medicine_id', 'medicines.medicine_id'),
+                'stock_total'
+            )
+            ->having('stock_total', '>', 0)
+            ->limit(20)
+            ->get();
+
+        return response()->json($medicines);
+    }
+
+    public function searchPatients(Request $request)
+    {
+        $term = $request->get('q', '');
+
+        $patients = \App\Models\Patient::query()
+            ->when($term, fn($q) => $q->where('full_name', 'like', "%{$term}%")
+                ->orWhere('patient_code', 'like', "%{$term}%"))
+            ->select('patient_id', 'patient_code', 'full_name')
+            ->limit(50)
+            ->get();
+
+        return response()->json($patients);
     }
 }

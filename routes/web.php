@@ -8,7 +8,9 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\Pharmacy\PrescriptionController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\Room\RoomController;
 use App\Http\Controllers\Settings\BackupController;
 use App\Http\Controllers\Settings\GeneralSettingsController;
 use App\Http\Controllers\Settings\SettingsController;
@@ -22,7 +24,6 @@ use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\MedicalRecord\MedicalRecordController;
 use App\Http\Controllers\Doctor\DoctorController;
 use App\Http\Controllers\Appointment\AppointmentController;
-use App\Http\Controllers\Room\RoomController;
 use App\Http\Controllers\Laboratory\LabController;
 
 /*

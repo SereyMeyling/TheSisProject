@@ -89,6 +89,17 @@ html {
 .btn-primary {
     background-color: var(--primary-color) !important;
 }
+.btn-outline-primary {
+    border-color: var(--primary-color) !important;
+    color: var(--primary-color) !important;
+}
+.btn-outline-primary:hover {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+}
+.bg-primary{
+    background-color: var(--primary-color) !important;
+}
 
 .modal-green .modal-header {
     background-color: var(--primary-color);
@@ -187,3 +198,21 @@ body.sidebar-mini.sidebar-collapse .nav-sidebar .nav-icon {
 .toast-custom.info { background: #17a2b8; }
 
 
+/* button ... */
+.action-icons .dropdown .btn {
+    border: none;
+    background: transparent;
+    padding: 5px 10px;
+}
+
+.action-icons .dropdown .btn:hover {
+    background-color: #f1f1f1;
+}
+
+.action-icons .dropdown-menu {
+    min-width: 130px;
+}
+
+.action-icons .dropdown-item {
+    cursor: pointer;
+}

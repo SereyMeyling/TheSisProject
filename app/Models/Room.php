@@ -9,7 +9,6 @@ class Room extends Model
 {
     use HasFactory;
 
-    protected $table = 'rooms';
     protected $primaryKey = 'room_id';
 
     protected $fillable = [
@@ -23,11 +22,37 @@ class Room extends Model
         'price_per_day' => 'decimal:2',
     ];
 
-    /**
-     * Relationship to Admissions
-     */
-    public function admissions()
+
+    public function getRouteKeyName()
     {
-        return $this->hasMany(Admission::class, 'room_id', 'room_id');
+        return 'room_id';
+    }
+    public static function typeLabels(): array
+    {
+        return [
+            'general' => 'ទូទៅ',
+            'private' => 'ឯកជន',
+            'icu' => 'ICU',
+            'isolation' => 'គ្រែឯកោ',
+        ];
+    }
+
+    public static function statusLabels(): array
+    {
+        return [
+            'available' => 'ទំនេរ',
+            'occupied' => 'បានប្រើប្រាស់',
+            'maintenance' => 'ថែទាំ',
+        ];
+    }
+
+    public function getTypeLabelAttribute(): string
+    {
+        return self::typeLabels()[$this->room_type] ?? $this->room_type;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::statusLabels()[$this->status] ?? $this->status;
     }
 }

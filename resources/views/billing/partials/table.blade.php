@@ -24,8 +24,9 @@
                 </td>
                 <td>
                     @if ($inv->admission_id)
-                        <span class="badge badge-purple px-2 py-1" style="background: #eedefc; color: #6b21a8; border-radius: 8px;" title="{{ optional($inv->admission->room)->room_number ? 'បន្ទប់ ' . $inv->admission->room->room_number : '' }}">
-                            <i class="fas fa-bed mr-1"></i>IPD (បន្ទប់ {{ optional($inv->admission->room)->room_number ?? '—' }})
+                        <span class="badge badge-purple px-2 py-1"
+                            title="{{ optional($inv->admission->room)->room_number ? 'Room ' . $inv->admission->room->room_number : '' }}">
+                            <i class="fas fa-bed mr-1"></i>IPD
                         </span>
                     @else
                         <span class="badge badge-secondary px-2 py-1" style="background: #f1f5f9; color: #475569; border-radius: 8px;"><i class="fas fa-walking mr-1"></i>OPD</span>
@@ -36,6 +37,19 @@
                 <td class="font-weight-bold {{ $inv->balance > 0 ? 'text-danger' : 'text-muted' }}">${{ number_format($inv->balance, 2) }}</td>
                 <td>
                     @if ($inv->status === 'paid')
+<<<<<<< HEAD
+                        <span class="badge badge-status badge-status-paid px-2 py-1"><i
+                                class="fas fa-check-circle mr-1"></i>បានទូទាត់រួច (Paid)</span>
+                    @elseif ($inv->status === 'partial')
+                        <span class="badge badge-status badge-status-partial px-2 py-1"><i class="fas fa-clock mr-1"></i>បង់ខ្លះ
+                            (Partial)</span>
+                    @elseif ($inv->status === 'cancelled')
+                        <span class="badge badge-status badge-status-cancelled px-2 py-1"><i
+                                class="fas fa-ban mr-1"></i>បានលុបចោល (Cancelled)</span>
+                    @else
+                        <span class="badge badge-status badge-status-unpaid px-2 py-1"><i
+                                class="fas fa-times-circle mr-1"></i>មិនទាន់បង់ (Unpaid)</span>
+=======
                         <span class="badge badge-success px-2 py-1" style="border-radius: 8px;"><i class="fas fa-check-circle mr-1"></i>បានទូទាត់រួច</span>
                     @elseif ($inv->status === 'partial')
                         <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 8px;"><i class="fas fa-clock mr-1"></i>បង់ខ្លះ</span>
@@ -43,70 +57,72 @@
                         <span class="badge badge-secondary px-2 py-1" style="border-radius: 8px;"><i class="fas fa-ban mr-1"></i>បានលុបចោល</span>
                     @else
                         <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;"><i class="fas fa-times-circle mr-1"></i>មិនទាន់បង់</span>
+>>>>>>> origin/vannaTask
                     @endif
                 </td>
                 <td class="text-muted small">
                     <i class="far fa-calendar-alt mr-1"></i>{{ $inv->created_at ? $inv->created_at->format('d/m/Y H:i') : '—' }}
                 </td>
                 <td>
-                    <div class="d-flex justify-content-end align-items-center" style="gap: 4px;">
-                        {{-- Pay Now Button --}}
+                    <div class="action-icons justify-content-center">
+
+                        {{-- Pay Now --}}
                         @if ($inv->status !== 'paid' && $inv->status !== 'cancelled')
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-success btn-pay-now"
-                                data-id="{{ $inv->id }}"
-                                data-number="{{ $inv->invoice_number }}"
-                                data-patient="{{ $inv->patient_name }}"
-                                data-total="{{ $inv->total_amount }}"
-                                data-paid="{{ $inv->paid_amount }}"
-                                data-balance="{{ $inv->balance }}"
-                                data-toggle="tooltip"
-                                title="ទូទាត់ប្រាក់"
-                                style="border-radius: 8px;"
-                            >
-                                <i class="fas fa-dollar-sign mr-1"></i> បង់ប្រាក់
+                            <button type="button" class="btn btn-icon btn-outline-success btn-pay-now" data-id="{{ $inv->id }}"
+                                data-number="{{ $inv->invoice_number }}" data-patient="{{ $inv->patient_name }}"
+                                data-total="{{ $inv->total_amount }}" data-paid="{{ $inv->paid_amount }}"
+                                data-balance="{{ $inv->balance }}" data-toggle="tooltip" title="ទូទាត់ប្រាក់ (Pay Now)">
+                                <i class="fas fa-dollar-sign"></i>
                             </button>
                         @endif
 
-                        {{-- View Detail Button --}}
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-info btn-view-detail"
-                            data-id="{{ $inv->id }}"
-                            data-toggle="tooltip"
-                            title="មើលព័ត៌មានលម្អិត"
-                            style="border-radius: 8px;"
-                        >
-                            <i class="fas fa-list-alt"></i>
-                        </button>
-
-                        {{-- View / Print Receipt Button --}}
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-secondary btn-view-receipt"
-                            data-id="{{ $inv->id }}"
-                            data-toggle="tooltip"
-                            title="មើល / បោះពុម្ពវិក្កយបត្រ"
-                            style="border-radius: 8px;"
-                        >
-                            <i class="fas fa-print"></i>
-                        </button>
-
-                        {{-- Cancel Button: only when unpaid, and only for admins / cashiers --}}
-                        @if ($inv->status === 'unpaid' && (auth()->user()->hasRole('admin') || auth()->user()->can('cancel-invoices')))
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-danger btn-cancel-invoice"
-                                data-id="{{ $inv->id }}"
-                                data-number="{{ $inv->invoice_number }}"
-                                data-toggle="tooltip"
-                                title="លុបចោលវិក្កយបត្រ"
-                                style="border-radius: 8px;"
-                            >
-                                <i class="fas fa-ban"></i>
+                        {{-- Three dots --}}
+                        <div class="dropdown">
+                            <button type="button" class="btn btn-icon btn-outline-secondary" data-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false" title="សកម្មភាពបន្ថែម">
+                                <i class="fas fa-ellipsis-h"></i>
                             </button>
-                        @endif
+
+                            <div class="dropdown-menu dropdown-menu-right">
+
+                                {{-- View Detail --}}
+                                <button type="button" class="dropdown-item btn-view-detail" data-id="{{ $inv->id }}">
+                                    <i class="fas fa-list-alt text-info mr-2"></i>
+                                    មើលព័ត៌មានលម្អិត
+                                </button>
+
+                                {{-- View / Print Receipt --}}
+                                <button type="button" class="dropdown-item btn-view-receipt" data-id="{{ $inv->id }}">
+                                    <i class="fas fa-print text-secondary mr-2"></i>
+                                    មើល / បោះពុម្ពវិក្កយបត្រ
+                                </button>
+
+                                {{-- Edit --}}
+                                @if (
+                                        $inv->status === 'unpaid' &&
+                                        (auth()->user()->hasRole('admin') || auth()->user()->can('edit-invoices'))
+                                    )
+                                    <button type="button" class="dropdown-item btn-edit-invoice" data-id="{{ $inv->id }}">
+                                        <i class="fas fa-pen text-warning mr-2"></i>
+                                        កែប្រែវិក្កយបត្រ
+                                    </button>
+                                @endif
+
+                                {{-- Cancel --}}
+                                @if (
+                                        $inv->status === 'unpaid' &&
+                                        (auth()->user()->hasRole('admin') || auth()->user()->can('cancel-invoices'))
+                                    )
+                                    <button type="button" class="dropdown-item btn-cancel-invoice" data-id="{{ $inv->id }}"
+                                        data-number="{{ $inv->invoice_number }}">
+                                        <i class="fas fa-ban text-danger mr-2"></i>
+                                        លុបចោលវិក្កយបត្រ
+                                    </button>
+                                @endif
+
+                            </div>
+                        </div>
+
                     </div>
                 </td>
             </tr>

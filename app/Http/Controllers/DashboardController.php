@@ -56,7 +56,7 @@ class DashboardController extends Controller
         $totalUsers = User::count();
         $totalEmployees = Employee::count();
         $totalMedicines = Medicine::count();
-        
+
         $todayInvoiceRev = InvoicePayment::whereDate('paid_at', today())->sum('amount');
         $todaySaleRev = Sale::whereDate('created_at', today())->sum('total_amount');
         $todayRevenue = $todayInvoiceRev + $todaySaleRev;

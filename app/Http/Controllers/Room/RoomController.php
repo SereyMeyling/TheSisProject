@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Room;
 use App\Http\Controllers\Controller;
 use App\Models\Room;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class RoomController extends Controller
 {
@@ -12,140 +13,80 @@ class RoomController extends Controller
     {
         $this->middleware(['auth', '2fa', 'role:admin|doctor|nurse']);
     }
-
-    /**
-     * Display a listing of rooms with search, filters, and summary stats.
-     */
     public function index(Request $request)
-    {
-        $rooms = $this->getFilteredRooms($request);
-        $totalRooms = Room::count();
-        $availableRooms = Room::where('status', 'available')->count();
-        $occupiedRooms = Room::where('status', 'occupied')->count();
-        $maintenanceRooms = Room::where('status', 'maintenance')->count();
-
-        if ($request->ajax() || $request->wantsJson()) {
-            return response()->json([
-                'html'        => view('form.room.partials.table', compact('rooms'))->render(),
-                'total'       => $totalRooms,
-                'available'   => $availableRooms,
-                'occupied'    => $occupiedRooms,
-                'maintenance' => $maintenanceRooms,
-            ]);
-        }
-
-        return view('form.room.room', compact(
-            'rooms',
-            'totalRooms',
-            'availableRooms',
-            'occupiedRooms',
-            'maintenanceRooms'
-        ));
-    }
-
-    /**
-     * Filter query for rooms.
-     */
-    protected function getFilteredRooms(Request $request)
     {
         $query = Room::query();
 
-        if ($request->filled('search')) {
-            $searchTerm = '%' . $request->search . '%';
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('room_number', 'LIKE', $searchTerm)
-                    ->orWhere('room_type', 'LIKE', $searchTerm)
-                    ->orWhere('price_per_day', 'LIKE', $searchTerm);
-            });
+        if ($search = $request->input('search')) {
+            $query->where('room_number', 'like', "%{$search}%");
+        }
+        if ($type = $request->input('room_type')) {
+            $query->where('room_type', $type);
+        }
+        if ($status = $request->input('status')) {
+            $query->where('status', $status);
         }
 
-        if ($request->filled('room_type')) {
-            $query->where('room_type', $request->room_type);
+        $rooms = $query->orderBy('room_number')->paginate(10)->withQueryString();
+
+        $stats = [
+            'total' => Room::count(),
+            'available' => Room::where('status', 'available')->count(),
+            'occupied' => Room::where('status', 'occupied')->count(),
+            'maintenance' => Room::where('status', 'maintenance')->count(),
+        ];
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('form.room.partials.table', compact('rooms'))->render(),
+                'stats' => $stats,
+            ]);
         }
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        $query->orderBy('room_id', 'asc');
-
-        return $query->paginate(10)->appends($request->query());
+        return view('form.room.index', compact('rooms', 'stats'));
     }
 
-    /**
-     * Store a newly created room in storage.
-     */
     public function store(Request $request)
     {
-        $request->validate([
-            'room_number'   => 'required|string|max:20|unique:rooms,room_number',
-            'room_type'     => 'required|in:general,private,icu,isolation',
-            'status'        => 'required|in:available,occupied,maintenance',
+        $validated = $request->validate([
+            'room_number' => 'required|string|max:20|unique:rooms,room_number',
+            'room_type' => ['required', Rule::in(['general', 'private', 'icu', 'isolation'])],
+            'status' => ['required', Rule::in(['available', 'occupied', 'maintenance'])],
             'price_per_day' => 'required|numeric|min:0',
         ]);
 
-        Room::create([
-            'room_number'   => $request->room_number,
-            'room_type'     => $request->room_type,
-            'status'        => $request->status,
-            'price_per_day' => $request->price_per_day,
-        ]);
+        Room::create($validated);
 
-        return redirect()->back()->with(['success' => 'បន្ទប់ត្រូវបានបង្កើតដោយជោគជ័យ (Room created successfully)']);
-    }
-
-    /**
-     * Show the form for editing the specified room (returns JSON).
-     */
-    public function edit($id)
-    {
-        $room = Room::find($id);
-        if (!$room) {
-            return response()->json(['error' => 'រកមិនឃើញបន្ទប់ទេ'], 404);
+        if ($request->ajax()) {
+            return response()->json(['message' => 'បន្ទប់ត្រូវបានបង្កើតដោយជោគជ័យ']);
         }
-
-        return response()->json($room);
+        return redirect()->route('room.index')->with('success', 'បន្ទប់ត្រូវបានបង្កើតដោយជោគជ័យ');
     }
-
-    /**
-     * Update the specified room in storage.
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, Room $room)
     {
-        $room = Room::find($id);
-        if (!$room) {
-            return redirect()->back()->with(['error' => 'រកមិនឃើញបន្ទប់ទេ']);
-        }
-
-        $request->validate([
-            'room_number'   => 'required|string|max:20|unique:rooms,room_number,' . $id . ',room_id',
-            'room_type'     => 'required|in:general,private,icu,isolation',
-            'status'        => 'required|in:available,occupied,maintenance',
+        $validated = $request->validate([
+            'room_number' => ['required', 'string', 'max:20', Rule::unique('rooms', 'room_number')->ignore($room->room_id, 'room_id')],
+            'room_type' => ['required', Rule::in(['general', 'private', 'icu', 'isolation'])],
+            'status' => ['required', Rule::in(['available', 'occupied', 'maintenance'])],
             'price_per_day' => 'required|numeric|min:0',
         ]);
 
-        $room->update([
-            'room_number'   => $request->room_number,
-            'room_type'     => $request->room_type,
-            'status'        => $request->status,
-            'price_per_day' => $request->price_per_day,
-        ]);
+        $room->update($validated);
 
-        return redirect()->back()->with(['success' => 'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ (Room updated successfully)']);
+        if ($request->ajax()) {
+            return response()->json(['message' => 'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ']);
+        }
+        return redirect()->route('room.index')->with('success', 'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ');
     }
 
-    /**
-     * Remove the specified room from storage.
-     */
-    public function destroy($id)
+    public function destroy(Room $room)
     {
-        $room = Room::find($id);
-        if (!$room) {
-            return redirect()->back()->with(['error' => 'រកមិនឃើញបន្ទប់ទេ']);
-        }
-
         $room->delete();
 
-        return redirect()->back()->with(['success' => 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ (Room deleted successfully)']);
+        if (request()->ajax()) {
+            return response()->json(['message' => 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ']);
+        }
+        return redirect()->route('room.index')->with('success', 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ');
     }
+
 }

@@ -31,42 +31,62 @@
                         <span class="badge badge-secondary">មិនទាន់កំណត់</span>
                     @endif
                 </td>
-                <td>
-                    <div class="action-icons">
-                        {{-- Edit Role --}}
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-outline-primary btn-edit-role"
-                            data-toggle="modal"
-                            data-target="#modalUpdateRole"
-                            data-id="{{ $u->id }}"
-                            data-name="{{ $u->name }}"
-                            data-role="{{ $u->roles->first()->name ?? '' }}"
-                            title="កំណត់តួនាទី"
-                        >
-                            <i class="fas fa-user-tag"></i> តួនាទី
-                        </button>
+             <td>
+    <div class="dropdown">
+        <button
+            type="button"
+            class="btn btn-sm btn-light"
+            data-toggle="dropdown"
+            aria-haspopup="true"
+            aria-expanded="false"
+            title="សកម្មភាព"
+        >
+            <i class="fas fa-ellipsis-h"></i>
+        </button>
 
-                        {{-- Reset 2FA --}}
-                        @if ($u->google2fa_secret)
-                            <button
-                                type="button"
-                                class="btn btn-sm btn-outline-warning btn-reset-2fa"
-                                data-toggle="modal"
-                                data-target="#modalReset2FA"
-                                data-id="{{ $u->id }}"
-                                data-name="{{ $u->name }}"
-                                title="Reset 2FA"
-                            >
-                                <i class="fas fa-shield-alt"></i> Reset 2FA
-                            </button>
-                        @else
-                            <button type="button" class="btn btn-sm btn-outline-warning" disabled title="គ្មាន 2FA ត្រូវកំណត់ឡើងវិញទេ">
-                                <i class="fas fa-shield-alt"></i> Reset 2FA
-                            </button>
-                        @endif
-                    </div>
-                </td>
+        <div class="dropdown-menu dropdown-menu-right">
+
+            {{-- Edit Role --}}
+            <button
+                type="button"
+                class="dropdown-item btn-edit-role"
+                data-toggle="modal"
+                data-target="#modalUpdateRole"
+                data-id="{{ $u->id }}"
+                data-name="{{ $u->name }}"
+                data-role="{{ $u->roles->first()->name ?? '' }}"
+            >
+                <i class="fas fa-user-tag mr-2 text-primary"></i>
+                កំណត់តួនាទី
+            </button>
+
+            {{-- Reset 2FA --}}
+            @if ($u->google2fa_secret)
+                <button
+                    type="button"
+                    class="dropdown-item btn-reset-2fa"
+                    data-toggle="modal"
+                    data-target="#modalReset2FA"
+                    data-id="{{ $u->id }}"
+                    data-name="{{ $u->name }}"
+                >
+                    <i class="fas fa-shield-alt mr-2 text-warning"></i>
+                    Reset 2FA
+                </button>
+            @else
+                <button
+                    type="button"
+                    class="dropdown-item text-muted"
+                    disabled
+                >
+                    <i class="fas fa-shield-alt mr-2"></i>
+                    Reset 2FA
+                </button>
+            @endif
+
+        </div>
+    </div>
+</td>
             </tr>
         @empty
             <tr>
