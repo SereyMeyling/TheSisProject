@@ -317,6 +317,12 @@ return [
             'icon' => 'fas fa-sitemap',
         ],
         [
+            'text' => 'គ្រប់គ្រងបុគ្គលិក',
+            'url' => 'employee',
+            'icon' => 'fas fa-id-card',
+            'role' => 'admin',
+        ],
+        [
             'text' => 'វេជ្ជបណ្ឌិត',
             'url' => 'doctor',
             'icon' => 'fas fa-user-md',
@@ -330,7 +336,6 @@ return [
         ],
         [
             'text' => 'ឱសថស្ថាន',
-            'url' => 'pharmacy',
             'icon' => 'fas fa-pills',
         ],
         [
@@ -369,6 +374,12 @@ return [
             'url' => 'appointment',
             'icon' => 'fas fa-calendar-check',
             'role' => ['admin', 'doctor', 'nurse'],
+        ],
+        [
+            'text' => 'មន្ទីរពិសោធន៍',
+            'url' => 'lab',
+            'icon' => 'fas fa-vials',
+            'role' => ['admin', 'doctor', 'nurse', 'lab_technician'],
         ],
         [
             'text' => 'ការកំណត់ប្រព័ន្ធ',

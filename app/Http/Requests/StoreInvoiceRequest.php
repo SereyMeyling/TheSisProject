@@ -23,7 +23,7 @@ class StoreInvoiceRequest extends FormRequest
             'admission_id'        => ['nullable', 'exists:admissions,admission_id'],
 
             'items'               => ['required', 'array', 'min:1'],
-            'items.*.item_type'   => ['required', 'string', 'in:consultation,prescription,lab_test,room,other'],
+            'items.*.item_type'   => ['required', 'string', 'in:consultation,prescription,lab_test,room,service,medicine,lab,other'],
             'items.*.description' => ['required', 'string', 'max:255'],
             'items.*.qty'         => ['required', 'integer', 'min:1'],
             'items.*.unit_price'  => ['required', 'numeric', 'min:0'],

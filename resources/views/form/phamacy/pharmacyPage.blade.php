@@ -1,6 +1,6 @@
 @extends('adminlte::page')
 
-@section('title', 'Pharmacy - Stock')
+@section('title', 'គ្រប់គ្រងឱសថស្ថាន & ការលក់ (Pharmacy & POS)')
 
 @section('content')
 
@@ -28,188 +28,215 @@
         <ul class="nav nav-tabs" id="pharmacyTab" role="tablist">
             <li class="nav-item">
                 <a class="nav-link active" id="stock-tab" data-toggle="tab" href="#stockPane" role="tab">
-                    <i class="fas fa-boxes"></i>
-                    ស្តុក
+                    <i class="fas fa-boxes"></i> ស្តុកថ្នាំ (Medicine Stock)
                 </a>
             </li>
             <li class="nav-item">
                 <a class="nav-link" id="sell-tab" data-toggle="tab" href="#sellPane" role="tab">
-                    <i class="fas fa-cash-register"></i>
-                    លក់ថ្នាំ
+                    <i class="fas fa-cash-register"></i> លក់ថ្នាំ (Point of Sale)
                 </a>
             </li>
         </ul>
     </div>
 
-    <div class="card-body">
-        <div class="tab-content">
+    <div class="tab-content">
+        {{-- ================= STOCK TAB ================= --}}
+        <div class="tab-pane fade show active" id="stockPane" role="tabpanel">
 
-            {{-- ================= STOCK TAB ================= --}}
-            <div class="tab-pane fade show active" id="stockPane" role="tabpanel">
-
-                <div class="row mb-4">
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stat-card stat-card-filter" data-filter="">
-                            <div class="icon bg-success-light"><i class="fas fa-pills"></i></div>
-                            <div>
-                                <small>ថ្នាំសរុប</small>
-                                <h3 id="statTotalMedicine">{{ number_format($stats['totalMedicine']) }}</h3>
-                                <a href="{{ route('pharmacy.export.names') }}" class="stat-card-link"
-                                    onclick="event.stopPropagation()">
-                                    <i class="fas fa-file-excel"></i> ទាញយកឈ្មោះថ្នាំ
-                                </a>
-                            </div>
+            {{-- Stat Cards Grid --}}
+            <div class="row mb-4">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card stat-card-filter" data-filter="">
+                        <div class="icon-box bg-purple-gradient">
+                            <i class="fas fa-pills"></i>
                         </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stat-card stat-card-filter" data-filter="">
-                            <div class="icon bg-blue-light"><i class="fas fa-boxes"></i></div>
-                            <div>
-                                <small>តម្លៃស្តុក</small>
-                                <h3 id="statStockValue">${{ number_format($stats['stockValue'], 2) }}</h3>
-                                <a href="{{ route('pharmacy.export.stockReport') }}" class="stat-card-link"
-                                    onclick="event.stopPropagation()">
-                                    <i class="fas fa-file-excel"></i> ទាញយករបាយការណ៍ស្តុក
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stat-card stat-card-filter" data-filter="low_stock">
-                            <div class="icon bg-warning-light"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div>
-                                <small>ស្តុកជិតអស់</small>
-                                <h3 id="statLowStock">{{ number_format($stats['lowStock']) }}</h3>
-                                <a href="{{ route('pharmacy.export') }}" class="stat-card-link">
-                                    <i class="fas fa-file-excel"></i>
-                                    ទាញយក ស្តុកជិតអស់
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-3 col-md-6 mb-3">
-                        <div class="stat-card stat-card-filter" data-filter="expiring">
-                            <div class="icon bg-danger-light"><i class="fas fa-calendar-times"></i></div>
-                            <div>
-                                <small>ជិតផុតកំណត់ក្នុងរយះពេល​៣០ថ្ងៃ</small>
-                                <h3 id="statExpiringSoon">{{ number_format($stats['expiringSoon']) }}</h3>
-                                <a href="#" class="stat-card-link" id="btnExpiringDetail"
-                                    onclick="event.stopPropagation()">
-                                    <i class="fas fa-list"></i> មើលលម្អិត
-                                </a>
-                            </div>
+                        <div>
+                            <small>ថ្នាំសរុប (Total Medicines)</small>
+                            <h3 id="statTotalMedicine">{{ number_format($stats['totalMedicine']) }}</h3>
+                            <a href="{{ route('pharmacy.export.names') }}" class="stat-card-link" onclick="event.stopPropagation()">
+                                <i class="fas fa-file-excel"></i> ទាញយកឈ្មោះថ្នាំ
+                            </a>
                         </div>
                     </div>
                 </div>
 
-
-
-                <div class="card">
-                    <div class="card-body">
-
-                        <div class="toolbar flex-wrap px-0">
-                            <div class="search-box">
-                                <i class="fas fa-search"></i>
-                                <input type="text" id="stockSearch" class="form-control border-0"
-                                    placeholder="ស្វែងរកថ្នាំ (ឈ្មោះ, ប្រភេទ, NDC)">
-                            </div>
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card stat-card-filter" data-filter="">
+                        <div class="icon-box bg-emerald-gradient">
+                            <i class="fas fa-coins"></i>
                         </div>
-
-                        <div class="d-flex flex-wrap gap-3 mb-3 small mt-2">
-                            <span>សម្គាល់៖</span>
-                            <span><span class="legend-dot" style="background:#ffc107"></span>ស្តុកជិតអស់ </span>
-                            <span><span class="legend-dot" style="background:#dc3545"></span>ជិតផុតកំណត់ </span>
-                            <span><span class="legend-dot" style="background:#6f42c1"></span>ស្តុកជិតអស់ + ជិតផុតកំណត់
-                            </span>
+                        <div>
+                            <small>តម្លៃស្តុកសរុប (Stock Value)</small>
+                            <h3 id="statStockValue">${{ number_format($stats['stockValue'], 2) }}</h3>
+                            <a href="{{ route('pharmacy.export.stockReport') }}" class="stat-card-link" onclick="event.stopPropagation()">
+                                <i class="fas fa-file-excel"></i> របាយការណ៍ស្តុក
+                            </a>
                         </div>
-
-                        <div id="activeFilterBar" class="d-none mb-3">
-                            <div class="d-flex flex-wrap align-items-center" style="gap:8px">
-                                <span class="small text-muted">កំពុងត្រង:</span>
-                                <div id="activeFilterChips" class="d-flex flex-wrap" style="gap:6px"></div>
-                                <button id="filterClearAll" type="button"
-                                    class="btn btn-sm btn-outline-danger py-0 px-2">
-                                    <i class="fas fa-times mr-1"></i> សម្អាតទាំងអស់
-                                </button>
-                            </div>
-                        </div>
-
-                        <div id="departmentTableContainer">
-                            @include('form.phamacy.table')
-                        </div>
-
                     </div>
                 </div>
 
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card stat-card-filter" data-filter="low_stock">
+                        <div class="icon-box bg-amber-gradient">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div>
+                            <small>ស្តុកជិតអស់ (Low Stock)</small>
+                            <h3 id="statLowStock">{{ number_format($stats['lowStock']) }}</h3>
+                            <a href="{{ route('pharmacy.export') }}" class="stat-card-link" onclick="event.stopPropagation()">
+                                <i class="fas fa-file-excel"></i> ទាញយកបញ្ជីស្តុកជិតអស់
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="stat-card stat-card-filter" data-filter="expiring">
+                        <div class="icon-box bg-rose-gradient">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div>
+                            <small>ជិតផុតកំណត់ (៣០ ថ្ងៃ)</small>
+                            <h3 id="statExpiringSoon">{{ number_format($stats['expiringSoon']) }}</h3>
+                            <a href="#" class="stat-card-link" id="btnExpiringDetail" onclick="event.stopPropagation()">
+                                <i class="fas fa-list"></i> មើលលម្អិត
+                            </a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            {{-- ================= END STOCK TAB ================= --}}
+
+            {{-- Main Stock Table Card --}}
+            <div class="card-modern">
+                <div class="card-body p-4">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 gap-3">
+                        <div class="search-box flex-grow-1 max-w-md">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="stockSearch" class="form-control" placeholder="ស្វែងរកថ្នាំ (តាមឈ្មោះ, ប្រភេទ, កូដ NDC)...">
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                            <span class="small font-weight-bold text-muted">សម្គាល់ពណ៌៖</span>
+                            <span class="legend-chip low-stock"><span class="dot"></span> ស្តុកជិតអស់</span>
+                            <span class="legend-chip expiring"><span class="dot"></span> ជិតផុតកំណត់</span>
+                            <span class="legend-chip both"><span class="dot"></span> ស្តុកជិតអស់ + ជិតផុតកំណត់</span>
+                        </div>
+                    </div>
+
+                    <div id="activeFilterBar" class="d-none mb-3">
+                        <div class="d-flex flex-wrap align-items-center" style="gap:8px">
+                            <span class="small font-weight-bold text-muted">កំពុងត្រង (Active Filter):</span>
+                            <div id="activeFilterChips" class="d-flex flex-wrap" style="gap:6px"></div>
+                            <button id="filterClearAll" type="button" class="btn btn-sm btn-outline-danger py-0 px-2 ml-auto" style="border-radius: 12px;">
+                                <i class="fas fa-times mr-1"></i> សម្អាតទាំងអស់
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="departmentTableContainer">
+                        @include('form.phamacy.table')
+                    </div>
+                </div>
+            </div>
+        </div>
+        {{-- ================= END STOCK TAB ================= --}}
 
 
-            {{-- ================= SELL TAB ================= --}}
-            <div class="tab-pane fade" id="sellPane" role="tabpanel">
+        {{-- ================= SELL TAB (POS) ================= --}}
+        <div class="tab-pane fade" id="sellPane" role="tabpanel">
+            <div class="row">
+                {{-- Left POS Form --}}
+                <div class="col-lg-7 mb-4">
+                    <div class="card-modern">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <span><i class="fas fa-cash-register text-primary mr-2"></i> ព័ត៌មានលក់ថ្នាំ (Point of Sale Checkout)</span>
+                            <span class="badge badge-light border"><i class="fas fa-user mr-1"></i> អតិថិជន/អ្នកជំងឺ</span>
+                        </div>
 
-                <div class="row">
-                    <div class="col-lg-7 mb-4">
-                        <div class="card">
-                            <div class="card-header"><strong>ព័ត៌មានលក់</strong></div>
-                            <div class="card-body">
-                                <form id="sellForm">
-                                    @csrf
-                                    <div class="alert alert-danger d-none" id="sellErrors"></div>
-                                    <div class="form-group">
-                                        <label>លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ (ទុកទទេប្រសិនបើអតិថិជនចរណ៍)</label>
-                                        <input type="text" name="patient_id" class="form-control"
-                                            placeholder="Patient ID or Code">
+                        <div class="card-body p-4">
+                            <form id="sellForm">
+                                @csrf
+                                <div class="alert alert-danger d-none" id="sellErrors" style="border-radius: 10px;"></div>
+
+                                <div class="form-group mb-4">
+                                    <label class="font-weight-bold">លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ (ទុកទទេប្រសិនបើជាអតិថិជនចរណ៍)</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-light border-right-0"><i class="fas fa-user-circle text-muted"></i></span>
+                                        </div>
+                                        <input type="text" name="patient_id" class="form-control border-left-0" placeholder="បញ្ចូល Patient ID ឬ កូដអ្នកជំងឺ (ឧ. P-0001)">
                                     </div>
-                                    <table class="table table-sm" id="sellItemsTable">
-                                        <thead>
+                                </div>
+
+                                <h6 class="font-weight-bold text-dark mb-3"><i class="fas fa-shopping-cart text-info mr-1"></i> បញ្ជីថ្នាំត្រូវលក់ (Items List)</h6>
+                                
+                                <div class="table-responsive mb-3">
+                                    <table class="table table-bordered align-middle mb-0" id="sellItemsTable">
+                                        <thead class="bg-light">
                                             <tr>
-                                                <th>ថ្នាំ</th>
-                                                <th style="width:120px">ចំនួន (គ្រាប់)</th>
-                                                <th style="width:40px"></th>
+                                                <th>ថ្នាំ (Select Medicine)</th>
+                                                <th style="width: 140px;">ចំនួន (Qty)</th>
+                                                <th style="width: 50px;" class="text-center"><i class="fas fa-trash-alt"></i></th>
                                             </tr>
                                         </thead>
                                         <tbody id="sellItemsBody">
                                             <tr>
-                                                <td><select class="form-control sell-medicine" required></select></td>
-                                                <td><input type="number" class="form-control sell-qty" min="1" required>
+                                                <td>
+                                                    <select class="form-control sell-medicine" required>
+                                                        <option value="">-- កំពុងផ្ទុកបញ្ជីថ្នាំ... --</option>
+                                                    </select>
                                                 </td>
-                                                <td><button type="button"
-                                                        class="btn btn-sm btn-outline-danger btn-remove-row">&times;</button>
+                                                <td>
+                                                    <input type="number" class="form-control sell-qty" min="1" value="1" required>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-row" style="border-radius: 6px;">&times;</button>
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
-                                    <button type="button" class="btn btn-sm btn-outline-green" id="btnAddSellRow">
-                                        <i class="fas fa-plus"></i> បន្ថែមថ្នាំ
-                                    </button>
-                                    <hr>
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <strong>សរុប: $<span id="sellTotalPreview">0.00</span></strong>
-                                        <button class="btn btn-primary" type="submit"><i
-                                                class="fas fa-cash-register"></i> លក់</button>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-primary btn-sm mb-4" id="btnAddSellRow" style="border-radius: 8px; font-weight: 600;">
+                                    <i class="fas fa-plus mr-1"></i> បន្ថែមមុខថ្នាំ (Add Item Row)
+                                </button>
+
+                                {{-- Checkout Summary Box --}}
+                                <div class="checkout-summary-box d-flex flex-wrap justify-content-between align-items-center">
+                                    <div>
+                                        <small class="text-light opacity-75 d-block">តម្លៃសរុបត្រូវទូទាត់ (Total Amount)</small>
+                                        <div class="total-price-display">$<span id="sellTotalPreview">0.00</span></div>
                                     </div>
-                                </form>
-                            </div>
+                                    <button class="btn checkout-btn" type="submit">
+                                        <i class="fas fa-cash-register mr-2"></i> បញ្ចប់ការលក់ (Complete Sale)
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                     </div>
+                </div>
 
-                    <div class="col-lg-5 mb-4">
-                        <div class="card">
-                            <div class="card-header"><strong>ការលក់ថ្មីៗ</strong></div>
-                            <div class="card-body p-0">
-                                <table class="table table-sm mb-0">
-                                    <thead>
+                {{-- Right Recent Sales History --}}
+                <div class="col-lg-5 mb-4">
+                    <div class="card-modern">
+                        <div class="card-header d-flex align-items-center justify-content-between">
+                            <span><i class="fas fa-history text-info mr-2"></i> ប្រវត្តិការលក់ថ្មីៗ (Recent Transactions)</span>
+                            <span class="badge badge-success"><i class="fas fa-check-double mr-1"></i> Live History</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table align-middle mb-0">
+                                    <thead class="bg-light">
                                         <tr>
-                                            <th>ថ្ងៃខែ</th>
+                                            <th>កាលបរិច្ឆេទ</th>
                                             <th>អតិថិជន</th>
-                                            <th class="text-right">សរុប</th>
-                                            <th class="text-center">PDF</th>
+                                            <th class="text-right">សរុប ($)</th>
+                                            <th class="text-center">វិក្កយបត្រ PDF</th>
                                         </tr>
                                     </thead>
                                     <tbody id="saleHistoryBody">
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">កំពុងផ្ទុក...</td>
+                                            <td colspan="4" class="text-center text-muted py-4">កំពុងផ្ទុកប្រវត្តិ...</td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -217,26 +244,25 @@
                         </div>
                     </div>
                 </div>
-
             </div>
             {{-- ================= END SELL TAB ================= --}}
 
         </div>
+        {{-- ================= END SELL TAB ================= --}}
     </div>
 </div>
 
 {{-- ====== Create Modal ====== --}}
 <div class="modal fade" id="modalCreate" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable modal-lg modal-mobile-fit">
-        <div class="modal-content modal-purple">
-            <div class="modal-header">
-                <h5 class="modal-title">បន្ថែមថ្មី</h5>
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close"><span>&times;</span></button>
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-plus-circle mr-2"></i> បន្ថែមថ្នាំថ្មី (Add New Medicine)</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
             </div>
             <form id="createForm">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="alert alert-danger d-none" id="createErrors"></div>
                     <div class="row">
                         <div class="form-group col-md-4">
@@ -495,32 +521,31 @@
 
 {{-- ====== Supplier Modal ====== --}}
 <div class="modal fade" id="modalSupplier" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-mobile-fit">
-        <div class="modal-content modal-purple">
-            <div class="modal-header">
-                <h5 class="modal-title">បន្ថែមអ្នកផ្គត់ផ្គង់</h5>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-truck mr-2"></i> បន្ថែម Supplier ថ្មី</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
             </div>
             <form id="supplierForm">
                 @csrf
-                <div class="modal-body">
-                    <div class="alert alert-danger d-none" id="supplierErrors"></div>
-                    <div class="form-group">
-                        <label>ឈ្មោះអ្នកផ្គត់ផ្គង់</label>
-                        <input type="text" name="name" class="form-control" required>
+                <div class="modal-body p-4">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">ឈ្មោះក្រុមហ៊ុន/អ្នកផ្គត់ផ្គង់ <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" placeholder="ឧ. Pharma Corp Co., Ltd" required>
                     </div>
-                    <div class="form-group">
-                        <label>លេខទូរស័ព្ទ</label>
-                        <input type="text" name="phone" class="form-control">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">លេខទូរស័ព្ទ</label>
+                        <input type="text" name="phone" class="form-control" placeholder="ឧ. 012 345 678">
                     </div>
-                    <div class="form-group">
-                        <label>អាសយដ្ឋាន</label>
-                        <input type="text" name="address" class="form-control">
+                    <div class="form-group mb-3">
+                        <label class="font-weight-bold">អ៊ីមែល</label>
+                        <input type="email" name="email" class="form-control" placeholder="supplier@example.com">
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-dismiss="modal">បោះបង់</button>
-                    <button class="btn btn-primary" type="submit">រក្សាទុក</button>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
+                    <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i> រក្សាទុក Supplier</button>
                 </div>
             </form>
         </div>
@@ -585,34 +610,53 @@
                 <h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <div class="modal-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-sm table-bordered mb-0">
-                        <thead class="thead-light">
-                            <tr>
-                                <th>លេខបាច់</th>
-                                <th>ថ្ងៃចូល</th>
-                                <th class="text-right">ចំនួនចូល</th>
-                                <th>ថ្ងៃផុតកំណត់</th>
-                                <th class="text-right">តម្លៃទិញ</th>
-                                <th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th>
-                                <th class="text-right">នៅសល់</th>
-                            </tr>
-                        </thead>
-                        <tbody id="detailBatchesBody"></tbody>
-                    </table>
+            <form id="restockForm">
+                @csrf
+                <input type="hidden" id="restock_medicine_id" name="medicine_id">
+                <div class="modal-body p-4">
+                    <div class="alert alert-info">
+                        <strong>ថ្នាំ៖ </strong><span id="restock_medicine_name" class="font-weight-bold"></span>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6 mb-3">
+                            <label class="font-weight-bold">លេខឡូតិ៍ថ្នាំ (Batch Number) <span class="text-danger">*</span></label>
+                            <input type="text" name="batch_number" class="form-control" placeholder="ឧ. BATCH-2026-001" required>
+                        </div>
+                        <div class="form-group col-md-6 mb-3">
+                            <label class="font-weight-bold">កាលបរិច្ឆេទផុតកំណត់ (Expiry Date) <span class="text-danger">*</span></label>
+                            <input type="date" name="expiry_date" class="form-control" required>
+                        </div>
+                        <div class="form-group col-md-6 mb-3">
+                            <label class="font-weight-bold">ចំនួនបញ្ចូល (Quantity) <span class="text-danger">*</span></label>
+                            <input type="number" min="1" name="quantity_initial" class="form-control" placeholder="ឧ. 100" required>
+                        </div>
+                        <div class="form-group col-md-6 mb-3">
+                            <label class="font-weight-bold">តម្លៃទិញចូល ($ Purchase Price)</label>
+                            <input type="number" step="0.01" min="0" name="purchase_price" class="form-control" placeholder="ឧ. 0.30">
+                        </div>
+                        <div class="form-group col-md-12 mb-3">
+                            <label class="font-weight-bold">អ្នកផ្គត់ផ្គង់ (Supplier)</label>
+                            <select name="supplier_id" class="form-control">
+                                <option value="">-- ជ្រើសរើស Supplier --</option>
+                                @foreach ($suppliers as $sup)
+                                    <option value="{{ $sup->supplier_id }}">{{ $sup->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button>
-            </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
+                    <button type="submit" class="btn btn-info"><i class="fas fa-download mr-1"></i> បញ្ចូលស្តុក</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
 
 @stop
 
-@section('css')
+@push('css')
 <style>
     .page-title {
         font-weight: 700;
@@ -733,38 +777,24 @@
         text-align: center !important;
         margin-top: 12px;
     }
-
     .dataTables_wrapper .pagination {
         justify-content: center;
     }
-
     .dataTables_wrapper .pagination .page-link {
         border-radius: 8px !important;
         margin: 0 3px !important;
-        color: #198754 !important;
+        color: #4f46e5 !important;
         border: 1px solid transparent !important;
     }
-
     .dataTables_wrapper .pagination .page-item.active .page-link {
-        background: #198754 !important;
-        border-color: #198754 !important;
+        background: #4f46e5 !important;
+        border-color: #4f46e5 !important;
         color: #fff !important;
-    }
-
-    .dataTables_wrapper .pagination .page-link:hover {
-        background: #e9f5ee !important;
-        color: #198754 !important;
-        border-color: transparent !important;
-    }
-
-    .dataTables_wrapper .pagination .page-item.disabled .page-link {
-        color: #aaa !important;
-        background: transparent !important;
     }
 </style>
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css">
 <link rel="stylesheet" href="{{ asset('css/pharmacy.css') }}">
-@stop
+@endpush
 
 @section('js')
 <script>
@@ -789,20 +819,17 @@
     };
 
     $(function () {
-
         const $stockActionBtns = $('#stockActionBtns');
         let sellScriptLoaded = false;
+        
         $.extend(true, $.fn.dataTable.defaults, {
             language: {
-                paginate: {
-                    previous: '‹',
-                    next: '›'
-                }
+                paginate: { previous: '‹', next: '›' }
             }
         });
+
         $(document).on('shown.bs.tab', '#sell-tab', function () {
             $stockActionBtns.hide();
-
             if (!sellScriptLoaded) {
                 sellScriptLoaded = true;
                 const s = document.createElement('script');
@@ -815,7 +842,6 @@
             $stockActionBtns.show();
         });
 
-
         let stockSearchTimer;
         $('#stockSearch').on('keyup', function () {
             clearTimeout(stockSearchTimer);
@@ -827,9 +853,8 @@
             }, 400);
         });
 
-
         const params = new URLSearchParams(window.location.search);
-        if (params.get('tab') === 'sell') {
+        if (params.get('tab') === 'sell' || window.location.hash === '#sellPane') {
             $('#sell-tab').tab('show');
         }
     });
@@ -838,5 +863,4 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 <script src="{{ asset('js/pharmacy.js') }}"></script>
-
 @stop

@@ -23,29 +23,30 @@
         }
 
         function resetCreateInvoiceModal() {
-            const $form = $('#createInvoiceForm');
+            const $form = $('#formCreateInvoice');
+            if (!$form.length) return;
 
             $form[0].reset();
             $form.find('.form-control, .custom-select').removeClass('is-invalid is-valid');
-            $('#createInvoiceAlert').addClass('d-none').text('');
+            $('#formCreateErrors').addClass('d-none').text('');
             $('#error_create_patient_name').text('');
             $('#error_create_admission_id').text('');
 
             itemIndex = 1;
             $('#invoiceItemsTbody').html(defaultCreateItemRowHtml(0));
-            $('#createInvoiceGrandTotal').text('$15.00');
+            $('#createGrandTotal').text('15.00');
 
             $('#select_patient_id').val('');
 
-            $('#labelVisitOPD').addClass('active');
-            $('#labelVisitIPD').removeClass('active');
+            $('#labelVisitOpd').addClass('active');
+            $('#labelVisitIpd').removeClass('active');
             $('input[name="visit_type"][value="opd"]').prop('checked', true);
 
             $('#admissionPickerWrap').addClass('d-none');
             $('#create_admission_id').prop('required', false).val('');
 
             $('#btnSubmitCreateInvoice').prop('disabled', false)
-                .html('<i class="fas fa-save mr-1"></i> បង្កើតវិក្កយបត្រ (Save Invoice)');
+                .html('<i class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ');
         }
 
         $('#modalCreateInvoice').on('show.bs.modal hidden.bs.modal', function () {
@@ -156,11 +157,10 @@
                 <tr class="item-row">
                     <td>
                         <select name="items[${idx}][item_type]" class="form-control form-control-sm item-type" required>
-                            <option value="consultation">ពិគ្រោះជំងឺ (Consultation)</option>
-                            <option value="prescription">ថ្នាំពេទ្យ (Medicine)</option>
-                            <option value="lab_test">មន្ទីរពិសោធន៍ (Lab Test)</option>
-                            <option value="room">បន្ទប់សម្រាក (Room Fee)</option>
-                            <option value="other">ផ្សេងៗ (Other)</option>
+                            <option value="service">សេវាកម្ម</option>
+                            <option value="room">បន្ទប់សម្រាក</option>
+                            <option value="medicine">ថ្នាំពេទ្យ</option>
+                            <option value="lab">មន្ទីរពិសោធន៍</option>
                         </select>
                     </td>
                     <td>
@@ -176,7 +176,7 @@
                         <input type="text" class="form-control form-control-sm item-subtotal text-right bg-light" value="${(qty * price).toFixed(2)}" readonly>
                     </td>
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item"><i class="fas fa-trash-alt"></i></button>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item" style="border-radius: 6px;"><i class="fas fa-trash-alt"></i></button>
                     </td>
                 </tr>
             `;
@@ -213,15 +213,15 @@
                 const price = parseFloat($(this).find('.item-price').val()) || 0;
                 total += (qty * price);
             });
-            $('#createInvoiceGrandTotal').text('$' + total.toFixed(2));
+            $('#createGrandTotal').text(total.toFixed(2));
         }
 
         // Submit Create Invoice
-        $('#createInvoiceForm').on('submit', function (e) {
+        $(document).on('submit', '#formCreateInvoice', function (e) {
             e.preventDefault();
             const $form = $(this);
             const $btn = $('#btnSubmitCreateInvoice');
-            const $alert = $('#createInvoiceAlert');
+            const $alert = $('#formCreateErrors');
 
             $form.find('.form-control, .custom-select').removeClass('is-invalid');
             $alert.addClass('d-none').text('');
@@ -233,18 +233,18 @@
                 data: $form.serialize(),
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                 success: function (res) {
-                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> បង្កើតវិក្កយបត្រ (Save Invoice)');
+                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ');
                     $('#modalCreateInvoice').modal('hide');
                     loadInvoices(1);
                     showBillingToast(res.message || 'បានបង្កើតវិក្កយបត្រដោយជោគជ័យ!');
                 },
                 error: function (xhr) {
-                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> បង្កើតវិក្កយបត្រ (Save Invoice)');
+                    $btn.prop('disabled', false).html('<i class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ');
                     if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                         const errors = xhr.responseJSON.errors;
                         $alert.removeClass('d-none').html(Object.values(errors).flat().join('<br>'));
                     } else {
-                        $alert.removeClass('d-none').text(xhr.responseJSON?.message || 'An error occurred.');
+                        $alert.removeClass('d-none').text(xhr.responseJSON?.message || 'មានបញ្ហាក្នុងការបង្កើតវិក្កយបត្រ');
                     }
                 }
             });
@@ -266,7 +266,8 @@
             $('#payBalanceAmount').text('$' + balance.toFixed(2));
             $('#pay_amount').val(balance.toFixed(2)).attr('max', balance.toFixed(2));
 
-            $('#payInvoiceForm').attr('action', window.billingConfig.baseUrl + "/" + id + "/pay");
+            const payUrl = (window.billingConfig.baseUrl || "{{ url('billing') }}") + "/" + id + "/pay";
+            $('#formPayInvoice, #payInvoiceForm').attr('action', payUrl);
             $('#modalPayInvoice').modal('show');
         });
 
@@ -386,13 +387,11 @@
             clearInterval(khqrPollTimer);
         });
 
-        $('#payInvoiceForm').on('submit', function (e) {
+        $(document).on('submit', '#formPayInvoice, #payInvoiceForm', function (e) {
             e.preventDefault();
             const $form = $(this);
             const $btn = $('#btnSubmitPayInvoice');
-            const $alert = $('#payInvoiceAlert');
 
-            $alert.addClass('d-none').text('');
             $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-1"></i> កំពុងដំណើរការ...');
 
             $.ajax({
@@ -401,14 +400,14 @@
                 data: $form.serialize(),
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                 success: function (res) {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់ (Confirm Payment)');
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់');
                     $('#modalPayInvoice').modal('hide');
                     loadInvoices(1);
                     showBillingToast(res.message || 'បានបញ្ចប់ការទូទាត់វិក្កយបត្រដោយជោគជ័យ!');
                 },
                 error: function (xhr) {
-                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់ (Confirm Payment)');
-                    $alert.removeClass('d-none').text(xhr.responseJSON?.message || 'Failed to process payment.');
+                    $btn.prop('disabled', false).html('<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់');
+                    alert(xhr.responseJSON?.message || 'មានបញ្ហាក្នុងការទូទាត់ប្រាក់');
                 }
             });
         });

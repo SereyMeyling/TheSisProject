@@ -16,11 +16,14 @@ use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
+use App\Http\Controllers\Employee\EmployeeController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Patient\PatientController;
 use App\Http\Controllers\MedicalRecord\MedicalRecordController;
 use App\Http\Controllers\Doctor\DoctorController;
+use App\Http\Controllers\Appointment\AppointmentController;
+use App\Http\Controllers\Laboratory\LabController;
 
 /*
 |--------------------------------------------------------------------------
@@ -75,6 +78,15 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::put('/{user}/role', [UserController::class, 'updateRole'])->name('user.update-role');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('user.destroy');
         Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
+    });
+
+    // Employee management routes
+    Route::group(['prefix' => 'employee'], function () {
+        Route::get('/', [EmployeeController::class, 'index'])->name('employee.index');
+        Route::post('/store', [EmployeeController::class, 'store'])->name('employee.store');
+        Route::get('/edit/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
+        Route::put('/update/{id}', [EmployeeController::class, 'update'])->name('employee.update');
+        Route::delete('/delete/{id}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
     });
 
     // Role & Permission management routes
@@ -147,6 +159,11 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('patients/search', [PharmacySaleController::class, 'searchPatients'])
         ->name('pharmacy.patients.search');
     Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
+
+    // Prescriptions
+    Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
+    Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
+    Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
 });
 
 // ------------------ Cashier & Admin Routes (Role: admin|cashier) --------------------

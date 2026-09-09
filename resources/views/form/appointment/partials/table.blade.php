@@ -1,0 +1,86 @@
+<table class="table align-middle mb-0">
+    <thead>
+        <tr>
+            <th>ល.រ (ID)</th>
+            <th>អ្នកជំងឺ (Patient)</th>
+            <th>វេជ្ជបណ្ឌិត (Doctor)</th>
+            <th>កាលបរិច្ឆេទ & ម៉ោង</th>
+            <th>មូលហេតុ (Reason)</th>
+            <th>ស្ថានភាព (Status)</th>
+            <th>សកម្មភាព (Actions)</th>
+        </tr>
+    </thead>
+    <tbody>
+        @forelse ($appointments as $app)
+            <tr>
+                <td>{{ $app->appointment_id }}</td>
+                <td>
+                    <div class="font-weight-bold text-dark">
+                        {{ $app->patient ? $app->patient->full_name : 'N/A' }}
+                    </div>
+                    <small class="text-muted"><i class="fas fa-phone mr-1"></i> {{ $app->patient ? $app->patient->phone : '-' }}</small>
+                </td>
+                <td>
+                    <div class="font-weight-bold text-primary">
+                        <i class="fas fa-user-md mr-1"></i>
+                        {{ $app->doctor ? $app->doctor->first_name . ' ' . $app->doctor->last_name : 'N/A' }}
+                    </div>
+                    <small class="text-muted">{{ $app->doctor ? ($app->doctor->specialization ?? 'វេជ្ជបណ្ឌិត') : '' }}</small>
+                </td>
+                <td>
+                    <div class="font-weight-bold">
+                        <i class="far fa-calendar-alt text-info mr-1"></i>
+                        {{ $app->appointment_date ? $app->appointment_date->format('d M, Y') : '-' }}
+                    </div>
+                    <small class="text-muted">
+                        <i class="far fa-clock mr-1"></i>
+                        {{ $app->appointment_date ? $app->appointment_date->format('h:i A') : '-' }}
+                    </small>
+                </td>
+                <td>{{ $app->reason ?? '-' }}</td>
+                <td>
+                    @switch($app->status)
+                        @case('scheduled')
+                            <span class="badge badge-info"><i class="fas fa-clock mr-1"></i> បានណាត់ (Scheduled)</span>
+                            @break
+                        @case('completed')
+                            <span class="badge badge-success"><i class="fas fa-check-circle mr-1"></i> បានរួចរាល់ (Completed)</span>
+                            @break
+                        @case('cancelled')
+                            <span class="badge badge-danger"><i class="fas fa-times-circle mr-1"></i> បានបោះបង់ (Cancelled)</span>
+                            @break
+                        @default
+                            <span class="badge badge-secondary">{{ ucfirst($app->status) }}</span>
+                    @endswitch
+                </td>
+                <td>
+                    <div class="action-icons">
+                        {{-- Edit --}}
+                        <button class="btn btn-sm btn-outline-primary btn-edit" 
+                                data-toggle="modal" 
+                                data-target="#modalEdit" 
+                                data-id="{{ $app->appointment_id }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {{-- Delete --}}
+                        <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                data-id="{{ $app->appointment_id }}" 
+                                data-name="{{ $app->patient ? $app->patient->full_name : 'ID: ' . $app->appointment_id }}"
+                                data-toggle="modal"
+                                data-target="#modalDelete">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        @empty
+            <tr>
+                <td colspan="7" class="text-center py-4 text-muted">មិនមានទិន្នន័យការណាត់ជួបទេ (No Appointments Found)</td>
+            </tr>
+        @endforelse
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-center pagination-wrapper mt-3">
+    {!! $appointments->appends(request()->query())->links('pagination::bootstrap-4') !!}
+</div>

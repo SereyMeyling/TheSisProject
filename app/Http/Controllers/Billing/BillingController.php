@@ -26,8 +26,9 @@ class BillingController extends Controller
     {
         $this->middleware(['auth', '2fa']);
         $this->middleware(function ($request, $next) {
+            /** @var \App\Models\User|null $user */
             $user = auth()->user();
-            if (!$user || (!$user->hasRole('admin') && !$user->hasRole('cashier') && !$user->hasPermissionTo('view-invoices') && !$user->hasPermissionTo('process-payments'))) {
+            if (!$user || (!$user->hasAnyRole(['admin', 'cashier']) && !$user->hasAnyPermission(['view-invoices', 'process-payments']))) {
                 abort(403, 'អ្នកមិនមានសិទ្ធិចូលប្រើប្រាស់ទំព័រ Billing ទេ។ (You do not have permission to access the Billing module.)');
             }
             return $next($request);
@@ -42,8 +43,9 @@ class BillingController extends Controller
      */
     private function authorizeAction(string $permission): void
     {
+        /** @var \App\Models\User|null $user */
         $user = auth()->user();
-        if (!$user->hasRole('admin') && !$user->hasPermissionTo($permission)) {
+        if (!$user || (!$user->hasRole('admin') && !$user->hasPermissionTo($permission))) {
             abort(403, 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ (You do not have permission to perform this action).');
         }
     }

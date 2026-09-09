@@ -12,14 +12,6 @@
 @stop
 
 @section('content')
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
-        <i class="fas fa-check-circle mr-1"></i> {{ session('success') }}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-        </button>
-    </div>
-@endif
 
 <div class="row">
     <div class="col-md-8">
@@ -70,8 +62,29 @@
                     </table>
                 </div>
             </div>
-            <div class="card-footer bg-white d-flex justify-content-end py-2">
-                {{ $waitingPatients->links() }}
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card-doc">
+                <div class="stat-icon bg-emerald-gradient">
+                    <i class="fas fa-stethoscope"></i>
+                </div>
+                <div>
+                    <small class="text-muted font-weight-bold d-block">ពិនិត្យថ្ងៃនេះ (Visits Today)</small>
+                    <h3 class="m-0 font-weight-bold text-success">{{ $totalToday ?? 0 }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-3">
+            <div class="stat-card-doc">
+                <div class="stat-icon bg-purple-gradient">
+                    <i class="fas fa-hospital-alt"></i>
+                </div>
+                <div>
+                    <small class="text-muted font-weight-bold d-block">ស្ថានភាពបន្ទប់ (Clinic Status)</small>
+                    <h3 class="m-0 font-weight-bold text-purple" style="font-size: 1.25rem;"><span class="badge badge-success px-3 py-1">ដំណើរការធម្មតា</span></h3>
+                </div>
             </div>
         </div>
     </div>
@@ -102,11 +115,11 @@
                             </a>
                         </div>
                     </div>
-                @empty
-                    <div class="text-center text-muted py-3">
-                        <small>គ្មានអ្នកជំងឺក្នុងបញ្ជីរង់ចាំទេ។</small>
-                    </div>
-                @endforelse
+                </div>
+
+                <div class="card-footer bg-white border-top d-flex justify-content-center py-2">
+                    {!! $waitingPatients->links('pagination::bootstrap-4') !!}
+                </div>
             </div>
         </div>
 
@@ -124,6 +137,7 @@
         </div>
     </div>
 </div>
+
 @stop
 
 
