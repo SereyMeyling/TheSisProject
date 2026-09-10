@@ -37,7 +37,6 @@
                 <td class="font-weight-bold {{ $inv->balance > 0 ? 'text-danger' : 'text-muted' }}">${{ number_format($inv->balance, 2) }}</td>
                 <td>
                     @if ($inv->status === 'paid')
-<<<<<<< HEAD
                         <span class="badge badge-status badge-status-paid px-2 py-1"><i
                                 class="fas fa-check-circle mr-1"></i>បានទូទាត់រួច (Paid)</span>
                     @elseif ($inv->status === 'partial')
@@ -49,15 +48,6 @@
                     @else
                         <span class="badge badge-status badge-status-unpaid px-2 py-1"><i
                                 class="fas fa-times-circle mr-1"></i>មិនទាន់បង់ (Unpaid)</span>
-=======
-                        <span class="badge badge-success px-2 py-1" style="border-radius: 8px;"><i class="fas fa-check-circle mr-1"></i>បានទូទាត់រួច</span>
-                    @elseif ($inv->status === 'partial')
-                        <span class="badge badge-warning text-dark px-2 py-1" style="border-radius: 8px;"><i class="fas fa-clock mr-1"></i>បង់ខ្លះ</span>
-                    @elseif ($inv->status === 'cancelled')
-                        <span class="badge badge-secondary px-2 py-1" style="border-radius: 8px;"><i class="fas fa-ban mr-1"></i>បានលុបចោល</span>
-                    @else
-                        <span class="badge badge-danger px-2 py-1" style="border-radius: 8px;"><i class="fas fa-times-circle mr-1"></i>មិនទាន់បង់</span>
->>>>>>> origin/vannaTask
                     @endif
                 </td>
                 <td class="text-muted small">

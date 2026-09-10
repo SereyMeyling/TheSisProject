@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Patient;
@@ -68,6 +69,59 @@ class DashboardController extends Controller
         $backupLogs = class_exists(BackupLog::class) ? BackupLog::latest()->take(5)->get() : collect();
         $recentUsers = User::latest()->take(5)->get();
 
+        // --- vars the dashboard.blade.php view also needs ---
+
+        $todayAppointments = Appointment::whereDate('appointment_date', today())->count();
+        $emergencyCases = 0;
+
+        $totalRooms = Room::count();
+        $availableRooms = Room::where('status', 'available')->count();
+        $occupiedRooms = Room::where('status', 'occupied')->count();
+        $occupancyPercent = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100) : 0;
+        $activePatientsTotal = Admission::where('status', 'admitted')->distinct('patient_id')->count('patient_id');
+
+        $departmentBreakdown = Department::with('rooms')->get()->map(function ($dept) use ($activePatientsTotal) {
+            $roomIds = $dept->rooms->pluck('room_id');
+
+            $count = Admission::whereIn('room_id', $roomIds)
+                ->where('status', 'admitted')
+                ->distinct('patient_id')
+                ->count('patient_id');
+
+            return [
+                'name' => $dept->department_name,
+                'total' => $count,
+                'percent' => $activePatientsTotal > 0 ? round(($count / $activePatientsTotal) * 100) : 0,
+            ];
+        })->filter(fn($d) => $d['total'] > 0)->values()->toArray();
+
+        // Last 6 months income/expense chart data
+        $months = [];
+        $incomeByMonth = [];
+        $expenseByMonth = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $months[] = $date->format('M');
+
+            $incomeByMonth[] = InvoicePayment::whereYear('paid_at', $date->year)
+                ->whereMonth('paid_at', $date->month)
+                ->sum('amount')
+                + Sale::whereYear('created_at', $date->year)
+                    ->whereMonth('created_at', $date->month)
+                    ->sum('total_amount');
+
+           
+            $expenseByMonth[] = 0;
+        }
+
+        // Last 4 weeks of admissions
+        $weeklyAdmissions = [];
+        for ($i = 3; $i >= 0; $i--) {
+            $start = now()->subWeeks($i)->startOfWeek();
+            $end = now()->subWeeks($i)->endOfWeek();
+            $weeklyAdmissions[] = Admission::whereBetween('created_at', [$start, $end])->count();
+        }
+
         return view('form.dashboard.dashboard', compact(
             'totalPatients',
             'totalUsers',
@@ -76,7 +130,17 @@ class DashboardController extends Controller
             'todayRevenue',
             'totalRevenue',
             'backupLogs',
-            'recentUsers'
+            'recentUsers',
+            'todayAppointments',
+            'emergencyCases',
+            'totalRooms',
+            'availableRooms',
+            'occupancyPercent',
+            'departmentBreakdown',
+            'months',
+            'incomeByMonth',
+            'expenseByMonth',
+            'weeklyAdmissions'
         ));
     }
 

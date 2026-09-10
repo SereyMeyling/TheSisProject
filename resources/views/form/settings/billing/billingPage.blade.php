@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-        
+
     </h2>
     <button class="btn btn-primary px-4" id="btnSaveSettings">
         <i class="fas fa-save mr-2"></i>
@@ -296,12 +296,5 @@
         });
     });
 </script>
-<<<<<<< HEAD
-<<<<<<< HEAD
-@stop
-=======
-@stop
->>>>>>> 382ac7ff47eb62993950f185918ff554de86bda7
-=======
-@stop
->>>>>>> c7c108047fe7a02f803f9c1338a5289b2243eb63
+
+

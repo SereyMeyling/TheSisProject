@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -12,54 +13,134 @@ class AdminUserSeeder extends Seeder
     {
         $usersData = [
             [
-                'name'     => 'Super Admin',
+                'name' => 'Super Admin',
                 'username' => 'superadmin',
-                'email'    => 'supperAdmin@gmai.com',
+                'email' => 'supperAdmin@gmai.com',
                 'password' => 'admin123',
-                'role'     => 'admin', // ឬ 'superAdmin' តាម Role មានក្នុង DB
+                'role' => 'admin',
+                'department_id' => 1,
             ],
+
             [
-                'name'     => 'Doctor User',
+                'name' => 'Doctor User',
                 'username' => 'doctor',
-                'email'    => 'doctor@gmail.com',
+                'email' => 'doctor@gmail.com',
                 'password' => 'doctor123',
-                'role'     => 'doctor',
+                'role' => 'doctor',
+                'department_id' => 2,
             ],
+
             [
-                'name'     => 'Nurse User',
+                'name' => 'Nurse User',
                 'username' => 'nurse',
-                'email'    => 'nurse@gmail.com',
+                'email' => 'nurse@gmail.com',
                 'password' => 'nurse123',
-                'role'     => 'nurse',
+                'role' => 'nurse',
+                'department_id' => 1,
             ],
+
             [
-                'name'     => 'Pharmacist User',
+                'name' => 'Pharmacist User',
                 'username' => 'pharmacist',
-                'email'    => 'pharmacist@gmail.com',
+                'email' => 'pharmacist@gmail.com',
                 'password' => 'pharmacist123',
-                'role'     => 'pharmacist',
+                'role' => 'pharmacist',
+                'department_id' => 9,
             ],
+
             [
-                'name'     => 'Cashier User',
+                'name' => 'Cashier User',
                 'username' => 'cashier',
-                'email'    => 'cashier@gmail.com',
+                'email' => 'cashier@gmail.com',
                 'password' => 'cashier123',
-                'role'     => 'cashier',
+                'role' => 'cashier',
+                'department_id' => 1,
             ],
         ];
 
         foreach ($usersData as $data) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create / Update User
+            |--------------------------------------------------------------------------
+            */
+
             $user = User::updateOrCreate(
-                ['email' => $data['email']],
                 [
-                    'name'     => $data['name'],
+                    'email' => $data['email'],
+                ],
+                [
+                    'name' => $data['name'],
                     'username' => $data['username'],
                     'password' => Hash::make($data['password']),
                 ]
             );
 
-            // Assign Role ជូន User នីមួយៗ
+            /*
+            |--------------------------------------------------------------------------
+            | Assign Role
+            |--------------------------------------------------------------------------
+            */
+
             $user->syncRoles([$data['role']]);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Create Employee
+            |--------------------------------------------------------------------------
+            |
+            | Cashier is skipped because the current employees.role ENUM
+            | does not contain "cashier".
+            |
+            */
+
+            if (
+                in_array($data['role'], [
+                    'admin',
+                    'doctor',
+                    'nurse',
+                    'pharmacist',
+                ])
+            ) {
+
+                $nameParts = explode(
+                    ' ',
+                    trim($data['name']),
+                    2
+                );
+
+                Employee::updateOrCreate(
+                    [
+                        'user_id' => $user->id,
+                    ],
+                    [
+                        'department_id' => $data['department_id'],
+
+                        'employee_code' =>
+                            'EMP-' .
+                            str_pad(
+                                $user->id,
+                                3,
+                                '0',
+                                STR_PAD_LEFT
+                            ),
+
+                        'first_name' => $nameParts[0],
+
+                        'last_name' =>
+                            $nameParts[1] ?? '',
+
+                        'role' => $data['role'],
+
+                        'specialization' => null,
+
+                        'phone' => null,
+
+                        'status' => 'active',
+                    ]
+                );
+            }
         }
     }
 }

@@ -60,6 +60,15 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::group(['prefix' => 'support'], function () {
         Route::get('/', [SupportController::class, 'index'])->name('support.index');
     });
+
+    // Profile (any authenticated user) — restored from the older route file,
+    // was still imported but no longer wired up
+    Route::group(['prefix' => 'profile'], function () {
+        Route::get('/', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+        Route::get('/avatar/{user}', [ProfileController::class, 'avatar'])->name('profile.avatar');
+    });
 });
 
 // =========================================================================

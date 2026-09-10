@@ -22,8 +22,12 @@
                     @csrf
                     <div class="alert alert-danger d-none" id="sellErrors"></div>
                     <div class="form-group">
-                        <label>អ្នកជំងឺ (ទុកទទេប្រសិនបើអតិថិជនចរណ៍)</label>
-                        <select name="patient_id" id="patientSelect" class="form-control">
+                        <label>
+                            លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ
+                            (ទុកទទេប្រសិនបើជាអតិថិជនចរណ៍)
+                        </label>
+
+                        <select name="patient_id" id="patientSelect" class="form-control" style="width: 100%;">
                             <option value="">-- អតិថិជនចរណ៍ --</option>
                         </select>
                     </div>
@@ -86,6 +90,8 @@
 <link rel="stylesheet" href="{{ asset('css/pharmacy.css') }}">
 @stop
 
+
+
 @section('js')
 <script>
     const routes = {
@@ -94,7 +100,9 @@
         sellStore: "{{ route('pharmacy.sell.store') }}",
         sellHistory: "{{ route('pharmacy.sell.history') }}",
     };
+
     const csrf = "{{ csrf_token() }}";
 </script>
+
 <script src="{{ asset('js/pharmacy-sell.js') }}"></script>
 @stop

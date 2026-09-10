@@ -55,4 +55,8 @@ class Room extends Model
     {
         return self::statusLabels()[$this->status] ?? $this->status;
     }
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class, 'room_id', 'room_id');
+    }
 }

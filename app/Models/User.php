@@ -99,6 +99,14 @@ class User extends Authenticatable
 
     public function department()
     {
-        return $this->belongsTo(\App\Models\Department::class, 'department_id', 'department_id');
+        return $this->belongsTo(
+            Department::class,
+            'department_id',
+            'department_id'
+        );
+    }
+    public function employee()
+    {
+        return $this->hasOne(Employee::class, 'user_id', 'id');
     }
 }

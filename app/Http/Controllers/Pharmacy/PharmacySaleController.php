@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Pharmacy;
 
 use App\Http\Controllers\Controller;
 
+use App\Models\Patient;
 use App\Models\Pharmacy\Medicine;
 use App\Models\Pharmacy\MedicineBatch;
 use App\Models\Pharmacy\MedicineStockMovement;
@@ -35,7 +36,7 @@ class PharmacySaleController extends Controller
                 return [
                     'sale_id' => $sale->sale_id,
                     'sale_date' => $sale->sale_date->format('d-M-Y h:i A'),
-                    'patient_name' => $sale->patient->name ?? 'អតិថិជនចរណ៍',
+                    'patient_name' => $sale->patient->full_name ?? 'អតិថិជនចរណ៍',
                     'total_amount' => (float) $sale->total_amount,
                     'pdf_url' => route('pharmacy.sell.pdf', $sale->sale_id),
                 ];
@@ -43,9 +44,18 @@ class PharmacySaleController extends Controller
 
         return response()->json(['data' => $sales]);
     }
+
     public function store(Request $request)
     {
-        $employeeId = Auth::user()->employee_id ?? null;
+        $user = Auth::user();
+
+        if (!$user || !$user->employee_id) {
+            return response()->json([
+                'message' => 'គណនីរបស់អ្នកមិនទាន់មាន Employee ID ទេ។ សូមកំណត់ Employee ID ជាមុនសិន។'
+            ], 422);
+        }
+
+        $employeeId = $user->employee_id;
 
         $data = $request->validate([
             'patient_id' => 'nullable|exists:patients,patient_id',
@@ -57,17 +67,25 @@ class PharmacySaleController extends Controller
         $sale = DB::transaction(function () use ($data, $employeeId) {
             $sale = Sale::create([
                 'patient_id' => $data['patient_id'] ?? null,
-                'employee_id' => $employeeId, // now nullable, no longer blocks the sale
+                'employee_id' => $employeeId,
                 'sale_date' => now(),
                 'total_amount' => 0,
                 'status' => 'COMPLETED',
             ]);
 
             $total = 0;
+
             foreach ($data['items'] as $item) {
-                $total += $this->sellOneMedicine($sale, $item['medicine_id'], $item['quantity']);
+                $total += $this->sellOneMedicine(
+                    $sale,
+                    $item['medicine_id'],
+                    $item['quantity']
+                );
             }
-            $sale->update(['total_amount' => $total]);
+
+            $sale->update([
+                'total_amount' => $total
+            ]);
 
             return $sale;
         });
@@ -168,17 +186,25 @@ class PharmacySaleController extends Controller
 
         return response()->json($medicines);
     }
-
-    public function searchPatients(Request $request)
+    public function patientSearch(Request $request)
     {
-        $term = $request->get('q', '');
+        $q = $request->get('q', '');
 
-        $patients = \App\Models\Patient::query()
-            ->when($term, fn($q) => $q->where('full_name', 'like', "%{$term}%")
-                ->orWhere('patient_code', 'like', "%{$term}%"))
-            ->select('patient_id', 'patient_code', 'full_name')
+        $patients = Patient::query()
+            ->when($q !== '', function ($query) use ($q) {
+                $query->where(function ($query) use ($q) {
+                    $query->where('patient_id', 'like', "%{$q}%")
+                        ->orWhere('patient_code', 'like', "%{$q}%")
+                        ->orWhere('full_name', 'like', "%{$q}%");
+                });
+            })
+            ->orderBy('patient_id')
             ->limit(50)
-            ->get();
+            ->get([
+                'patient_id',
+                'patient_code',
+                'full_name',
+            ]);
 
         return response()->json($patients);
     }

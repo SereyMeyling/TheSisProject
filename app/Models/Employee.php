@@ -13,6 +13,7 @@ class Employee extends Model
     protected $primaryKey = 'employee_id';
 
     protected $fillable = [
+        'user_id',
         'department_id',
         'employee_code',
         'first_name',
@@ -31,5 +32,9 @@ class Employee extends Model
     public function medicalRecords()
     {
         return $this->hasMany(MedicalRecord::class, 'employee_id', 'employee_id');
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

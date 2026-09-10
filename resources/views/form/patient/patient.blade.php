@@ -99,7 +99,7 @@
                                         </select>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
-                                        <button type="submit" class="btn btn-sm btn-success btn-block font-weight-bold">
+                                        <button type="submit" class="btn btn-sm btn-primary btn-block font-weight-bold">
                                             <i class="fas fa-filter mr-1"></i> Filter
                                         </button>
                                     </div>
@@ -127,25 +127,69 @@
                                                     <td>{{ $patient->phone ?? '-' }}</td>
                                                     <td>{{ $patient->created_at ? $patient->created_at->format('d/m/Y') : '-' }}</td>
                                                     <td>
-                                                        <div class="d-flex align-items-center" style="gap: 5px;">
-                                                            <a href="{{ route('patients.show', $patient->patient_id) }}" class="btn btn-sm btn-light text-info rounded-circle" title="មើលព័ត៌មាន">
-                                                                <i class="fas fa-eye"></i>
-                                                            </a>
-                                                            <a href="{{ route('patients.print', $patient->patient_id) }}" target="_blank" class="btn btn-sm btn-light text-success rounded-circle" title="បោះពុម្ព">
-                                                                <i class="fas fa-print"></i>
-                                                            </a>
-                                                            <a href="{{ route('patients.edit', $patient->patient_id) }}" class="btn btn-sm btn-light text-primary rounded-circle" title="កែប្រែ">
-                                                                <i class="fas fa-edit"></i>
-                                                            </a>
-                                                            <form action="{{ route('patients.destroy', $patient->patient_id) }}" method="POST" onsubmit="return confirm('តើអ្នកពិតជាចង់លុបទិន្នន័យអ្នកជំងឺនេះមែនទេ?');" style="display:inline;">
-                                                                @csrf
-                                                                @method('DELETE')
-                                                                <button type="submit" class="btn btn-sm btn-light text-danger rounded-circle" title="លុប">
-                                                                    <i class="fas fa-trash"></i>
-                                                                </button>
-                                                            </form>
+                                                        <div class="dropdown">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        class="btn btn-sm btn-light"
+                                                                                        data-toggle="dropdown"
+                                                                                        aria-haspopup="true"
+                                                                                        aria-expanded="false"
+                                                                                        title="សកម្មភាព"
+                                                                                    >
+                                                                                        <i class="fas fa-ellipsis-h"></i>
+                                                                                    </button>
+
+                                                                                    <div class="dropdown-menu dropdown-menu-right">
+
+                                                                                        {{-- View --}}
+                                                                                        <a
+                                                                                            href="{{ route('patients.show', $patient->patient_id) }}"
+                                                                                            class="dropdown-item"
+                                                                                        >
+                                                                                            <i class="fas fa-eye mr-2 text-info"></i>
+                                                                                            មើលព័ត៌មាន
+                                                                                        </a>
+
+                                                                                        {{-- Print --}}
+                                                                                        <a
+                                                                                            href="{{ route('patients.print', $patient->patient_id) }}"
+                                                                                            target="_blank"
+                                                                                            class="dropdown-item"
+                                                                                        >
+                                                                                            <i class="fas fa-print mr-2 text-success"></i>
+                                                                                            បោះពុម្ព
+                                                                                        </a>
+
+                                                                                        {{-- Edit --}}
+                                                                                        <a
+                                                                                            href="{{ route('patients.edit', $patient->patient_id) }}"
+                                                                                            class="dropdown-item"
+                                                                                        >
+                                                                                            <i class="fas fa-edit mr-2 text-primary"></i>
+                                                                                            កែប្រែ
+                                                                                        </a>
+
+                                                                                        {{-- Delete --}}
+                                                                                        <form
+                                                                                            action="{{ route('patients.destroy', $patient->patient_id) }}"
+                                                                                            method="POST"
+                                                                                            onsubmit="return confirm('តើអ្នកពិតជាចង់លុបទិន្នន័យអ្នកជំងឺនេះមែនទេ?');"
+                                                                                        >
+                                                                                            @csrf
+                                                                                            @method('DELETE')
+
+                                                                                            <button
+                                                                                                type="submit"
+                                                                                                class="dropdown-item"
+                                                                                            >
+                                                                                                <i class="fas fa-trash mr-2 text-danger"></i>
+                                                                                                លុប
+                                                                                            </button>
+                                                                                        </form>
+
+                                                                                    </div>
                                                         </div>
-                                                    </td>
+                                                        </td>
                                                 </tr>
                                             @empty
                                                 <tr>

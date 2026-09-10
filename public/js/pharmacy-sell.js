@@ -129,13 +129,21 @@ $(function () {
             });
         });
 
+        const patientId = $("#patientSelect").val() || null;
+
+        console.log("Patient ID:", patientId);
+        console.log(
+            "Patient Text:",
+            $("#patientSelect option:selected").text(),
+        );
+
         $.ajax({
             url: routes.sellStore,
             method: "POST",
             data: {
                 _token: csrf,
-                patient_id: $("[name=patient_id]").val(),
-                items,
+                patient_id: patientId,
+                items: items,
             },
         })
             .done((res) => {
@@ -159,34 +167,43 @@ $(function () {
             });
     });
     // ---- Patient dropdown ----
-    function patientOptionsHtml(list) {
-        const options = list
-            .map(
-                (p) =>
-                    `<option value="${p.patient_id}">${p.patient_code ? p.patient_code + " - " : ""}${p.full_name}</option>`,
-            )
-            .join("");
-        return (
-            `<option value="">-- អតិថិជនចរណ៍ / Walk-in --</option>` + options
-        );
-    }
+    $("#patientSelect").select2({
+        placeholder: "-- បញ្ចូល Patient ID ឬ កូដអ្នកជំងឺ --",
+        allowClear: true,
+        width: "100%",
+        minimumInputLength: 0,
 
-    function loadPatientSelect() {
-        $.get(routes.patientSearch)
-            .done((list) => {
-                if (!Array.isArray(list)) {
-                    console.error("Unexpected patients response:", list);
-                    return;
-                }
-                $("#patientSelect").html(patientOptionsHtml(list));
-            })
-            .fail((xhr) => {
-                console.error(
-                    "Patient search failed:",
-                    xhr.status,
-                    xhr.responseText,
-                );
-            });
-    }
-    loadPatientSelect();
+        ajax: {
+            url: routes.patientSearch,
+            dataType: "json",
+            delay: 250,
+
+            data: function (params) {
+                return {
+                    q: params.term || "",
+                };
+            },
+
+            processResults: function (data) {
+                return {
+                    results: (Array.isArray(data) ? data : []).map(
+                        function (patient) {
+                            return {
+                                // IMPORTANT
+                                id: patient.patient_id,
+
+                                // What user sees
+                                text:
+                                    patient.patient_code +
+                                    " - " +
+                                    patient.full_name,
+                            };
+                        },
+                    ),
+                };
+            },
+
+            cache: true,
+        },
+    });
 });

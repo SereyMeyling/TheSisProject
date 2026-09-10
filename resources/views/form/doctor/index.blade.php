@@ -83,7 +83,8 @@
                 </div>
                 <div>
                     <small class="text-muted font-weight-bold d-block">ស្ថានភាពបន្ទប់ (Clinic Status)</small>
-                    <h3 class="m-0 font-weight-bold text-purple" style="font-size: 1.25rem;"><span class="badge badge-success px-3 py-1">ដំណើរការធម្មតា</span></h3>
+                    <h3 class="m-0 font-weight-bold text-purple" style="font-size: 1.25rem;"><span
+                            class="badge badge-success px-3 py-1">ដំណើរការធម្មតា</span></h3>
                 </div>
             </div>
         </div>
@@ -115,7 +116,9 @@
                             </a>
                         </div>
                     </div>
-                </div>
+                @empty
+                    <p class="text-muted text-center py-3">គ្មានអ្នកជំងឺបន្ថែមទៀតទេ។</p>
+                @endforelse
 
                 <div class="card-footer bg-white border-top d-flex justify-content-center py-2">
                     {!! $waitingPatients->links('pagination::bootstrap-4') !!}
