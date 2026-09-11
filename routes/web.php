@@ -5,6 +5,7 @@ use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
 use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\Pharmacy\PrescriptionController;
@@ -191,6 +192,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::get('/appointment/edit/{id}', [AppointmentController::class, 'edit'])->name('appointment.edit');
     Route::put('/appointment/update/{id}', [AppointmentController::class, 'update'])->name('appointment.update');
     Route::delete('/appointment/delete/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
+    Route::get('/appointment/{id}', [AppointmentController::class, 'show'])->name('appointment.show');
 
     // Laboratory & Test Orders
     Route::get('/lab', [LabController::class, 'index'])->name('lab.index');
@@ -199,6 +201,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::post('/lab/tests/store', [LabController::class, 'storeTest'])->name('lab.tests.store');
     Route::put('/lab/tests/update/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
     Route::delete('/lab/tests/delete/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
+    Route::get('/lab/results/{id}', [LabController::class, 'showResult'])->name('lab-results.show');
 });
 
 // =========================================================================
@@ -235,6 +238,7 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
     Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
     Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
+    
 });
 
 // =========================================================================
@@ -253,4 +257,13 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:cashi
     // KHQR & Payment status
     Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
     Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
+});
+
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
 });

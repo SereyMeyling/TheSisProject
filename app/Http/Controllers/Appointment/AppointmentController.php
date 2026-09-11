@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Appointment;
 use App\Models\Employee;
 use App\Models\Patient;
+use App\Notifications\AppointmentNotification;
 use Illuminate\Http\Request;
 
 class AppointmentController extends Controller
@@ -31,8 +32,8 @@ class AppointmentController extends Controller
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'html'      => view('form.appointment.partials.table', compact('appointments'))->render(),
-                'total'     => $totalAppointments,
+                'html' => view('form.appointment.partials.table', compact('appointments'))->render(),
+                'total' => $totalAppointments,
                 'scheduled' => $scheduledCount,
                 'completed' => $completedCount,
                 'cancelled' => $cancelledCount,
@@ -65,12 +66,12 @@ class AppointmentController extends Controller
                         ->orWhere('patient_code', 'LIKE', $searchTerm)
                         ->orWhere('phone', 'LIKE', $searchTerm);
                 })
-                ->orWhereHas('doctor', function ($dq) use ($searchTerm) {
-                    $dq->where('first_name', 'LIKE', $searchTerm)
-                        ->orWhere('last_name', 'LIKE', $searchTerm)
-                        ->orWhere('specialization', 'LIKE', $searchTerm);
-                })
-                ->orWhere('reason', 'LIKE', $searchTerm);
+                    ->orWhereHas('doctor', function ($dq) use ($searchTerm) {
+                        $dq->where('first_name', 'LIKE', $searchTerm)
+                            ->orWhere('last_name', 'LIKE', $searchTerm)
+                            ->orWhere('specialization', 'LIKE', $searchTerm);
+                    })
+                    ->orWhere('reason', 'LIKE', $searchTerm);
             });
         }
 
@@ -93,22 +94,55 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'patient_id'       => 'required|exists:patients,patient_id',
-            'employee_id'      => 'required|exists:employees,employee_id',
+            'patient_id' => 'required|exists:patients,patient_id',
+            'employee_id' => 'required|exists:employees,employee_id',
             'appointment_date' => 'required|date',
-            'status'           => 'required|in:scheduled,completed,cancelled',
-            'reason'           => 'nullable|string|max:255',
+            'status' => 'required|in:scheduled,completed,cancelled',
+            'reason' => 'nullable|string|max:255',
         ]);
 
-        Appointment::create([
-            'patient_id'       => $request->patient_id,
-            'employee_id'      => $request->employee_id,
+        // Create appointment
+        $appointment = Appointment::create([
+            'patient_id' => $request->patient_id,
+            'employee_id' => $request->employee_id,
             'appointment_date' => $request->appointment_date,
-            'status'           => $request->status,
-            'reason'           => $request->reason,
+            'status' => $request->status,
+            'reason' => $request->reason,
         ]);
 
-        return redirect()->back()->with(['success' => 'ការណាត់ជួបត្រូវបានបង្កើតដោយជោគជ័យ (Appointment created successfully)']);
+        // Find the doctor/employee and related user
+        $doctor = Employee::with('user')
+            ->where('employee_id', $request->employee_id)
+            ->first();
+
+        // Send notification to the doctor's user account
+        if ($doctor && $doctor->user) {
+            $doctor->user->notify(
+                new AppointmentNotification($appointment, 'created')
+            );
+        }
+
+        return redirect()
+            ->back()
+            ->with([
+                'success' => 'ការណាត់ជួបត្រូវបានបង្កើតដោយជោគជ័យ'
+            ]);
+    }
+
+    public function show($id)
+    {
+        $appointment = Appointment::with([
+            'patient',
+            'doctor',
+        ])->find($id);
+
+        if (!$appointment) {
+            return redirect()
+                ->route('appointments.index')
+                ->with('error', 'រកមិនឃើញការណាត់ជួបទេ');
+        }
+
+        return view('form.appointment.show', compact('appointment'));
     }
 
     /**
@@ -122,12 +156,12 @@ class AppointmentController extends Controller
         }
 
         return response()->json([
-            'appointment_id'   => $appointment->appointment_id,
-            'patient_id'       => $appointment->patient_id,
-            'employee_id'      => $appointment->employee_id,
+            'appointment_id' => $appointment->appointment_id,
+            'patient_id' => $appointment->patient_id,
+            'employee_id' => $appointment->employee_id,
             'appointment_date' => $appointment->appointment_date ? $appointment->appointment_date->format('Y-m-d\TH:i') : '',
-            'status'           => $appointment->status,
-            'reason'           => $appointment->reason,
+            'status' => $appointment->status,
+            'reason' => $appointment->reason,
         ]);
     }
 
@@ -142,19 +176,19 @@ class AppointmentController extends Controller
         }
 
         $request->validate([
-            'patient_id'       => 'required|exists:patients,patient_id',
-            'employee_id'      => 'required|exists:employees,employee_id',
+            'patient_id' => 'required|exists:patients,patient_id',
+            'employee_id' => 'required|exists:employees,employee_id',
             'appointment_date' => 'required|date',
-            'status'           => 'required|in:scheduled,completed,cancelled',
-            'reason'           => 'nullable|string|max:255',
+            'status' => 'required|in:scheduled,completed,cancelled',
+            'reason' => 'nullable|string|max:255',
         ]);
 
         $appointment->update([
-            'patient_id'       => $request->patient_id,
-            'employee_id'      => $request->employee_id,
+            'patient_id' => $request->patient_id,
+            'employee_id' => $request->employee_id,
             'appointment_date' => $request->appointment_date,
-            'status'           => $request->status,
-            'reason'           => $request->reason,
+            'status' => $request->status,
+            'reason' => $request->reason,
         ]);
 
         return redirect()->back()->with(['success' => 'ការណាត់ជួបត្រូវបានកែប្រែដោយជោគជ័យ (Appointment updated successfully)']);

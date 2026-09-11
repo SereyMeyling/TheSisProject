@@ -54,6 +54,7 @@ class PrescriptionController extends Controller
 
         return view('form.phamacy.prescriptions', compact('prescriptions', 'totalPrescriptions', 'medicalRecords', 'medicines'));
     }
+    
 
     /**
      * Store a newly created prescription in storage.

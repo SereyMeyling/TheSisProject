@@ -27,4 +27,8 @@ class MedicineStockMovement extends Model
     {
         return $this->belongsTo(MedicineBatch::class, 'batch_id', 'batch_id');
     }
+    public function medicine()
+    {
+        return $this->belongsTo(Medicine::class, 'medicine_id', 'medicine_id');
+    }
 }

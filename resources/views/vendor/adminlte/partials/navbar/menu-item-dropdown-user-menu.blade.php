@@ -44,6 +44,16 @@
 
 @endif
 
+{{-- ============================================================
+NOTIFICATION DATA (added)
+============================================================ --}}
+@php(
+    $unreadNotifications = Auth::user()->unreadNotifications()->take(8)->get()
+)
+@php(
+    $unreadCount = Auth::user()->unreadNotifications()->count()
+)
+
 
 <li class="nav-item dropdown user-menu">
 
@@ -53,14 +63,15 @@
 
     <a href="#" class="nav-link dropdown-toggle d-flex align-items-center" data-toggle="dropdown">
 
-        {{-- Notification --}}
+        {{-- Notification (badge is now live) --}}
         <span class="mr-3 position-relative">
 
             <i class="fas fa-bell" style="font-size: 18px;">
             </i>
 
-            <span class="badge badge-danger navbar-badge" style="font-size: 9px;">
-                3
+            <span id="navbarNotifBadge" class="badge badge-danger navbar-badge"
+                style="font-size: 9px; {{ $unreadCount === 0 ? 'display:none;' : '' }}">
+                {{ $unreadCount }}
             </span>
 
         </span>
@@ -92,10 +103,10 @@
 
             <img id="navbarUserAvatar" src="{{ Auth::user()->adminlte_image() }}" class="user-image img-circle elevation-2"
                 alt="{{ Auth::user()->name }}" style="
-                            width: 35px;
-                            height: 35px;
-                            object-fit: cover;
-                         ">
+                                                    width: 35px;
+                                                    height: 35px;
+                                                    object-fit: cover;
+                                                 ">
 
         @endif
 
@@ -116,33 +127,33 @@
                 )
 
                 <li class="user-header
-                                {{ config(
+                                                                                {{ config(
                 'adminlte.usermenu_header_class',
                 'bg-primary'
             ) }}
-                                @if(!config('adminlte.usermenu_image'))
-                                    h-auto
-                                @endif
-                            ">
+                                                                                @if(!config('adminlte.usermenu_image'))
+                                                                                    h-auto
+                                                                                @endif
+                                                                            ">
 
                     {{-- Dropdown Profile Image --}}
                     @if(config('adminlte.usermenu_image'))
 
                         <img id="dropdownUserAvatar" src="{{ Auth::user()->adminlte_image() }}" class="img-circle elevation-2"
                             alt="{{ Auth::user()->name }}" style="
-                                                    width: 90px;
-                                                    height: 90px;
-                                                    object-fit: cover;
-                                                 ">
+                                                                                                                            width: 90px;
+                                                                                                                            height: 90px;
+                                                                                                                            object-fit: cover;
+                                                                                                                         ">
 
                     @endif
 
 
                     <p class="
-                                    @if(!config('adminlte.usermenu_image'))
-                                        mt-0
-                                    @endif
-                                ">
+                                                                                    @if(!config('adminlte.usermenu_image'))
+                                                                                        mt-0
+                                                                                    @endif
+                                                                                ">
 
                         <span id="dropdownUserName">
                             {{ Auth::user()->name }}
@@ -168,6 +179,52 @@
             @yield('usermenu_header')
 
         @endif
+
+
+        {{-- =========================================================
+        NOTIFICATIONS LIST (added)
+        ========================================================== --}}
+
+        <li class="dropdown-header d-flex justify-content-between align-items-center">
+            <span>ការជូនដំណឹង</span>
+            @if($unreadCount > 0)
+                <form action="{{ route('notifications.readAll') }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="btn btn-link btn-sm p-0" style="font-size: 11px;">
+                        ធ្វើសញ្ញាអានទាំងអស់
+                    </button>
+                </form>
+            @endif
+        </li>
+
+        @forelse($unreadNotifications as $notification)
+            <li class="dropdown-divider"></li>
+            <li>
+                <form action="{{ route('notifications.read', $notification->id) }}" method="POST" class="m-0">
+                    @csrf
+                    <button type="submit" class="dropdown-item d-flex align-items-start text-wrap py-2"
+                        style="white-space: normal;">
+                        <i
+                            class="fas {{ $notification->data['icon'] ?? 'fa-bell' }} {{ $notification->data['color'] ?? 'text-primary' }} mr-2 mt-1"></i>
+                        <span>
+                            <strong
+                                style="font-size: 13px;">{{ $notification->data['title'] ?? 'Notification' }}</strong><br>
+                            <small class="text-muted">{{ $notification->data['message'] ?? '' }}</small><br>
+                            <small class="text-muted">{{ $notification->created_at->diffForHumans() }}</small>
+                        </span>
+                    </button>
+                </form>
+            </li>
+        @empty
+            <li class="dropdown-item text-center text-muted py-2">គ្មានការជូនដំណឹង</li>
+        @endforelse
+
+        <li class="dropdown-divider"></li>
+        <li>
+            <a href="{{ route('notifications.index') }}" class="dropdown-item text-center">
+                មើលការជូនដំណឹងទាំងអស់
+            </a>
+        </li>
 
 
         {{-- Configured User Menu Links --}}
@@ -201,9 +258,7 @@
                 <a href="{{ $profile_url }}" class="nav-link btn btn-default btn-flat d-inline-block">
 
                     <i class="fa fa-fw fa-user text-lightblue"></i>
-
-                    {{ __('adminlte::menu.profile') }}
-
+                    ប្រវត្តិរូប
                 </a>
 
             @endif
@@ -222,9 +277,7 @@
                ">
 
                 <i class="fa fa-fw fa-power-off text-red"></i>
-
-                {{ __('adminlte::adminlte.log_out') }}
-
+                ចាកចេញ
             </a>
 
 
@@ -248,3 +301,26 @@
     </ul>
 
 </li>
+
+{{-- ============================================================
+LIVE BADGE POLLING (added)
+Refreshes just the bell count every 30s, no page reload needed.
+Move this into @push('js') in your layout if it supports stacks.
+============================================================ --}}
+<script>
+    setInterval(function () {
+        fetch("{{ route('notifications.unreadCount') }}")
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('navbarNotifBadge');
+                if (!badge) return;
+                if (data.count > 0) {
+                    badge.style.display = '';
+                    badge.textContent = data.count;
+                } else {
+                    badge.style.display = 'none';
+                }
+            })
+            .catch(() => { });
+    }, 30000);
+</script>

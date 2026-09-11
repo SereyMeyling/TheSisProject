@@ -30,7 +30,7 @@ class LabController extends Controller
                 $q->where('lab_order_id', 'LIKE', $searchTerm)
                     ->orWhereHas('medicalRecord.patient', function ($pq) use ($searchTerm) {
                         $pq->where('full_name', 'LIKE', $searchTerm)
-                           ->orWhere('patient_code', 'LIKE', $searchTerm);
+                            ->orWhere('patient_code', 'LIKE', $searchTerm);
                     });
             });
         }
@@ -41,19 +41,19 @@ class LabController extends Controller
 
         $labOrders = $queryOrders->orderBy('lab_order_id', 'desc')->paginate(10)->appends($request->query());
 
-        $totalOrders     = LabOrder::count();
-        $pendingOrders   = LabOrder::where('status', 'pending')->count();
+        $totalOrders = LabOrder::count();
+        $pendingOrders = LabOrder::where('status', 'pending')->count();
         $completedOrders = LabOrder::where('status', 'completed')->count();
-        $totalTests      = LabTest::count();
+        $totalTests = LabTest::count();
 
         $labTests = LabTest::orderBy('test_name', 'asc')->get();
         $medicalRecords = MedicalRecord::with(['patient', 'doctor'])->orderBy('record_id', 'desc')->limit(50)->get();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'html'            => view('form.laboratory.partials.order_table', compact('labOrders'))->render(),
-                'totalOrders'     => $totalOrders,
-                'pendingOrders'   => $pendingOrders,
+                'html' => view('form.laboratory.partials.order_table', compact('labOrders'))->render(),
+                'totalOrders' => $totalOrders,
+                'pendingOrders' => $pendingOrders,
                 'completedOrders' => $completedOrders,
             ]);
         }
@@ -75,28 +75,28 @@ class LabController extends Controller
     public function storeOrder(Request $request)
     {
         $request->validate([
-            'record_id'  => 'required|exists:medical_records,record_id',
+            'record_id' => 'required|exists:medical_records,record_id',
             'order_date' => 'required|date',
-            'test_ids'   => 'required|array|min:1',
+            'test_ids' => 'required|array|min:1',
             'test_ids.*' => 'required|exists:lab_tests,test_id',
         ]);
 
         DB::beginTransaction();
         try {
             $order = LabOrder::create([
-                'record_id'  => $request->record_id,
+                'record_id' => $request->record_id,
                 'order_date' => $request->order_date,
-                'status'     => 'pending',
+                'status' => 'pending',
             ]);
 
             foreach ($request->test_ids as $testId) {
                 $test = LabTest::find($testId);
                 LabResult::create([
                     'lab_order_id' => $order->lab_order_id,
-                    'test_id'      => $testId,
+                    'test_id' => $testId,
                     'result_value' => 'Pending',
                     'normal_range' => $test ? $test->normal_range : null,
-                    'remark'       => null,
+                    'remark' => null,
                 ]);
             }
 
@@ -119,11 +119,11 @@ class LabController extends Controller
         }
 
         $request->validate([
-            'results'                => 'required|array',
-            'results.*.result_id'    => 'required|exists:lab_results,result_id',
+            'results' => 'required|array',
+            'results.*.result_id' => 'required|exists:lab_results,result_id',
             'results.*.result_value' => 'required|string|max:100',
             'results.*.normal_range' => 'nullable|string|max:100',
-            'results.*.remark'       => 'nullable|string|max:255',
+            'results.*.remark' => 'nullable|string|max:255',
         ]);
 
         DB::beginTransaction();
@@ -134,7 +134,7 @@ class LabController extends Controller
                     $result->update([
                         'result_value' => $resData['result_value'],
                         'normal_range' => $resData['normal_range'] ?? $result->normal_range,
-                        'remark'       => $resData['remark'] ?? null,
+                        'remark' => $resData['remark'] ?? null,
                     ]);
                 }
             }
@@ -154,11 +154,11 @@ class LabController extends Controller
     public function storeTest(Request $request)
     {
         $request->validate([
-            'test_name'    => 'required|string|max:100',
-            'test_code'    => 'nullable|string|max:50',
+            'test_name' => 'required|string|max:100',
+            'test_code' => 'nullable|string|max:50',
             'normal_range' => 'nullable|string|max:100',
-            'unit'         => 'nullable|string|max:50',
-            'price'        => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
+            'price' => 'required|numeric|min:0',
         ]);
 
         LabTest::create($request->only(['test_name', 'test_code', 'normal_range', 'unit', 'price']));
@@ -172,11 +172,11 @@ class LabController extends Controller
     {
         $test = LabTest::findOrFail($id);
         $request->validate([
-            'test_name'    => 'required|string|max:100',
-            'test_code'    => 'nullable|string|max:50',
+            'test_name' => 'required|string|max:100',
+            'test_code' => 'nullable|string|max:50',
             'normal_range' => 'nullable|string|max:100',
-            'unit'         => 'nullable|string|max:50',
-            'price'        => 'required|numeric|min:0',
+            'unit' => 'nullable|string|max:50',
+            'price' => 'required|numeric|min:0',
         ]);
 
         $test->update($request->only(['test_name', 'test_code', 'normal_range', 'unit', 'price']));
@@ -191,5 +191,19 @@ class LabController extends Controller
         $test = LabTest::findOrFail($id);
         $test->delete();
         return redirect()->back()->with(['success' => 'តេស្តពិសោធន៍ត្រូវបានលុបដោយជោគជ័យ']);
+    }
+    public function showResult($id)
+    {
+        $labResult = LabResult::with([
+            'labOrder.patient',
+        ])->find($id);
+
+        if (!$labResult) {
+            return redirect()
+                ->route('lab.index')
+                ->with('error', 'រកមិនឃើញលទ្ធផលពិនិត្យមន្ទីរពិសោធន៍ទេ');
+        }
+
+        return view('form.laboratory.result.show', compact('labResult'));
     }
 }
