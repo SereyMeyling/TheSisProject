@@ -83,7 +83,7 @@ class User extends Authenticatable
     public function adminlte_image()
     {
         return $this->avatar
-            ? route('profile.avatar', $this->id)
+            ? route('profile.avatar', $this->id) . '?v=' . $this->updated_at->timestamp
             : asset('vendor/adminlte/dist/img/user2-160x160.jpg');
     }
 
