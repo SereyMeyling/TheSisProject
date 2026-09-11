@@ -37,6 +37,8 @@ class StoreInvoiceRequest extends FormRequest
             'patient_name.required'        => 'សូមបញ្ចូលឈ្មោះអ្នកជំងឺ (Patient name is required).',
             'admission_id.exists'          => 'ការចូលសម្រាកព្យាបាលនេះមិនត្រឹមត្រូវទេ (Selected admission is invalid).',
             'items.required'               => 'សូមបញ្ចូលយ៉ាងហោចណាស់ធាតុទូទាត់មួយ (At least one invoice item is required).',
+            'items.*.item_type.required'   => 'សូមជ្រើសរើសប្រភេទសេវា (Service type is required).',
+            'items.*.item_type.in'         => 'ប្រភេទសេវាមិនត្រឹមត្រូវទេ (Selected service type is invalid).',
             'items.*.description.required' => 'សូមបញ្ចូលបរិយាយសេវាកម្ម (Item description is required).',
             'items.*.qty.min'              => 'ចំនួនត្រូវតែធំជាង 0 (Quantity must be at least 1).',
             'items.*.unit_price.min'       => 'តម្លៃត្រូវតែធំជាង ឬស្មើ 0 (Unit price must be at least 0).',

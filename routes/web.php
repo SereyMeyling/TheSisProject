@@ -153,9 +153,12 @@ Route::group(['middleware' => ['auth', '2fa', 'role:doctor']], function () {
 // =========================================================================
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], function () {
 
-    // Doctor directory list
+    // Doctor workspace and clinical routes
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/', [DoctorController::class, 'index'])->name('index');
+        Route::post('/lab-order', [DoctorController::class, 'storeLabOrder'])->name('lab-order.store');
+        Route::post('/admit', [DoctorController::class, 'storeAdmission'])->name('admit.store');
+        Route::post('/vitals', [DoctorController::class, 'updateVitals'])->name('vitals.update');
     });
 
     // Patient Routes
@@ -238,10 +241,10 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
 });
 
 // =========================================================================
-// 5. CASHIER ROUTES (Role: cashier)
+// 5. BILLING & CASHIER ROUTES (Role: admin|cashier)
 // Billing management, payment collection, KHQR, receipts
 // =========================================================================
-Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:cashier']], function () {
+Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
     Route::get('/', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');

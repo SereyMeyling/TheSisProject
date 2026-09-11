@@ -80,17 +80,11 @@ class DashboardController extends Controller
         $occupancyPercent = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100) : 0;
         $activePatientsTotal = Admission::where('status', 'admitted')->distinct('patient_id')->count('patient_id');
 
-        $departmentBreakdown = Department::with('rooms')->get()->map(function ($dept) use ($activePatientsTotal) {
-            $roomIds = $dept->rooms->pluck('room_id');
-
-            $count = Admission::whereIn('room_id', $roomIds)
-                ->where('status', 'admitted')
-                ->distinct('patient_id')
-                ->count('patient_id');
-
+        $departmentBreakdown = Department::withCount('employees')->get()->map(function ($dept) use ($activePatientsTotal) {
+            $count = $dept->employees_count;
             return [
-                'name' => $dept->department_name,
-                'total' => $count,
+                'name'    => $dept->department_name,
+                'total'   => $count,
                 'percent' => $activePatientsTotal > 0 ? round(($count / $activePatientsTotal) * 100) : 0,
             ];
         })->filter(fn($d) => $d['total'] > 0)->values()->toArray();

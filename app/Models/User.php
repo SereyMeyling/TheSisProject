@@ -49,9 +49,40 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'google2fa_secret' => 'encrypted',
         'google2fa_enabled' => 'boolean',
     ];
+
+    /**
+     * Get the google2fa_secret attribute with fallback for invalid MAC / old APP_KEY.
+     *
+     * @param  string|null  $value
+     * @return string|null
+     */
+    public function getGoogle2faSecretAttribute($value)
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Set the google2fa_secret attribute.
+     *
+     * @param  string|null  $value
+     * @return void
+     */
+    public function setGoogle2faSecretAttribute($value)
+    {
+        $this->attributes['google2fa_secret'] = $value
+            ? \Illuminate\Support\Facades\Crypt::encryptString($value)
+            : null;
+    }
 
     /**
      * Clear this user's 2FA enrollment so they are forced back through
