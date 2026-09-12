@@ -41,13 +41,11 @@ class PatientController extends Controller
             ->latest('patient_id')
             ->paginate(10);
 
-        // ៣. Live Waiting Queue
         $waitingPatients = MedicalRecord::with('patient')
             ->latest('record_id')
             ->take(10)
             ->get();
 
-        // កែសម្រួលត្រង់នេះឱ្យទៅចំ file patient.blade.php របស់បង
         return view('form.patient.patient', compact(
             'patients',
             'todayCount',
@@ -72,11 +70,18 @@ class PatientController extends Controller
     {
         $request->validate([
             'full_name'     => 'required|string|max:255',
-            'id_card'       => 'nullable|string|max:100',
+            'id_card'       => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'sex'           => 'required',
-            'phone'         => 'nullable|string|max:20',
-            'address'       => 'nullable|string|max:255',
+            'sex'           => 'required|string',
+            'phone'         => 'required|string|max:20',
+            'address'       => 'required|string|max:255',
+        ], [
+            'full_name.required'     => 'សូមបញ្ចូលឈ្មោះពេញ!',
+            'id_card.required'       => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
+            'date_of_birth.required' => 'សូមជ្រើសរើសថ្ងៃខែឆ្នាំកំណើត!',
+            'sex.required'           => 'សូមជ្រើសរើសភេទ!',
+            'phone.required'         => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
+            'address.required'       => 'សូមបញ្ចូលអាសយដ្ឋាន!',
         ]);
 
         try {
@@ -99,12 +104,11 @@ class PatientController extends Controller
             return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការចុះឈ្មោះ៖ ' . $e->getMessage())->withInput();
         }
     }
+
     public function show($id)
     {
         $patient = Patient::where('patient_id', $id)->firstOrFail();
-
         $medicalRecords = MedicalRecord::where('patient_id', $id)->latest('record_id')->get();
-
         $waitingPatients = MedicalRecord::with('patient')
             ->latest('record_id')
             ->take(10)
@@ -116,7 +120,6 @@ class PatientController extends Controller
     public function edit($id)
     {
         $patient = Patient::where('patient_id', $id)->firstOrFail();
-
         $waitingPatients = MedicalRecord::with('patient')
             ->latest('record_id')
             ->take(10)
@@ -129,11 +132,18 @@ class PatientController extends Controller
     {
         $request->validate([
             'full_name'     => 'required|string|max:255',
-            'id_card'       => 'nullable|string|max:100',
+            'id_card'       => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'sex'           => 'required',
-            'phone'         => 'nullable|string|max:20',
-            'address'       => 'nullable|string|max:255',
+            'sex'           => 'required|string',
+            'phone'         => 'required|string|max:20',
+            'address'       => 'required|string|max:255',
+        ], [
+            'full_name.required'     => 'សូមបញ្ចូលឈ្មោះពេញ!',
+            'id_card.required'       => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
+            'date_of_birth.required' => 'សូមជ្រើសរើសថ្ងៃខែឆ្នាំកំណើត!',
+            'sex.required'           => 'សូមជ្រើសរើសភេទ!',
+            'phone.required'         => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
+            'address.required'       => 'សូមបញ្ចូលអាសយដ្ឋាន!',
         ]);
 
         try {
@@ -164,6 +174,7 @@ class PatientController extends Controller
             return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការលុប៖ ' . $e->getMessage());
         }
     }
+
     public function print($id)
     {
         $patient = Patient::findOrFail($id);
