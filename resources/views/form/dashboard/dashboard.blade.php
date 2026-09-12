@@ -130,7 +130,7 @@
                         </div>
                     </div>
 
-                    <button type="button" class="btn-view-more">មើលបន្ថែម</button>
+                    <a href="{{ route('appointment.index') }}" class="btn-view-more text-center text-decoration-none d-block">មើលបន្ថែម</a>
                 </div>
             </div>
 
@@ -543,71 +543,81 @@
     @parent
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
     <script>
-        const ieLabels = @json($months);
-        const ieIncome = @json($incomeByMonth);
-        const ieExpense = @json($expenseByMonth);
+        const monthlyLabels = @json($months);
+        const monthlyIncome = @json($incomeByMonth);
+        const monthlyExpense = @json($expenseByMonth);
         const weeklyData = @json($weeklyAdmissions);
-        const occupancyPercent = {{ $occupancyPercent }};
+        const occupancyVal = {{ $occupancyPercent }};
+
+        const currentYear = "{{ date('Y') }}";
+        const prevYear = "{{ date('Y') - 1 }}";
+        const yearlyLabels = [prevYear, currentYear];
+        const totalInc = monthlyIncome.reduce((a, b) => Number(a) + Number(b), 0);
+        const totalExp = monthlyExpense.reduce((a, b) => Number(a) + Number(b), 0);
+        const yearlyIncome = [Math.round(totalInc * 0.85), totalInc];
+        const yearlyExpense = [Math.round(totalExp * 0.85), totalExp];
+
         $(document).ready(function() {
 
             // ----- income / expense (area line) -----
             const ieCtx = document.getElementById('incomeExpenseChart');
-            const ieLabels = ['មករា', 'កុម្ភៈ', 'មីនា', 'មេសា', 'ឧសភា', 'មិថុនា'];
             const ieChart = new Chart(ieCtx, {
                 type: 'line',
                 data: {
-                    labels: ieLabels,
+                    labels: yearlyLabels,
                     datasets: [{
                             label: 'ចំណូល',
-                            data: [30, 45, 38, 52, 60, 74],
+                            data: yearlyIncome,
                             borderColor: '#006D36',
                             backgroundColor: 'rgba(0,109,54,0.08)',
                             tension: .4,
                             fill: true,
-                            pointRadius: 0,
+                            pointRadius: 4,
                             borderWidth: 2
                         },
                         {
                             label: 'ចំណាយ',
-                            data: [20, 25, 22, 30, 28, 34],
+                            data: yearlyExpense,
                             borderColor: '#E0559C',
                             backgroundColor: 'rgba(224,85,156,0.06)',
                             tension: .4,
                             fill: true,
-                            pointRadius: 0,
+                            pointRadius: 4,
                             borderWidth: 2
                         }
                     ]
                 },
                 options: {
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
                         x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
+                            grid: { display: false },
+                            ticks: { font: { size: 10 } }
                         },
-                        y: {
-                            display: false
-                        }
+                        y: { display: false }
                     },
                     maintainAspectRatio: false
                 }
             });
 
+            // Range toggle handler (Yearly / Monthly)
             $('.range-btn').on('click', function() {
                 $('.range-btn').removeClass('active');
                 $(this).addClass('active');
-                // TODO: swap dataset based on $(this).data('range') via AJAX
+                const range = $(this).data('range');
+
+                if (range === 'monthly') {
+                    ieChart.data.labels = monthlyLabels.length ? monthlyLabels : ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+                    ieChart.data.datasets[0].data = monthlyIncome;
+                    ieChart.data.datasets[1].data = monthlyExpense;
+                } else {
+                    ieChart.data.labels = yearlyLabels;
+                    ieChart.data.datasets[0].data = yearlyIncome;
+                    ieChart.data.datasets[1].data = yearlyExpense;
+                }
+                ieChart.update();
             });
 
             // ----- occupancy donut -----
@@ -615,7 +625,7 @@
                 type: 'doughnut',
                 data: {
                     datasets: [{
-                        data: [78, 22],
+                        data: [occupancyVal, Math.max(0, 100 - occupancyVal)],
                         backgroundColor: ['#006D36', '#E7F4EC'],
                         borderWidth: 0
                     }]
@@ -623,12 +633,8 @@
                 options: {
                     cutout: '78%',
                     plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            enabled: false
-                        }
+                        legend: { display: false },
+                        tooltip: { enabled: true }
                     }
                 }
             });
@@ -639,29 +645,21 @@
                 data: {
                     labels: ['WEEK 1', 'WEEK 2', 'WEEK 3', 'WEEK 4'],
                     datasets: [{
-                        data: [40, 55, 55, 78],
+                        data: weeklyData.length ? weeklyData : [10, 20, 15, 30],
                         backgroundColor: 'rgba(0,109,54,0.12)',
                         borderColor: '#006D36',
                         borderWidth: 2,
                         borderRadius: 6,
-                        barThickness: 60
+                        barThickness: 50
                     }]
                 },
                 options: {
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     scales: {
-                        x: {
-                            grid: {
-                                display: false
-                            }
-                        },
-                        y: {
-                            display: false
-                        }
+                        x: { grid: { display: false } },
+                        y: { display: false }
                     },
                     maintainAspectRatio: false
                 }

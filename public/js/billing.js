@@ -152,15 +152,17 @@
         let itemIndex = 1;
 
         function itemRowHtml(idx, opts = {}) {
-            const { desc = '', qty = 1, price = '0.00' } = opts;
+            const { desc = '', qty = 1, price = '0.00', item_type = '' } = opts;
+            const isSelected = val => (item_type === val ? 'selected' : '');
             return `
                 <tr class="item-row">
                     <td>
                         <select name="items[${idx}][item_type]" class="form-control form-control-sm item-type" required>
-                            <option value="service">សេវាកម្ម</option>
-                            <option value="room">បន្ទប់សម្រាក</option>
-                            <option value="medicine">ថ្នាំពេទ្យ</option>
-                            <option value="lab">មន្ទីរពិសោធន៍</option>
+                            <option value="" disabled ${!item_type ? 'selected' : ''}>-- ជ្រើសរើសប្រភេទសេវា --</option>
+                            <option value="service" ${isSelected('service')}>សេវាកម្ម</option>
+                            <option value="room" ${isSelected('room')}>បន្ទប់សម្រាក</option>
+                            <option value="medicine" ${isSelected('medicine')}>ថ្នាំពេទ្យ</option>
+                            <option value="lab" ${isSelected('lab')}>មន្ទីរពិសោធន៍</option>
                         </select>
                     </td>
                     <td>
@@ -182,7 +184,7 @@
             `;
         }
         function defaultCreateItemRowHtml(idx) {
-            return itemRowHtml(idx, { desc: 'ថ្លៃពិគ្រោះជំងឺទូទៅ', qty: 1, price: '15.00' });
+            return itemRowHtml(idx, { item_type: '', desc: 'ថ្លៃពិគ្រោះជំងឺទូទៅ', qty: 1, price: '15.00' });
         }
 
         $('#btnAddInvoiceItem').on('click', function () {
@@ -555,13 +557,14 @@
         let editItemIndex = 0;
 
         function editItemRowHtml(item, idx) {
-            item = item || { item_type: 'consultation', description: '', qty: 1, unit_price: 0 };
+            item = item || { item_type: '', description: '', qty: 1, unit_price: 0 };
             const qty = item.qty ?? 1;
             const price = parseFloat(item.unit_price ?? 0);
             return `
                 <tr class="item-row">
                     <td>
                         <select name="items[${idx}][item_type]" class="form-control form-control-sm item-type" required>
+                            <option value="" disabled ${!item.item_type ? 'selected' : ''}>-- ជ្រើសរើសប្រភេទសេវា --</option>
                             <option value="consultation" ${item.item_type === 'consultation' ? 'selected' : ''}>ពិគ្រោះជំងឺ (Consultation)</option>
                             <option value="prescription" ${item.item_type === 'prescription' ? 'selected' : ''}>ថ្នាំពេទ្យ (Medicine)</option>
                             <option value="lab_test" ${item.item_type === 'lab_test' ? 'selected' : ''}>មន្ទីរពិសោធន៍ (Lab Test)</option>

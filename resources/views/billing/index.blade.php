@@ -265,8 +265,8 @@
                     <table class="table table-bordered align-middle mb-3" id="invoiceItemsTable">
                         <thead class="bg-light">
                             <tr>
-                                <th style="width: 22%;">ប្រភេទសេវា</th>
-                                <th>បរិយាយ</th>
+                                <th style="width: 24%;">ប្រភេទសេវា <span class="text-danger">*</span></th>
+                                <th>បរិយាយ <span class="text-danger">*</span></th>
                                 <th style="width: 100px;">ចំនួន</th>
                                 <th style="width: 130px;">តម្លៃ ($)</th>
                                 <th style="width: 130px;">សរុប ($)</th>
@@ -277,6 +277,7 @@
                             <tr class="item-row">
                                 <td>
                                     <select name="items[0][item_type]" class="form-control form-control-sm item-type" required>
+                                        <option value="" disabled selected>-- ជ្រើសរើសប្រភេទសេវា --</option>
                                         <option value="service">សេវាកម្ម</option>
                                         <option value="room">បន្ទប់សម្រាក</option>
                                         <option value="medicine">ថ្នាំពេទ្យ</option>

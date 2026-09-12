@@ -18,6 +18,8 @@ class MedicalRecord extends Model
         'visit_date',
         'diagnosis',
         'notes',
+        'prescription_notes',
+        'status_destination',
         'bp_systolic',
         'bp_diastolic',
         'heart_rate',
@@ -30,6 +32,19 @@ class MedicalRecord extends Model
     protected $casts = [
         'visit_date' => 'datetime',
     ];
+
+    public function getBloodPressureAttribute(): ?string
+    {
+        if (!is_null($this->bp_systolic) && !is_null($this->bp_diastolic)) {
+            return "{$this->bp_systolic}/{$this->bp_diastolic}";
+        }
+        return null;
+    }
+
+    public function getChiefComplaintAttribute(): ?string
+    {
+        return $this->notes;
+    }
 
     public function patient()
     {
