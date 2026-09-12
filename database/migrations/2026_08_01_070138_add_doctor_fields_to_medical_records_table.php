@@ -14,8 +14,8 @@ class AddDoctorFieldsToMedicalRecordsTable extends Migration
     public function up()
     {
         Schema::table('medical_records', function (Blueprint $table) {
-            if (!Schema::hasColumn('medical_records', 'employee_id')) {
-                $table->unsignedBigInteger('employee_id')->nullable()->after('patient_id');
+            if (!Schema::hasColumn('medical_records', 'user_id')) {
+                $table->unsignedBigInteger('user_id')->nullable()->after('patient_id');
             }
 
             if (!Schema::hasColumn('medical_records', 'status_destination')) {
@@ -37,7 +37,7 @@ class AddDoctorFieldsToMedicalRecordsTable extends Migration
     {
         Schema::table('medical_records', function (Blueprint $table) {
             $table->dropColumn([
-                'employee_id',
+                'user_id',
                 'status_destination',
                 'prescription_notes'
             ]);

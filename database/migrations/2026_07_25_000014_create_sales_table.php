@@ -17,8 +17,8 @@ class CreateSalesTable extends Migration
                 ->constrained('patients', 'patient_id')
                 ->nullOnDelete();
 
-            $table->foreignId('employee_id')
-                ->constrained('employees', 'employee_id');
+            $table->foreignId('user_id')
+                ->constrained('users', 'user_id');
 
             $table->dateTime('sale_date');
             $table->decimal('total_amount', 12, 2)->unsigned()->default(0);

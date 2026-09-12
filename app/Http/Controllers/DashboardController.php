@@ -6,7 +6,6 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Patient;
-use App\Models\Employee;
 use App\Models\User;
 use App\Models\Appointment;
 use App\Models\MedicalRecord;
@@ -25,7 +24,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        /** @var \App\Models\User $user */
+
         $user = Auth::user();
 
         if ($user->hasRole('admin')) {
@@ -55,7 +54,7 @@ class DashboardController extends Controller
     {
         $totalPatients = Patient::count();
         $totalUsers = User::count();
-        $totalEmployees = Employee::count();
+        $totalusers = User::count();
         $totalMedicines = Medicine::count();
 
         $todayInvoiceRev = InvoicePayment::whereDate('paid_at', today())->sum('amount');
@@ -80,8 +79,8 @@ class DashboardController extends Controller
         $occupancyPercent = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100) : 0;
         $activePatientsTotal = Admission::where('status', 'admitted')->distinct('patient_id')->count('patient_id');
 
-        $departmentBreakdown = Department::withCount('employees')->get()->map(function ($dept) use ($activePatientsTotal) {
-            $count = $dept->employees_count;
+        $departmentBreakdown = Department::withCount('users')->get()->map(function ($dept) use ($activePatientsTotal) {
+            $count = $dept->users_count;
             return [
                 'name'    => $dept->department_name,
                 'total'   => $count,
@@ -104,7 +103,7 @@ class DashboardController extends Controller
                     ->whereMonth('created_at', $date->month)
                     ->sum('total_amount');
 
-           
+
             $expenseByMonth[] = 0;
         }
 
@@ -119,7 +118,7 @@ class DashboardController extends Controller
         return view('form.dashboard.dashboard', compact(
             'totalPatients',
             'totalUsers',
-            'totalEmployees',
+            'totalusers',
             'totalMedicines',
             'todayRevenue',
             'totalRevenue',

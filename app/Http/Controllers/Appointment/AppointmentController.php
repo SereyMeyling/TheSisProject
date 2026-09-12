@@ -4,10 +4,12 @@ namespace App\Http\Controllers\Appointment;
 
 use App\Http\Controllers\Controller;
 use App\Models\Appointment;
-use App\Models\Employee;
 use App\Models\Patient;
+use App\Models\User;
 use App\Notifications\AppointmentNotification;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
+use Carbon\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -17,22 +19,50 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Display a listing of appointments with search, filters, and summary stats.
+     * Check if the doctor already has an appointment in the same hour.
+     */
+    protected function hasConflict($userId, $appointmentDate, $excludeId = null)
+    {
+        $date = Carbon::parse($appointmentDate);
+
+        return Appointment::where('user_id', $userId)
+            ->where('status', 'scheduled')
+            ->whereDate('appointment_date', $date->toDateString())
+            ->whereTime('appointment_date', $date->format('H:i:00'))
+            ->when($excludeId, function ($query) use ($excludeId) {
+                $query->where('appointment_id', '!=', $excludeId);
+            })
+            ->exists();
+    }
+    /**
+     * Display appointments with search, filters and statistics.
      */
     public function index(Request $request)
     {
         $appointments = $this->getFilteredAppointments($request);
+
         $totalAppointments = Appointment::count();
+
         $scheduledCount = Appointment::where('status', 'scheduled')->count();
+
         $completedCount = Appointment::where('status', 'completed')->count();
+
         $cancelledCount = Appointment::where('status', 'cancelled')->count();
 
         $patients = Patient::orderBy('full_name', 'asc')->get();
-        $doctors = Employee::where('role', 'doctor')->orderBy('first_name', 'asc')->get();
+
+        // Spatie roles
+        $doctors = User::role('doctor')
+            ->orderBy('name', 'asc')
+            ->get();
 
         if ($request->ajax() || $request->wantsJson()) {
             return response()->json([
-                'html' => view('form.appointment.partials.table', compact('appointments'))->render(),
+                'html' => view(
+                    'form.appointment.partials.table',
+                    compact('appointments')
+                )->render(),
+
                 'total' => $totalAppointments,
                 'scheduled' => $scheduledCount,
                 'completed' => $completedCount,
@@ -40,37 +70,55 @@ class AppointmentController extends Controller
             ]);
         }
 
-        return view('form.appointment.appointment', compact(
-            'appointments',
-            'totalAppointments',
-            'scheduledCount',
-            'completedCount',
-            'cancelledCount',
-            'patients',
-            'doctors'
-        ));
+        return view(
+            'form.appointment.appointment',
+            compact(
+                'appointments',
+                'totalAppointments',
+                'scheduledCount',
+                'completedCount',
+                'cancelledCount',
+                'patients',
+                'doctors'
+            )
+        );
     }
 
     /**
-     * Filter query for appointments.
+     * Filter appointments.
      */
     protected function getFilteredAppointments(Request $request)
     {
-        $query = Appointment::with(['patient', 'doctor']);
+        $query = Appointment::with([
+            'patient',
+            'doctor',
+        ]);
 
         if ($request->filled('search')) {
-            $searchTerm = '%' . $request->search . '%';
+
+            $searchTerm = '%' . trim($request->search) . '%';
+
             $query->where(function ($q) use ($searchTerm) {
+
+                // Patient search
                 $q->whereHas('patient', function ($pq) use ($searchTerm) {
+
                     $pq->where('full_name', 'LIKE', $searchTerm)
                         ->orWhere('patient_code', 'LIKE', $searchTerm)
                         ->orWhere('phone', 'LIKE', $searchTerm);
+
                 })
+
+                    // Doctor/User search
                     ->orWhereHas('doctor', function ($dq) use ($searchTerm) {
-                        $dq->where('first_name', 'LIKE', $searchTerm)
-                            ->orWhere('last_name', 'LIKE', $searchTerm)
-                            ->orWhere('specialization', 'LIKE', $searchTerm);
+
+                        $dq->where('name', 'LIKE', $searchTerm)
+                            ->orWhere('specialization', 'LIKE', $searchTerm)
+                            ->orWhere('phone', 'LIKE', $searchTerm);
+
                     })
+
+                    // Reason search
                     ->orWhere('reason', 'LIKE', $searchTerm);
             });
         }
@@ -80,55 +128,60 @@ class AppointmentController extends Controller
         }
 
         if ($request->filled('date')) {
-            $query->whereDate('appointment_date', $request->date);
-        }
-
-        $query->orderBy('appointment_date', 'desc');
-
-        return $query->paginate(10)->appends($request->query());
-    }
-
-    /**
-     * Store a newly created appointment in storage.
-     */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'patient_id' => 'required|exists:patients,patient_id',
-            'employee_id' => 'required|exists:employees,employee_id',
-            'appointment_date' => 'required|date',
-            'status' => 'required|in:scheduled,completed,cancelled',
-            'reason' => 'nullable|string|max:255',
-        ]);
-
-        // Create appointment
-        $appointment = Appointment::create([
-            'patient_id' => $request->patient_id,
-            'employee_id' => $request->employee_id,
-            'appointment_date' => $request->appointment_date,
-            'status' => $request->status,
-            'reason' => $request->reason,
-        ]);
-
-        // Find the doctor/employee and related user
-        $doctor = Employee::with('user')
-            ->where('employee_id', $request->employee_id)
-            ->first();
-
-        // Send notification to the doctor's user account
-        if ($doctor && $doctor->user) {
-            $doctor->user->notify(
-                new AppointmentNotification($appointment, 'created')
+            $query->whereDate(
+                'appointment_date',
+                $request->date
             );
         }
 
-        return redirect()
-            ->back()
-            ->with([
-                'success' => 'ការណាត់ជួបត្រូវបានបង្កើតដោយជោគជ័យ'
-            ]);
+        return $query
+            ->orderBy('appointment_date', 'desc')
+            ->paginate(10)
+            ->appends($request->query());
     }
 
+    /**
+     * Store appointment.
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'patient_id' => ['required', 'exists:patients,patient_id'],
+            'user_id' => ['required', 'exists:users,id'],
+            'appointment_date' => ['required', 'date', 'after_or_equal:now'],
+            'status' => ['required', 'in:scheduled,completed,cancelled'],
+            'reason' => ['nullable', 'string', 'max:255'],
+        ], [
+            'appointment_date.after_or_equal' => 'មិនអាចជ្រើសរើសកាលបរិច្ឆេទ ឬម៉ោងក្នុងអតីតកាលបានទេ សូមជ្រើសរើសពេលវេលាថ្ងៃនេះ ឬថ្ងៃខាងមុខ។',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->with('error', $validator->errors()->first());
+        }
+
+        $validated = $validator->validated();
+
+        if ($this->hasConflict($validated['user_id'], $validated['appointment_date'])) {
+            return redirect()->back()->withInput()->with(
+                'error',
+                'វេជ្ជបណ្ឌិតរូបនេះមានការណាត់ជួបផ្សេងទៀតនៅក្នុងម៉ោងដដែលនេះរួចហើយ សូមជ្រើសរើសម៉ោងផ្សេង។'
+            );
+        }
+
+        $appointment = Appointment::create($validated);
+
+        $doctor = User::find($validated['user_id']);
+
+        if ($doctor) {
+            $doctor->notify(new AppointmentNotification($appointment, 'created'));
+        }
+
+        return redirect()->back()->with('success', 'ការណាត់ជួបត្រូវបានបង្កើតដោយជោគជ័យ');
+    }
+
+    /**
+     * Show appointment details.
+     */
     public function show($id)
     {
         $appointment = Appointment::with([
@@ -138,74 +191,112 @@ class AppointmentController extends Controller
 
         if (!$appointment) {
             return redirect()
-                ->route('appointments.index')
-                ->with('error', 'រកមិនឃើញការណាត់ជួបទេ');
+                ->route('appointment.index')
+                ->with(
+                    'error',
+                    'រកមិនឃើញការណាត់ជួបទេ'
+                );
         }
 
-        return view('form.appointment.show', compact('appointment'));
+        return view(
+            'form.appointment.show',
+            compact('appointment')
+        );
     }
 
     /**
-     * Show the form for editing the specified appointment (returns JSON).
+     * Edit appointment.
      */
     public function edit($id)
     {
-        $appointment = Appointment::with(['patient', 'doctor'])->find($id);
+        $appointment = Appointment::with([
+            'patient',
+            'doctor',
+        ])->find($id);
+
         if (!$appointment) {
-            return response()->json(['error' => 'រកមិនឃើញការណាត់ជួបទេ'], 404);
+            return response()->json([
+                'error' => 'រកមិនឃើញការណាត់ជួបទេ',
+            ], 404);
         }
 
         return response()->json([
             'appointment_id' => $appointment->appointment_id,
+
             'patient_id' => $appointment->patient_id,
-            'employee_id' => $appointment->employee_id,
-            'appointment_date' => $appointment->appointment_date ? $appointment->appointment_date->format('Y-m-d\TH:i') : '',
+
+            'user_id' => $appointment->user_id,
+
+            'appointment_date' => $appointment->appointment_date
+                ? $appointment->appointment_date->format('Y-m-d\TH:i')
+                : '',
+
             'status' => $appointment->status,
+
             'reason' => $appointment->reason,
         ]);
     }
 
     /**
-     * Update the specified appointment in storage.
+     * Update appointment.
      */
     public function update(Request $request, $id)
     {
         $appointment = Appointment::find($id);
+
         if (!$appointment) {
-            return redirect()->back()->with(['error' => 'រកមិនឃើញការណាត់ជួបទេ']);
+            return redirect()->back()->with('error', 'រកមិនឃើញការណាត់ជួបទេ');
         }
 
-        $request->validate([
-            'patient_id' => 'required|exists:patients,patient_id',
-            'employee_id' => 'required|exists:employees,employee_id',
-            'appointment_date' => 'required|date',
-            'status' => 'required|in:scheduled,completed,cancelled',
-            'reason' => 'nullable|string|max:255',
+        $validator = Validator::make($request->all(), [
+            'patient_id' => ['required', 'exists:patients,patient_id'],
+            'user_id' => ['required', 'exists:users,id'],
+            'appointment_date' => ['required', 'date'],
+            'status' => ['required', 'in:scheduled,completed,cancelled'],
+            'reason' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $appointment->update([
-            'patient_id' => $request->patient_id,
-            'employee_id' => $request->employee_id,
-            'appointment_date' => $request->appointment_date,
-            'status' => $request->status,
-            'reason' => $request->reason,
-        ]);
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->with('error', $validator->errors()->first());
+        }
 
-        return redirect()->back()->with(['success' => 'ការណាត់ជួបត្រូវបានកែប្រែដោយជោគជ័យ (Appointment updated successfully)']);
+        $validated = $validator->validated();
+
+        if ($this->hasConflict($validated['user_id'], $validated['appointment_date'], $appointment->appointment_id)) {
+            return redirect()->back()->withInput()->with(
+                'error',
+                'វេជ្ជបណ្ឌិតរូបនេះមានការណាត់ជួបផ្សេងទៀតនៅក្នុងម៉ោងដដែលនេះរួចហើយ សូមជ្រើសរើសម៉ោងផ្សេង។'
+            );
+        }
+
+        $appointment->update($validated);
+
+        return redirect()->back()->with('success', 'ការណាត់ជួបត្រូវបានកែប្រែដោយជោគជ័យ');
     }
 
     /**
-     * Remove the specified appointment from storage.
+     * Delete appointment.
      */
     public function destroy($id)
     {
         $appointment = Appointment::find($id);
+
         if (!$appointment) {
-            return redirect()->back()->with(['error' => 'រកមិនឃើញការណាត់ជួបទេ']);
+            return redirect()
+                ->back()
+                ->with(
+                    'error',
+                    'រកមិនឃើញការណាត់ជួបទេ'
+                );
         }
 
         $appointment->delete();
 
-        return redirect()->back()->with(['success' => 'ការណាត់ជួបត្រូវបានលុបដោយជោគជ័យ (Appointment deleted successfully)']);
+        return redirect()
+            ->back()
+            ->with(
+                'success',
+                'ការណាត់ជួបត្រូវបានលុបដោយជោគជ័យ'
+            );
     }
 }

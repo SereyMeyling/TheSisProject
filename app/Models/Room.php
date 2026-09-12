@@ -33,7 +33,7 @@ class Room extends Model
             'general' => 'ទូទៅ',
             'private' => 'ឯកជន',
             'icu' => 'ICU',
-            'isolation' => 'គ្រែឯកោ',
+            'isolation' => 'គ្រែមួយ',
         ];
     }
 

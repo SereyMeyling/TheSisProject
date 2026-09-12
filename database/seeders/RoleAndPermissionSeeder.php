@@ -32,11 +32,11 @@ class RoleAndPermissionSeeder extends Seeder
                 'manage-system-settings',
                 'manage-backups',
             ],
-            'Employee Management' => [
-                'view-employees',
-                'create-employees',
-                'edit-employees',
-                'delete-employees',
+            'user Management' => [
+                'view-users',
+                'create-users',
+                'edit-users',
+                'delete-users',
             ],
             'Hospital Setup' => [
                 'manage-departments',
@@ -88,7 +88,7 @@ class RoleAndPermissionSeeder extends Seeder
         foreach ($permissionsByModule as $module => $permissions) {
             foreach ($permissions as $permissionName) {
                 Permission::firstOrCreate([
-                    'name'       => $permissionName,
+                    'name' => $permissionName,
                     'guard_name' => 'web',
                 ]);
             }
@@ -106,10 +106,10 @@ class RoleAndPermissionSeeder extends Seeder
                 'reset-2fa',
                 'manage-system-settings',
                 'manage-backups',
-                'view-employees',
-                'create-employees',
-                'edit-employees',
-                'delete-employees',
+                'view-users',
+                'create-users',
+                'edit-users',
+                'delete-users',
                 'manage-departments',
                 'manage-rooms',
                 'view-patients',

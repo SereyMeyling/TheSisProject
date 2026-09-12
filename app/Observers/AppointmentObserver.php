@@ -29,7 +29,7 @@ class AppointmentObserver
     protected function notify(Appointment $appointment, string $action): void
     {
         // Adjust ->doctor->user if your Appointment model names the relation differently.
-        // This assumes: appointment->doctor is an Employee, and employee->user is the login account.
+        // This assumes: appointment->doctor is an user, and user->user is the login account.
         $doctorUser = optional($appointment->doctor)->user;
 
         // Doctor assigned to THIS appointment + everyone with the admin role

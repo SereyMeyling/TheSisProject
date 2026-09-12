@@ -500,7 +500,7 @@
             $('#edit_room_type').val($btn.data('room-type'));
             $('#edit_status').val($btn.data('status'));
             $('#edit_price_per_day').val($btn.data('price'));
-            $('#editRoomForm').attr('action', "{{ url('room') }}/" + $btn.data('id'));
+            $('#editRoomForm').attr('action', "{{ url('room/update') }}/" + $btn.data('id'));
             clearErrors($('#editRoomForm'));
             $('#editRoomAlert').addClass('d-none').text('');
             $('#modalEditRoom').modal('show');
@@ -537,16 +537,16 @@
                 }
             });
         });
-
-        // ---- Delete Room ----
         $(document).on('click', '.btn-delete-room', function () {
             const id = $(this).data('id');
             const number = $(this).data('number');
             $('#deleteRoomNumber').text(number);
-            $('#deleteRoomForm').attr('action', "{{ url('room') }}/" + id);
+            $('#deleteRoomForm').attr(
+                'action',
+                "{{ url('room/delete') }}/" + id
+            );
             $('#modalDeleteRoom').modal('show');
         });
-
         $('#deleteRoomForm').on('submit', function (e) {
             e.preventDefault();
             $.ajax({

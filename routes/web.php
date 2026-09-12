@@ -18,7 +18,7 @@ use App\Http\Controllers\Settings\SettingsController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\Support\SupportController;
 use App\Http\Controllers\User\UserController;
-use App\Http\Controllers\Employee\EmployeeController;
+// use App\Http\Controllers\user\userController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Patient\PatientController;
@@ -39,8 +39,8 @@ Route::get('/', function () {
 
 Auth::routes([
     'register' => false,
-    'reset'    => false,
-    'verify'   => false,
+    'reset' => false,
+    'verify' => false,
 ]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
@@ -74,7 +74,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
 // =========================================================================
 // 1. ADMIN ONLY ROUTES (Role: admin)
-// System settings, backups, user & employee management, department setup
+// System settings, backups, user & user management, department setup
 // =========================================================================
 Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
 
@@ -96,14 +96,14 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
     });
 
-    // Employee Management
-    Route::group(['prefix' => 'employee'], function () {
-        Route::get('/', [EmployeeController::class, 'index'])->name('employee.index');
-        Route::post('/store', [EmployeeController::class, 'store'])->name('employee.store');
-        Route::get('/edit/{id}', [EmployeeController::class, 'edit'])->name('employee.edit');
-        Route::put('/update/{id}', [EmployeeController::class, 'update'])->name('employee.update');
-        Route::delete('/delete/{id}', [EmployeeController::class, 'destroy'])->name('employee.destroy');
-    });
+    // // user Management
+    // Route::group(['prefix' => 'user'], function () {
+    //     Route::get('/', [userController::class, 'index'])->name('user.index');
+    //     Route::post('/store', [userController::class, 'store'])->name('user.store');
+    //     Route::get('/edit/{id}', [userController::class, 'edit'])->name('user.edit');
+    //     Route::put('/update/{id}', [userController::class, 'update'])->name('user.update');
+    //     Route::delete('/delete/{id}', [userController::class, 'destroy'])->name('user.destroy');
+    // });
 
     // Role & Permission Management
     Route::group(['prefix' => 'roles'], function () {
@@ -241,7 +241,7 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/prescriptions', [PrescriptionController::class, 'index'])->name('pharmacy.prescriptions.index');
     Route::post('/prescriptions/store', [PrescriptionController::class, 'store'])->name('pharmacy.prescriptions.store');
     Route::post('/prescriptions/{id}/dispense', [PrescriptionController::class, 'dispense'])->name('pharmacy.prescriptions.dispense');
-    
+
 });
 
 // =========================================================================

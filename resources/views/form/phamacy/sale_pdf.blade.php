@@ -27,39 +27,39 @@
                             <div class="form-group">
                                 <label>រូបិយវត្ថុ</label>
                                 <input type="text" name="currency_symbol" id="f_currency" class="form-control"
-                                    placeholder="$ / ៛" value="{{ $settings->currency_symbol }}">
+                                    placeholder="$ / ៛" value="{{ $billing->currency_symbol }}">
                             </div>
                             <div class="form-group">
                                 <label>ពន្ធ %</label>
                                 <input type="number" step="0.01" name="tax_percent" id="f_tax" class="form-control"
-                                    placeholder="0" value="{{ $settings->tax_percent }}">
+                                    placeholder="0" value="{{ $billing->tax_percent }}}">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
                                 <label>វិក័យប័ត្រ Prefix</label>
                                 <input type="text" name="invoice_prefix" id="f_prefix" class="form-control"
-                                    placeholder="INV-" value="{{ $settings->invoice_prefix }}">
+                                    placeholder="INV-" value="{{ $billing->invoice_prefix }}">
                             </div>
                             <div class="form-group">
                                 <label>វិក័យប័ត្រ Footer</label>
                                 <input type="text" name="invoice_footer" id="f_footer" class="form-control"
-                                    placeholder="សូមអរគុណ!" value="{{ $settings->invoice_footer }}">
+                                    placeholder="សូមអរគុណ!" value="{{ $billing->invoice_footer }}">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
                                 <label>លេខវិក័យប័ត្របន្ទាប់ (Auto)</label>
                                 <input type="number" min="1" name="next_invoice_number" id="f_number"
-                                    class="form-control" value="{{ $settings->next_invoice_number }}">
+                                    class="form-control" value="{{ $billing->next_invoice_number }}">
                             </div>
                         </div>
                         <div class="col-6">
                             <div class="form-group">
                                 <label>ព្រីនទំហំ</label>
                                 <select name="print_size" id="f_size" class="form-control">
-                                    <option value="A4" {{ $settings->print_size == 'A4' ? 'selected' : '' }}>A4</option>
-                                    <option value="80mm" {{ $settings->print_size == '80mm' ? 'selected' : '' }}>80mm
+                                    <option value="A4" {{ $billing->print_size == 'A4' ? 'selected' : '' }}>A4</option>
+                                    <option value="80mm" {{ $billing->print_size == '80mm' ? 'selected' : '' }}>80mm
                                         (receipt)</option>
                                 </select>
                             </div>
@@ -67,7 +67,7 @@
                         <div class="col-12">
                             <div class="form-check">
                                 <input type="checkbox" class="form-check-input" name="invoice_auto_number" id="f_auto"
-                                    {{ $settings->invoice_auto_number ? 'checked' : '' }}>
+                                    {{ $billing->invoice_auto_number ? 'checked' : '' }}>
                                 <label class="form-check-label" for="f_auto">បង្កើតលេខវិក័យប័ត្រស្វ័យប្រវត្តិ</label>
                             </div>
                         </div>

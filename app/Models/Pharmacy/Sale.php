@@ -2,6 +2,8 @@
 
 namespace App\Models\Pharmacy;
 
+use App\Models\Patient;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,7 +15,7 @@ class Sale extends Model
 
     protected $fillable = [
         'patient_id',
-        'employee_id',
+        'user_id',
         'sale_date',
         'total_amount',
         'status',
@@ -33,8 +35,8 @@ class Sale extends Model
         return $this->belongsTo(Patient::class, 'patient_id', 'patient_id');
     }
 
-    public function employee()
+    public function user()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

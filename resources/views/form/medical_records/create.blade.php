@@ -35,7 +35,8 @@
                             <option value="" disabled selected>-- ជ្រើសរើសអ្នកជំងឺ --</option>
                             @foreach($patients as $patient)
                                 <option value="{{ $patient->patient_id }}" {{ (isset($selectedPatientId) && $selectedPatientId == $patient->patient_id) ? 'selected' : '' }}>
-                                    {{ $patient->patient_code ?? 'ID: ' . $patient->patient_id }} - {{ $patient->full_name }}
+                                    {{ $patient->patient_code ?? 'ID: ' . $patient->patient_id }} -
+                                    {{ $patient->full_name }}
                                 </option>
                             @endforeach
                         </select>
@@ -43,11 +44,11 @@
 
                     <div class="col-md-4 form-group">
                         <label class="small font-weight-bold text-secondary">គ្រូពេទ្យពិនិត្យ (Doctor /
-                            Employee)</label>
-                        <select name="employee_id" class="form-control">
+                            user)</label>
+                        <select name="user_id" class="form-control">
                             <option value="" selected>-- ជ្រើសរើសគ្រូពេទ្យ --</option>
                             @foreach($doctors as $doc)
-                                <option value="{{ $doc->employee_id }}">{{ $doc->first_name }} {{ $doc->last_name }}
+                                <option value="{{ $doc->user_id }}">{{ $doc->first_name }} {{ $doc->last_name }}
                                 </option>
                             @endforeach
                         </select>

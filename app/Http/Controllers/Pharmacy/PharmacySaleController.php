@@ -48,14 +48,13 @@ class PharmacySaleController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-
-        if (!$user || !$user->employee_id) {
+        if (!$user) {
             return response()->json([
-                'message' => 'គណនីរបស់អ្នកមិនទាន់មាន Employee ID ទេ។ សូមកំណត់ Employee ID ជាមុនសិន។'
+                'message' => 'សូមចូលគណនីជាមុនសិន។'
             ], 422);
         }
 
-        $employeeId = $user->employee_id;
+        $userId = $user->id;
 
         $data = $request->validate([
             'patient_id' => 'nullable|exists:patients,patient_id',
@@ -64,10 +63,10 @@ class PharmacySaleController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        $sale = DB::transaction(function () use ($data, $employeeId) {
+        $sale = DB::transaction(function () use ($data, $userId) {
             $sale = Sale::create([
                 'patient_id' => $data['patient_id'] ?? null,
-                'employee_id' => $employeeId,
+                'user_id' => $userId,
                 'sale_date' => now(),
                 'total_amount' => 0,
                 'status' => 'COMPLETED',
@@ -155,7 +154,8 @@ class PharmacySaleController extends Controller
     }
     public function exportPdf(Sale $sale)
     {
-        $sale->load(['items.medicine', 'patient', 'employee']);
+
+        $sale->load(['items.medicine', 'patient', 'user']);
 
         $general = GeneralSettings::first();
         $billing = InvoiceSetting::firstOrCreate(['id' => 1]);

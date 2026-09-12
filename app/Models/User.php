@@ -136,8 +136,5 @@ class User extends Authenticatable
             'department_id'
         );
     }
-    public function employee()
-    {
-        return $this->hasOne(Employee::class, 'user_id', 'id');
-    }
+  
 }

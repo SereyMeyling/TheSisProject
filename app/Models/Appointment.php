@@ -14,7 +14,7 @@ class Appointment extends Model
 
     protected $fillable = [
         'patient_id',
-        'employee_id',
+        'user_id',
         'appointment_date',
         'status',
         'reason',
@@ -33,18 +33,23 @@ class Appointment extends Model
     }
 
     /**
-     * Relationship to Employee (Doctor)
+     * Relationship to user (Doctor)
      */
     public function doctor()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(
+            User::class,
+            'user_id',
+            'id'
+        );
     }
 
-    /**
-     * Relationship alias for employee
-     */
-    public function employee()
+    public function user()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(
+            User::class,
+            'user_id',
+            'id'
+        );
     }
 }

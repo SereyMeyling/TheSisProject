@@ -14,7 +14,7 @@ class MedicalRecord extends Model
 
     protected $fillable = [
         'patient_id',
-        'employee_id',
+        'user_id',
         'visit_date',
         'diagnosis',
         'notes',
@@ -53,11 +53,11 @@ class MedicalRecord extends Model
 
     public function doctor()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 
-    public function employee()
+    public function user()
     {
-        return $this->belongsTo(Employee::class, 'employee_id', 'employee_id');
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

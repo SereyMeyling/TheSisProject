@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Doctor;
 use App\Http\Controllers\Controller;
 use App\Models\Admission;
 use App\Models\Department;
-use App\Models\Employee;
+// use App\Models\user;
 use App\Models\LabOrder;
 use App\Models\LabResult;
 use App\Models\LabTest;
@@ -29,17 +29,15 @@ class DoctorController extends Controller
      */
     public function index(Request $request)
     {
-        /** @var User|null $user */
         $user = auth()->user();
         $userRole = 'doctor';
 
         if ($user) {
-            $userSpatieRoles = $user->roles->pluck('name')->toArray();
-            if (in_array('admin', $userSpatieRoles) || strtolower($user->role ?? '') === 'admin') {
+            if ($user->hasRole('admin')) {
                 $userRole = 'admin';
-            } elseif (in_array('nurse', $userSpatieRoles) || strtolower($user->role ?? '') === 'nurse') {
+            } elseif ($user->hasRole('nurse')) {
                 $userRole = 'nurse';
-            } elseif (in_array('doctor', $userSpatieRoles) || strtolower($user->role ?? '') === 'doctor') {
+            } elseif ($user->hasRole('doctor')) {
                 $userRole = 'doctor';
             }
         }
@@ -48,22 +46,29 @@ class DoctorController extends Controller
         // 1. ADMIN ROLE: Doctor Directory & Consultation Audit
         // ------------------------------------------------------------------
         if ($userRole === 'admin') {
-            $query = Employee::whereIn('role', ['doctor', 'Doctor'])->with('department');
-
+            $query = User::role('doctor')->with('department');
             if ($request->filled('search')) {
-                $term = '%' . $request->search . '%';
-                $query->where(function ($q) use ($term) {
-                    $q->where('first_name', 'LIKE', $term)
-                      ->orWhere('last_name', 'LIKE', $term)
-                      ->orWhere('employee_code', 'LIKE', $term)
-                      ->orWhere('specialization', 'LIKE', $term);
+                $search = trim($request->search);
+                $query->where(function ($q) use ($search) {
+                    // Search by doctor name
+                    $q->where('name', 'LIKE', '%' . $search . '%')
+                        // Search by specialization
+                        ->orWhere('specialization', 'LIKE', '%' . $search . '%')
+                        // Search by phone
+                        ->orWhere('phone', 'LIKE', '%' . $search . '%');
+                    // Search by User ID if search is a number
+                    if (is_numeric($search)) {
+                        $q->orWhere('id', (int) $search);
+                    }
                 });
             }
 
-            $doctors = $query->orderBy('employee_id', 'desc')->paginate(10)->appends($request->query());
+            $doctors = $query->orderBy('id', 'desc')->paginate(10)->appends($request->query());
 
-            $totalDoctors = Employee::whereIn('role', ['doctor', 'Doctor'])->count();
-            $activeDoctors = Employee::whereIn('role', ['doctor', 'Doctor'])->where('status', 'active')->count();
+            $totalDoctors = User::role('doctor')->count();
+
+            $activeDoctors = User::role('doctor')->count();
+
             $todayConsultations = MedicalRecord::whereDate('visit_date', today())->count();
 
             return view('form.doctor.index', compact(
@@ -85,7 +90,7 @@ class DoctorController extends Controller
                 $term = '%' . $request->search . '%';
                 $query->whereHas('patient', function ($q) use ($term) {
                     $q->where('full_name', 'LIKE', $term)
-                      ->orWhere('patient_code', 'LIKE', $term);
+                        ->orWhere('patient_code', 'LIKE', $term);
                 });
             }
 
@@ -93,20 +98,18 @@ class DoctorController extends Controller
             $pendingVitalsCount = MedicalRecord::whereNull('bp_systolic')->orWhere('bp_systolic', '')->count();
             $todayVisitsCount = MedicalRecord::whereDate('visit_date', today())->count();
 
-            // Dynamic Nurse info from employees table
-            $nurseEmployee = Employee::whereIn('role', ['nurse', 'Nurse'])->with('department')->first();
-
-            // Dynamic Doctor info from employees table
-            $doctorEmployee = Employee::whereIn('role', ['doctor', 'Doctor'])->first();
-            $assignedDocName = $doctorEmployee ? $doctorEmployee->full_name : 'Dr. Julian Vance';
+            $nurseuser = auth()->user();
+            $nurseuser->load('department');
+            $doctoruser = User::role('doctor')->first();
+            $assignedDocName = $doctoruser ? $doctoruser->full_name : 'Dr. Julian Vance';
             if (!str_starts_with($assignedDocName, 'Dr.')) {
                 $assignedDocName = 'Dr. ' . $assignedDocName;
             }
 
             $nurseShift = [
-                'name'            => $nurseEmployee ? $nurseEmployee->full_name : ($user->name ?? 'Nurse Workspace'),
-                'department'      => $nurseEmployee->department->department_name ?? 'Emergency & Outpatient Triage',
-                'shift'           => 'Morning Shift (07:00 AM - 05:00 PM)',
+                'name' => $nurseuser ? $nurseuser->full_name : ($user->name ?? 'Nurse Workspace'),
+                'department' => $nurseuser->department->department_name ?? 'Emergency & Outpatient Triage',
+                'shift' => 'Morning Shift (07:00 AM - 05:00 PM)',
                 'assigned_doctor' => $assignedDocName,
             ];
 
@@ -122,9 +125,8 @@ class DoctorController extends Controller
         // ------------------------------------------------------------------
         // 3. DOCTOR ROLE: Primary Interactive Consultation Workspace
         // ------------------------------------------------------------------
-        // Dynamic Doctor info from employees table
-        $doctorEmployee = Employee::whereIn('role', ['doctor', 'Doctor'])->with('department')->first();
-
+        $doctoruser = auth()->user();
+        $doctoruser->load('department');
         $activeRecord = null;
         if ($request->filled('record_id')) {
             $activeRecord = MedicalRecord::with(['patient', 'doctor'])->find($request->record_id);
@@ -141,30 +143,30 @@ class DoctorController extends Controller
                 $samplePatient = Patient::firstOrCreate(
                     ['patient_code' => 'ID-2001-0023'],
                     [
-                        'full_name'     => 'លោក ពាក់ មី',
-                        'id_card'       => '012345678901',
-                        'sex'           => 'Male',
+                        'full_name' => 'លោក ពាក់ មី',
+                        'id_card' => '012345678901',
+                        'sex' => 'Male',
                         'date_of_birth' => '2006-05-12',
-                        'phone'         => '012 345 678',
-                        'address'       => 'រាជធានីភ្នំពេញ',
+                        'phone' => '012 345 678',
+                        'address' => 'រាជធានីភ្នំពេញ',
                     ]
                 );
             }
 
-            $empId = $doctorEmployee ? $doctorEmployee->employee_id : ($user->id ?? 1);
+            $userId = $doctoruser?->id ?? $user->id;
 
             $activeRecord = MedicalRecord::create([
-                'patient_id'         => $samplePatient->patient_id,
-                'employee_id'        => $empId,
-                'visit_date'         => now(),
-                'bp_systolic'        => 120,
-                'bp_diastolic'       => 80,
-                'heart_rate'         => 75,
-                'temperature'        => 38.6,
-                'spo2'               => 98,
-                'weight'             => 65,
-                'diagnosis'          => 'Acute Pharyngitis',
-                'notes'              => 'ក្ដៅខ្លួន ឈឺបំពង់ក និងអស់កម្លាំង (Fever, Sore Throat & Fatigue) | អ្នកជំងឺមានអាការៈឈឺបំពង់ក ២ថ្ងៃមកហើយ។',
+                'patient_id' => $samplePatient->patient_id,
+                'user_id' => $userId,
+                'visit_date' => now(),
+                'bp_systolic' => 120,
+                'bp_diastolic' => 80,
+                'heart_rate' => 75,
+                'temperature' => 38.6,
+                'spo2' => 98,
+                'weight' => 65,
+                'diagnosis' => 'Acute Pharyngitis',
+                'notes' => 'ក្ដៅខ្លួន ឈឺបំពង់ក និងអស់កម្លាំង (Fever, Sore Throat & Fatigue) | អ្នកជំងឺមានអាការៈឈឺបំពង់ក ២ថ្ងៃមកហើយ។',
                 'prescription_notes' => 'Paracetamol 500mg (2 tabs x 3 times/day after meal), Amoxicillin 500mg (1 tab x 2 times/day)',
                 'status_destination' => 'pharmacy',
             ]);
@@ -181,17 +183,19 @@ class DoctorController extends Controller
         $labTests = LabTest::orderBy('test_name', 'asc')->get();
         $availableRooms = Room::where('status', 'available')->orderBy('room_number', 'asc')->get();
 
-        $docName = $doctorEmployee ? $doctorEmployee->full_name : ($user->name ?? 'Dr. Julian Vance');
+        $docName = $doctoruser->full_name ?? $doctoruser->name ?? 'Dr. Julian Vance';
+
         if (!str_starts_with($docName, 'Dr.')) {
             $docName = 'Dr. ' . $docName;
         }
 
         $doctorInfo = [
-            'name'       => $docName,
-            'department' => $doctorEmployee->department->department_name ?? 'Emergency Dept. / ផ្នែកសង្គ្រោះបន្ទាន់',
-            'code'       => $doctorEmployee->employee_code ?? ('DOC-' . str_pad($user->id ?? 1, 3, '0', STR_PAD_LEFT)),
+            'name' => $docName,
+            'department' => $doctoruser->department->department_name
+                ?? 'Emergency Dept. / ផ្នែកសង្គ្រោះបន្ទាន់',
+            'code' => $doctoruser->user_code
+                ?? ('DOC-' . str_pad($doctoruser->id, 3, '0', STR_PAD_LEFT)),
         ];
-
         return view('form.doctor.index', compact(
             'userRole',
             'activeRecord',
@@ -218,25 +222,24 @@ class DoctorController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'diagnosis'          => 'required|string',
+            'diagnosis' => 'required|string',
             'status_destination' => 'required|in:admit,pharmacy,done',
         ]);
 
         try {
             $record = MedicalRecord::findOrFail($id);
-
-            $doctorEmployee = Employee::whereIn('role', ['doctor', 'Doctor'])->first();
-            $empId = $doctorEmployee ? $doctorEmployee->employee_id : auth()->id();
-
+            $doctoruser = auth()->user();
+            $doctoruser->load('department');
+            $empId = $doctoruser ? $doctoruser->id : auth()->id();
             $updateData = [
-                'employee_id'        => $empId,
-                'diagnosis'          => $request->diagnosis,
-                'notes'              => $request->notes ?? $record->notes,
+                'user_id' => $empId,
+                'diagnosis' => $request->diagnosis,
+                'notes' => $request->notes ?? $record->notes,
                 'prescription_notes' => $request->prescription_notes,
                 'status_destination' => $request->status_destination,
-                'heart_rate'         => $request->heart_rate ?? $record->heart_rate,
-                'temperature'        => $request->temperature ?? $record->temperature,
-                'spo2'               => $request->spo2 ?? $record->spo2,
+                'heart_rate' => $request->heart_rate ?? $record->heart_rate,
+                'temperature' => $request->temperature ?? $record->temperature,
+                'spo2' => $request->spo2 ?? $record->spo2,
             ];
 
             if ($request->filled('blood_pressure')) {
@@ -269,22 +272,22 @@ class DoctorController extends Controller
     {
         $request->validate([
             'record_id' => 'required|exists:medical_records,record_id',
-            'test_ids'  => 'required|array|min:1',
+            'test_ids' => 'required|array|min:1',
         ]);
 
         DB::beginTransaction();
         try {
             $order = LabOrder::create([
-                'record_id'  => $request->record_id,
+                'record_id' => $request->record_id,
                 'order_date' => now(),
-                'status'     => 'pending',
+                'status' => 'pending',
             ]);
 
             foreach ($request->test_ids as $testId) {
                 $test = LabTest::find($testId);
                 LabResult::create([
                     'lab_order_id' => $order->lab_order_id,
-                    'test_id'      => $testId,
+                    'test_id' => $testId,
                     'result_value' => 'Pending',
                     'normal_range' => $test ? $test->normal_range : null,
                 ]);
@@ -305,16 +308,16 @@ class DoctorController extends Controller
     {
         $request->validate([
             'patient_id' => 'required|exists:patients,patient_id',
-            'room_id'    => 'required|exists:rooms,room_id',
+            'room_id' => 'required|exists:rooms,room_id',
         ]);
 
         DB::beginTransaction();
         try {
             Admission::create([
-                'patient_id'     => $request->patient_id,
-                'room_id'        => $request->room_id,
+                'patient_id' => $request->patient_id,
+                'room_id' => $request->room_id,
                 'admission_date' => now(),
-                'status'         => 'admitted',
+                'status' => 'admitted',
             ]);
 
             $room = Room::find($request->room_id);
@@ -336,21 +339,21 @@ class DoctorController extends Controller
     public function updateVitals(Request $request)
     {
         $request->validate([
-            'record_id'      => 'required|exists:medical_records,record_id',
+            'record_id' => 'required|exists:medical_records,record_id',
             'blood_pressure' => 'nullable|string|max:50',
-            'heart_rate'     => 'nullable|numeric',
-            'temperature'    => 'nullable|numeric',
-            'spo2'           => 'nullable|numeric',
-            'weight'         => 'nullable|numeric',
+            'heart_rate' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric',
+            'spo2' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
         ]);
 
         $record = MedicalRecord::findOrFail($request->record_id);
 
         $updateData = [
-            'heart_rate'   => $request->heart_rate ?? $record->heart_rate,
-            'temperature'  => $request->temperature ?? $record->temperature,
-            'spo2'         => $request->spo2 ?? $record->spo2,
-            'weight'       => $request->weight ?? $record->weight,
+            'heart_rate' => $request->heart_rate ?? $record->heart_rate,
+            'temperature' => $request->temperature ?? $record->temperature,
+            'spo2' => $request->spo2 ?? $record->spo2,
+            'weight' => $request->weight ?? $record->weight,
         ];
 
         if ($request->filled('blood_pressure')) {

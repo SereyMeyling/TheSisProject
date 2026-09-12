@@ -62,31 +62,105 @@ class RoomController extends Controller
         }
         return redirect()->route('room.index')->with('success', 'បន្ទប់ត្រូវបានបង្កើតដោយជោគជ័យ');
     }
-    public function update(Request $request, Room $room)
+    public function edit($id)
     {
-        $validated = $request->validate([
-            'room_number' => ['required', 'string', 'max:20', Rule::unique('rooms', 'room_number')->ignore($room->room_id, 'room_id')],
-            'room_type' => ['required', Rule::in(['general', 'private', 'icu', 'isolation'])],
-            'status' => ['required', Rule::in(['available', 'occupied', 'maintenance'])],
-            'price_per_day' => 'required|numeric|min:0',
-        ]);
-
-        $room->update($validated);
-
-        if ($request->ajax()) {
-            return response()->json(['message' => 'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ']);
-        }
-        return redirect()->route('room.index')->with('success', 'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ');
+        $room = Room::findOrFail($id);
+        return response()->json($room);
     }
-
-    public function destroy(Room $room)
+    public function update(Request $request, $id)
     {
-        $room->delete();
+        try {
+            $room = Room::findOrFail($id);
 
-        if (request()->ajax()) {
-            return response()->json(['message' => 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ']);
+            $validated = $request->validate([
+                'room_number' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    Rule::unique('rooms', 'room_number')
+                        ->ignore($room->room_id, 'room_id'),
+                ],
+
+                'room_type' => [
+                    'required',
+                    Rule::in([
+                        'general',
+                        'private',
+                        'icu',
+                        'isolation',
+                    ]),
+                ],
+
+                'status' => [
+                    'required',
+                    Rule::in([
+                        'available',
+                        'occupied',
+                        'maintenance',
+                    ]),
+                ],
+
+                'price_per_day' => [
+                    'required',
+                    'numeric',
+                    'min:0',
+                ],
+            ]);
+
+            \Log::info('Room update attempt', [
+                'room_id' => $room->room_id,
+                'old_room_type' => $room->room_type,
+                'new_room_type' => $validated['room_type'],
+                'data' => $validated,
+            ]);
+
+            $room->update($validated);
+
+            \Log::info('Room updated successfully', [
+                'room_id' => $room->room_id,
+                'room_type' => $room->room_type,
+            ]);
+
+            return redirect()
+                ->route('room.index')
+                ->with(
+                    'success',
+                    'ព័ត៌មានបន្ទប់ត្រូវបានកែប្រែដោយជោគជ័យ'
+                );
+
+        } catch (\Throwable $e) {
+
+            \Log::error('Room update failed', [
+                'room_id' => $id,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return back()
+                ->withInput()
+                ->with(
+                    'error',
+                    'Room update failed: ' . $e->getMessage()
+                );
         }
-        return redirect()->route('room.index')->with('success', 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ');
+    }
+    public function destroy($id)
+    {
+        $room = Room::findOrFail($id);
+        $room->delete();
+        if (request()->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ',
+            ]);
+        }
+        return redirect()
+            ->route('room.index')
+            ->with(
+                'success',
+                'បន្ទប់ត្រូវបានលុបដោយជោគជ័យ'
+            );
     }
 
 }

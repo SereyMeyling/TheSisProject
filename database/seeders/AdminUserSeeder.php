@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Employee;
+use App\Models\user;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -87,10 +87,10 @@ class AdminUserSeeder extends Seeder
 
             /*
             |--------------------------------------------------------------------------
-            | Create Employee
+            | Create user
             |--------------------------------------------------------------------------
             |
-            | Cashier is skipped because the current employees.role ENUM
+            | Cashier is skipped because the current users.role ENUM
             | does not contain "cashier".
             |
             */
@@ -110,14 +110,14 @@ class AdminUserSeeder extends Seeder
                     2
                 );
 
-                Employee::updateOrCreate(
+                user::updateOrCreate(
                     [
                         'user_id' => $user->id,
                     ],
                     [
                         'department_id' => $data['department_id'],
 
-                        'employee_code' =>
+                        'user_code' =>
                             'EMP-' .
                             str_pad(
                                 $user->id,
