@@ -23,7 +23,8 @@ class Patient extends Model
     ];
 
     protected $casts = [
-        'date_of_birth' => 'date',
+        // 'date_of_birth' => 'date',
+        'date_of_birth' => 'date:d/m/Y',
     ];
 
     public function getAgeAttribute(): int

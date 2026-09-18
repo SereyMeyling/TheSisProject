@@ -255,8 +255,21 @@
                 contentType: false,
                 headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
                 success: function (res) {
-                    showToast(res.message || 'បានរក្សាទុក');
-                },
+                showToast(res.message || 'បានរក្សាទុក');
+
+                // Update navbar name
+                $('#navbarUserName, #dropdownUserName').text(res.name);
+
+                // Update navbar department
+                if (res.department_name !== undefined) {
+                    $('#navbarDepartment, #dropdownUserDepartment').text(res.department_name || 'No Department');
+                }
+
+                // Update navbar avatar (if changed)
+                if (res.avatar_url) {
+                    $('#navbarUserAvatar, #dropdownUserAvatar').attr('src', res.avatar_url);
+                }
+            },
                 error: function (xhr) {
                     if (xhr.status === 422 && xhr.responseJSON.errors) {
                         showErrors($form, xhr.responseJSON.errors);

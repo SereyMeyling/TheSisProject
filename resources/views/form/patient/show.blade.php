@@ -27,9 +27,11 @@
                         <span class="text-muted">ភេទ:</span>
                         <span class="font-weight-bold">{{ $patient->sex == 'Male' ? 'ប្រុស' : 'ស្រី' }}</span>
                     </li>
-                    <li class="list-group-item d-flex justify-content-between">
+                   <li class="list-group-item d-flex justify-content-between">
                         <span class="text-muted">ថ្ងៃកំណើត:</span>
-                        <span class="font-weight-bold">{{ $patient->date_of_birth }}</span>
+                        <span class="font-weight-bold">
+                            {{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->format('d/m/Y') : '-' }}
+                        </span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="text-muted">លេខទូរសព្ទ:</span>
@@ -55,7 +57,9 @@
                         @foreach($medicalRecords as $record)
                             <div class="card border mb-2 shadow-sm">
                                 <div class="card-body p-3">
-                                    <span class="badge badge-info float-right">{{ $record->visit_date }}</span>
+                                   <span class="badge badge-info float-right">
+                                        {{ $record->visit_date ? \Carbon\Carbon::parse($record->visit_date)->format('d/m/Y') : '' }}
+                                    </span>
                                     <h6 class="font-weight-bold text-dark">រោគវិនិច្ឆ័យ: {{ $record->diagnosis ?? 'គ្មាន' }}</h6>
                                     <p class="mb-1 text-muted small">ចំណាំ: {{ $record->notes ?? 'គ្មាន' }}</p>
                                 </div>

@@ -85,7 +85,7 @@
 
                             {{-- Filter Form --}}
                             <form id="searchForm" method="GET" action="{{ route('patients.index') }}"
-                                class="row g-2 mb-3">
+                                class="row g-2 mb-3 align-items-end">
                                 <div class="col-md-4">
                                     <label class="small text-muted mb-1">ស្វែងរកអ្នកជំងឺ</label>
                                     <input type="text" id="searchInput" name="search"
@@ -108,10 +108,15 @@
                                         <option value="Female" {{ request('gender') == 'Female' || request('gender') == 'female' ? 'selected' : '' }}>ស្រី</option>
                                     </select>
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end">
-                                    <button type="submit" class="btn btn-sm btn-primary btn-block font-weight-bold">
-                                        <i class="fas fa-filter mr-1"></i> Filter
-                                    </button>
+
+                                {{-- NEW: Reset button, only shows when a filter is active --}}
+                                <div class="col-md-2">
+                                    @if(request()->anyFilled(['search', 'date', 'gender']))
+                                        <a href="{{ route('patients.index') }}"
+                                            class="btn btn-sm btn-outline-secondary btn-block" id="resetFilterBtn">
+                                            <i class="fas fa-undo mr-1"></i> មើលទាំងអស់
+                                        </a>
+                                    @endif
                                 </div>
                             </form>
 

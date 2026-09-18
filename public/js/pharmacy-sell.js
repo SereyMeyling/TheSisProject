@@ -102,8 +102,9 @@ $(function () {
                     <td>${s.sale_date}</td>
                     <td>${s.patient_name}</td>
                     <td class="text-right">$${s.total_amount.toFixed(2)}</td>
+                    // loadHistory()
                     <td class="text-center">
-                        <a href="${s.pdf_url}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                        <a href="${s.receipt_url}" target="_blank" class="btn btn-sm btn-outline-secondary">
                             <i class="fas fa-file-pdf"></i>
                         </a>
                     </td>
@@ -158,8 +159,14 @@ $(function () {
                 );
                 recalcSellTotal();
                 loadHistory();
+
+                // NEW: refresh stock numbers in all medicine dropdowns
+                $("#sellItemsBody .sell-medicine").each(function () {
+                    loadMedicineSelect($(this));
+                });
+
                 showToast("លក់ជោគជ័យ — កំពុងបើក PDF", "success");
-                window.open(res.pdf_url, "_blank");
+                window.open(res.receipt_url, "_blank");
             })
             .fail((xhr) => {
                 showErrors("#sellErrors", xhr);

@@ -33,8 +33,7 @@ class LowStockNotification extends Notification
             'message' => "{$this->medicine->name} is low in stock ({$this->remaining} left)",
             'icon' => 'fa-pills',
             'color' => 'text-warning',
-            // 'url' => route('pharmacy.details', $this->medicine->id),
-              'url'     => route('medicines.show', $this->medicine->id),
+            'url' => route('pharmacy.index', ['detail' => $this->medicine->medicine_id]),
         ];
     }
 }

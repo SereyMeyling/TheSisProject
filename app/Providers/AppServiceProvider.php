@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\Pharmacy\MedicineStockMovement;
 use App\Models\Setting\GeneralSettings;
+use App\Observers\MedicineStockMovementObserver;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Config;
@@ -31,6 +33,7 @@ class AppServiceProvider extends ServiceProvider
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
+        MedicineStockMovement::observe(MedicineStockMovementObserver::class);
 
         try {
             if (Schema::hasTable('general_settings')) {

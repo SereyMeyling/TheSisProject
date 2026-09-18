@@ -292,7 +292,7 @@
     .pagination .page-link {
         border-radius: 8px;
         margin: 0 3px;
-        color: #198754;
+       C
     }
 
     .pagination .active .page-link {

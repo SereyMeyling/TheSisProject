@@ -34,7 +34,10 @@
                     <table class="table table-sm" id="sellItemsTable">
                         <thead>
                             <tr>
-                                <th>ថ្នាំ</th>
+                                <th class="font-weight-bold text-dark mb-3"><i
+                                        class="fas fa-shopping-cart text-info mr-1"></i> បញ្ជីថ្នាំត្រូវលក់
+                                </th>
+
                                 <th style="width:120px">ចំនួន (គ្រាប់)</th>
                                 <th style="width:40px"></th>
                             </tr>
@@ -52,9 +55,14 @@
                         <i class="fas fa-plus"></i> បន្ថែមថ្នាំ
                     </button>
                     <hr>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <strong>សរុប: $<span id="sellTotalPreview">0.00</span></strong>
-                        <button class="btn btn-primary" type="submit"><i class="fas fa-cash-register"></i> លក់</button>
+                    <div class="checkout-summary-box d-flex flex-wrap justify-content-between align-items-center">
+                        <div>
+                            <small class="text-light opacity-75 d-block">តម្លៃសរុបត្រូវទូទាត់</small>
+                            <div class="total-price-display">$<span id="sellTotalPreview">0.00</span></div>
+                        </div>
+                        <button class="btn checkout-btn" type="submit">
+                            <i class="fas fa-cash-register mr-2"></i> លក់
+                        </button>
                     </div>
                 </form>
             </div>

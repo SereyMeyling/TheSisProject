@@ -769,13 +769,13 @@
         .dataTables_wrapper .pagination .page-link {
             border-radius: 8px !important;
             margin: 0 3px !important;
-            color: #4f46e5 !important;
+            color: #198754 !important;
             border: 1px solid transparent !important;
         }
 
         .dataTables_wrapper .pagination .page-item.active .page-link {
-            background: #4f46e5 !important;
-            border-color: #4f46e5 !important;
+            background: #198754 !important;
+            border-color: #198754 !important;
             color: #fff !important;
         }
     </style>
@@ -857,6 +857,37 @@
         const params = new URLSearchParams(window.location.search);
         if (params.get('tab') === 'sell' || window.location.hash === '#sellPane') {
             $('#sell-tab').tab('show');
+        }
+
+
+
+        // Auto-open detail modal if arriving from a notification link (?detail=ID)
+        const detailId = new URLSearchParams(window.location.search).get('detail');
+        if (detailId) {
+            $('#stock-tab').tab('show');
+
+            $.get(routes.detailsBase + '/' + detailId + '/details', function (data) {
+                $('#detail_medicine_name').text(data.medicine_name);
+
+                const rows = data.batches.map(function (b) {
+                    const outsHtml = b.outs.length
+                        ? b.outs.map(o => `${o.date} (-${o.quantity})`).join('<br>')
+                        : '-';
+                    return `
+                <tr>
+                    <td>${b.batch_number}</td>
+                    <td>${b.date_in}</td>
+                    <td class="text-right">${b.quantity_initial}</td>
+                    <td>${b.expiry_date}</td>
+                    <td class="text-right">$${parseFloat(b.purchase_price).toFixed(2)}</td>
+                    <td>${outsHtml}</td>
+                    <td class="text-right">${b.remaining_quantity}</td>
+                </tr>`;
+                }).join('');
+
+                $('#detailBatchesBody').html(rows || '<tr><td colspan="7" class="text-center text-muted">គ្មានទិន្នន័យ</td></tr>');
+                $('#modalDetail').modal('show');
+            });
         }
     });
 </script>

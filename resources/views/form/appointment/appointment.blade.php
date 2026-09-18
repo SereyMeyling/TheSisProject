@@ -105,6 +105,29 @@
     .toast-custom.error {
         background-color: #e53e3e;
     }
+
+    /* Pagination */
+    .pagination-wrapper {
+        padding-bottom: 10px;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 3px;
+        color: #198754;
+    }
+
+    .pagination .active .page-link {
+        background: #198754;
+        border-color: #198754;
+        color: #fff;
+    }
+
+    .pagination .page-link:hover {
+        color: #198754;
+        background: #eaf7ef;
+        border-color: #198754;
+    }
 </style>
 
 <div id="toastContainer"></div>
@@ -392,9 +415,7 @@
             $(this).find('input[name="appointment_date"]').attr('min', nowLocalString());
         });
 
-        $('#modalEdit').on('show.bs.modal', function () {
-            $('#edit_appointment_date').attr('min', nowLocalString());
-        });
+      
 
         function loadAppointments(page = 1) {
             const params = currentParams(page);

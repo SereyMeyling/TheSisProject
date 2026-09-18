@@ -21,11 +21,14 @@
                     <small class="text-muted"><i class="fas fa-phone mr-1"></i> {{ $app->patient ? $app->patient->phone : '-' }}</small>
                 </td>
                 <td>
-                    <div class="font-weight-bold text-primary">
-                        <i class="fas fa-user-md mr-1"></i>
-                        {{ $app->doctor ? $app->doctor->first_name . ' ' . $app->doctor->last_name : 'N/A' }}
-                    </div>
-                    <small class="text-muted">{{ $app->doctor ? ($app->doctor->specialization ?? 'វេជ្ជបណ្ឌិត') : '' }}</small>
+                  <div class="font-weight-bold text-primary">
+                    <i class="fas fa-user-md mr-1"></i>
+                    {{ $app->doctor ? $app->doctor->name : 'N/A' }}
+                </div>
+
+                <small class="text-muted">
+                    {{ $app->doctor ? ($app->doctor->specialization ?? 'វេជ្ជបណ្ឌិត') : '' }}
+                </small>
                 </td>
                 <td>
                     <div class="font-weight-bold">
