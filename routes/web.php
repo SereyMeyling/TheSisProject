@@ -225,6 +225,8 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
     Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
     Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
+     Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
+    ->name('pharmacy.show');
 
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
 
@@ -235,6 +237,8 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
     Route::get('/sell/{sale}/receipt', [PharmacySaleController::class, 'receipt'])
     ->name('pharmacy.sell.receipt');
+   
+
 
     // Patient search for POS
     Route::get('/sell/patients/search', [PharmacySaleController::class, 'patientSearch'])

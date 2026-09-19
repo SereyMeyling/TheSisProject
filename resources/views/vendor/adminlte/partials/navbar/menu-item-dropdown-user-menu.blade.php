@@ -105,8 +105,8 @@ NOTIFICATION MENU
                         style="white-space: normal;">
 
                         <i class="fas {{ $notification->data['icon'] ?? 'fa-bell' }}
-                               {{ $notification->data['color'] ?? 'text-primary' }}
-                               mr-2 mt-1"></i>
+                   {{ $notification->data['color'] ?? 'text-primary' }}
+                   mr-2 mt-1"></i>
 
                         <span>
 
@@ -181,10 +181,10 @@ USER / PROFILE MENU
 
             <img id="navbarUserAvatar" src="{{ Auth::user()->adminlte_image() }}" class="user-image img-circle elevation-2"
                 alt="{{ Auth::user()->name }}" style="
-                        width: 35px;
-                        height: 35px;
-                        object-fit: cover;
-                     ">
+                            width: 35px;
+                            height: 35px;
+                            object-fit: cover;
+                         ">
 
         @endif
 
@@ -203,23 +203,23 @@ USER / PROFILE MENU
                 )
 
                 <li class="user-header
-                        {{ config(
+                                {{ config(
                 'adminlte.usermenu_header_class',
                 'bg-primary'
             ) }}
-                        @if(!config('adminlte.usermenu_image'))
-                            h-auto
-                        @endif
-                    ">
+                                @if(!config('adminlte.usermenu_image'))
+                                    h-auto
+                                @endif
+                            ">
 
                     @if(config('adminlte.usermenu_image'))
 
                         <img id="dropdownUserAvatar" src="{{ Auth::user()->adminlte_image() }}" class="img-circle elevation-2"
                             alt="{{ Auth::user()->name }}" style="
-                                        width: 90px;
-                                        height: 90px;
-                                        object-fit: cover;
-                                     ">
+                                                    width: 90px;
+                                                    height: 90px;
+                                                    object-fit: cover;
+                                                 ">
 
                     @endif
 

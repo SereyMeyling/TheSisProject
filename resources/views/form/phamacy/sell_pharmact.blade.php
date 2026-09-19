@@ -5,8 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title">
-        <i class="fas fa-cash-register"></i>
-        ឱសថស្ថាន - លក់ថ្នាំ
+    
     </h2>
     <a href="{{ route('pharmacy.index') }}" class="btn btn-outline-secondary">
         <i class="fas fa-boxes"></i> ទៅកាន់ស្តុក

@@ -166,16 +166,15 @@
                                 </div>
 
                                 <div class="form-group mb-4">
-                                    <label class="font-weight-bold">លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ
-                                        (ទុកទទេប្រសិនបើជាអតិថិជនចរណ៍)</label>
-                                    <div class="input-group">
-                                        <div class="input-group-prepend">
-                                            <span class="input-group-text bg-light border-right-0"><i
-                                                    class="fas fa-user-circle text-muted"></i></span>
-                                        </div>
-                                        <input type="text" name="patient_id" class="form-control border-left-0"
-                                            placeholder="បញ្ចូល Patient ID ឬ កូដអ្នកជំងឺ (ឧ. P-0001)">
-                                    </div>
+                                    <label>
+                                        លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ
+                                        (ទុកទទេប្រសិនបើជាអតិថិជនចរណ៍)
+                                    </label>
+
+                                    <select name="patient_id" id="patientSelect" class="form-control"
+                                        style="width: 100%;">
+                                        <option value="">-- អតិថិជនចរណ៍ --</option>
+                                    </select>
                                 </div>
 
                                 <h6 class="font-weight-bold text-dark mb-3"><i
@@ -578,7 +577,6 @@
 </div>
 
 
-
 {{-- ====== Detail Modal ====== --}}
 <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-scrollable modal-xl modal-mobile-fit">
@@ -587,57 +585,30 @@
                 <h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>
-            <form id="restockForm">
-                @csrf
-                <input type="hidden" id="restock_medicine_id" name="medicine_id">
-                <div class="modal-body p-4">
-                    <div class="alert alert-success">
-                        <strong>ថ្នាំ៖ </strong><span id="restock_medicine_name" class="font-weight-bold"></span>
-                    </div>
-                    <div class="row">
-                        <div class="form-group col-md-6 mb-3">
-                            <label class="font-weight-bold">លេខឡូតិ៍ថ្នាំ (Batch Number) <span
-                                    class="text-danger">*</span></label>
-                            <input type="text" name="batch_number" class="form-control" placeholder="ឧ. BATCH-2026-001"
-                                required>
-                        </div>
-                        <div class="form-group col-md-6 mb-3">
-                            <label class="font-weight-bold">កាលបរិច្ឆេទផុតកំណត់ (Expiry Date) <span
-                                    class="text-danger">*</span></label>
-                            <input type="date" name="expiry_date" class="form-control" required>
-                        </div>
-                        <div class="form-group col-md-6 mb-3">
-                            <label class="font-weight-bold">ចំនួនបញ្ចូល (Quantity) <span
-                                    class="text-danger">*</span></label>
-                            <input type="number" min="1" name="quantity_initial" class="form-control"
-                                placeholder="ឧ. 100" required>
-                        </div>
-                        <div class="form-group col-md-6 mb-3">
-                            <label class="font-weight-bold">តម្លៃទិញចូល ($ Purchase Price)</label>
-                            <input type="number" step="0.01" min="0" name="purchase_price" class="form-control"
-                                placeholder="ឧ. 0.30">
-                        </div>
-                        <div class="form-group col-md-12 mb-3">
-                            <label class="font-weight-bold">អ្នកផ្គត់ផ្គង់ (Supplier)</label>
-                            <select name="supplier_id" class="form-control">
-                                <option value="">-- ជ្រើសរើស Supplier --</option>
-                                @foreach ($suppliers as $sup)
-                                    <option value="{{ $sup->supplier_id }}">{{ $sup->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+            <div class="modal-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="thead-light">
+                            <tr>
+                                <th>លេខបាច់</th>
+                                <th>ថ្ងៃចូល</th>
+                                <th class="text-right">ចំនួនចូល</th>
+                                <th>ថ្ងៃផុតកំណត់</th>
+                                <th class="text-right">តម្លៃទិញ</th>
+                                <th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th>
+                                <th class="text-right">នៅសល់</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detailBatchesBody"></tbody>
+                    </table>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-download mr-1"></i>
-                        បញ្ចូលស្តុក</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button>
+            </div>
         </div>
     </div>
 </div>
-
 @stop
 
 @push('css')
@@ -660,15 +631,9 @@
             box-shadow: 0 8px 30px rgba(0, 0, 0, .05);
         }
 
-            {
-                {
-                --======Detail Modal======--
-            }
-        }
 
-        <div class="modal fade" id="modalDetail" tabindex="-1" aria-hidden="true"><div class="modal-dialog modal-dialog-scrollable modal-xl modal-mobile-fit"><div class="modal-content modal-purple"><div class="modal-header"><h5 class="modal-title">លម្អិតស្តុក: <span id="detail_medicine_name"></span></h5><button type="button" class="close" data-dismiss="modal"><span>&times;
 
-        </span></button></div><div class="modal-body p-0"><div class="table-responsive"><table class="table table-sm table-bordered mb-0"><thead class="thead-light"><tr><th>លេខបាច់</th><th>ថ្ងៃចូល</th><th class="text-right">ចំនួនចូល</th><th>ថ្ងៃផុតកំណត់</th><th class="text-right">តម្លៃទិញ</th><th>ថ្ងៃចេញ (ចេញប៉ុន្មាន)</th><th class="text-right">នៅសល់</th></tr></thead><tbody id="detailBatchesBody"></tbody></table></div></div><div class="modal-footer"><button type="button" class="btn btn-light" data-dismiss="modal">បិទ</button></div></div></div></div>.nav-tabs .nav-link {
+        .nav-tabs .nav-link {
             font-weight: 600;
             padding: 15px 25px;
             border: none;
@@ -803,6 +768,7 @@
         sellSearch: "{{ route('pharmacy.sell.search') }}",
         sellStore: "{{ route('pharmacy.sell.store') }}",
         sellHistory: "{{ route('pharmacy.sell.history') }}",
+          patientSearch: "{{ route('pharmacy.patients.search') }}",
     };
 
 

@@ -21,11 +21,26 @@ class PharmacyController extends Controller
     public function index(Request $request)
     {
         $stats = $this->dashboardStats();
-        $suppliers = Supplier::orderBy('name')->get(['supplier_id', 'name']);
 
-        return view('form.phamacy.pharmacyPage', compact('stats', 'suppliers'));
+        $suppliers = Supplier::orderBy('name')
+            ->get(['supplier_id', 'name']);
+
+        $medicines = Medicine::with('batches.supplier')
+            ->orderBy('medicine_name')
+            ->get();
+
+        return view('form.phamacy.pharmacyPage', compact(
+            'stats',
+            'suppliers',
+            'medicines'
+        ));
     }
+    // public function show(Medicine $medicine)
+    // {
+    //     $medicine->load('batches.supplier');
 
+    //     return view('form.phamacy.show', compact('medicine'));
+    // }
     public function stats()
     {
         return response()->json($this->dashboardStats());
