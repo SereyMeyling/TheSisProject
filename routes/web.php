@@ -96,14 +96,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{id}/reset-2fa', [UserController::class, 'resetTwoFactor'])->name('user.reset2fa');
     });
 
-    // // user Management
-    // Route::group(['prefix' => 'user'], function () {
-    //     Route::get('/', [userController::class, 'index'])->name('user.index');
-    //     Route::post('/store', [userController::class, 'store'])->name('user.store');
-    //     Route::get('/edit/{id}', [userController::class, 'edit'])->name('user.edit');
-    //     Route::put('/update/{id}', [userController::class, 'update'])->name('user.update');
-    //     Route::delete('/delete/{id}', [userController::class, 'destroy'])->name('user.destroy');
-    // });
+
 
     // Role & Permission Management
     Route::group(['prefix' => 'roles'], function () {
@@ -237,7 +230,7 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
     Route::get('/sell/{sale}/receipt', [PharmacySaleController::class, 'receipt'])
     ->name('pharmacy.sell.receipt');
-   
+
 
 
     // Patient search for POS
