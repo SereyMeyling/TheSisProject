@@ -136,7 +136,8 @@ class BillingController extends Controller
             ]);
         }
 
-        return view('billing.show', compact('invoice'));
+        // Normal browser visit (e.g. from a notification link): open the list and auto-show the modal
+        return redirect()->route('billing.index', ['view' => $invoice->id]);
     }
 
 

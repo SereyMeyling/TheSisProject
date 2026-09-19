@@ -8,6 +8,7 @@
     .billing-container {
         font-family: 'Inter', 'Kantumruuy Pro', sans-serif;
     }
+
     .stat-card-billing {
         background: #ffffff;
         border-radius: 16px;
@@ -20,10 +21,12 @@
         transition: transform 0.2s ease, box-shadow 0.2s ease;
         height: 100%;
     }
+
     .stat-card-billing:hover {
         transform: translateY(-2px);
         box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
     }
+
     .stat-icon {
         width: 52px;
         height: 52px;
@@ -34,9 +37,21 @@
         font-size: 22px;
         flex-shrink: 0;
     }
-    .bg-icon-primary { background: #e0e7ff; color: #4338ca; }
-    .bg-icon-success { background: #dcfce7; color: #15803d; }
-    .bg-icon-danger  { background: #ffe4e6; color: #be123c; }
+
+    .bg-icon-primary {
+        background: #e0e7ff;
+        color: #4338ca;
+    }
+
+    .bg-icon-success {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    .bg-icon-danger {
+        background: #ffe4e6;
+        color: #be123c;
+    }
 
     .card-modern {
         background: #ffffff;
@@ -45,17 +60,20 @@
         box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
         overflow: hidden;
     }
+
     .toolbar-filters {
         padding: 16px 20px;
         background: #ffffff;
         border-bottom: 1px solid #f1f5f9;
         gap: 12px;
     }
+
     .search-box {
         position: relative;
         flex: 1;
         min-width: 250px;
     }
+
     .search-box i {
         position: absolute;
         left: 14px;
@@ -63,6 +81,7 @@
         transform: translateY(-50%);
         color: #94a3b8;
     }
+
     .search-box input {
         padding-left: 38px;
         border-radius: 10px;
@@ -84,15 +103,18 @@
             <h2 class="font-weight-bold text-dark mb-1">
                 <i class="fas fa-file-invoice-dollar text-primary mr-2"></i> គ្រប់គ្រងការទូទាត់ប្រាក់ & វិក្កយបត្រ
             </h2>
-            <small class="text-muted">បង្កើតវិក្កយបត្រ គ្រប់គ្រងសេវាកម្ម/បន្ទប់/ថ្នាំ/មន្ទីរពិសោធន៍ និងទទួលការទូទាត់ប្រាក់</small>
+            <small class="text-muted">បង្កើតវិក្កយបត្រ គ្រប់គ្រងសេវាកម្ម/បន្ទប់/ថ្នាំ/មន្ទីរពិសោធន៍
+                និងទទួលការទូទាត់ប្រាក់</small>
         </div>
-        <button type="button" class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#modalCreateInvoice" style="border-radius: 10px; font-weight: 600; padding: 10px 20px;">
+        <button type="button" class="btn btn-primary shadow-sm" data-toggle="modal" data-target="#modalCreateInvoice"
+            style="border-radius: 10px; font-weight: 600; padding: 10px 20px;">
             <i class="fas fa-plus-circle mr-2"></i> បង្កើតវិក្កយបត្រថ្មី
         </button>
     </div>
 
     {{-- Success Toast Notification --}}
-    <div id="billingSuccessToast" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert" style="border-radius: 10px;">
+    <div id="billingSuccessToast" class="alert alert-success alert-dismissible fade show d-none mb-3" role="alert"
+        style="border-radius: 10px;">
         <i class="fas fa-check-circle mr-2"></i><span id="billingSuccessToastMessage"></span>
         <button type="button" class="close" data-dismiss="alert" aria-label="Close">
             <span aria-hidden="true">&times;</span>
@@ -119,7 +141,8 @@
                 </div>
                 <div>
                     <small class="text-muted font-weight-bold d-block">ចំណូលទទួលបានសរុប</small>
-                    <h3 id="statTotalRevenue" class="m-0 font-weight-bold text-success">${{ number_format($totalRevenue, 2) }}</h3>
+                    <h3 id="statTotalRevenue" class="m-0 font-weight-bold text-success">
+                        ${{ number_format($totalRevenue, 2) }}</h3>
                 </div>
             </div>
         </div>
@@ -130,7 +153,8 @@
                 </div>
                 <div>
                     <small class="text-muted font-weight-bold d-block">ប្រាក់ជំពាក់សរុប</small>
-                    <h3 id="statTotalUnpaid" class="m-0 font-weight-bold text-danger">${{ number_format($totalUnpaid, 2) }}</h3>
+                    <h3 id="statTotalUnpaid" class="m-0 font-weight-bold text-danger">
+                        ${{ number_format($totalUnpaid, 2) }}</h3>
                 </div>
             </div>
         </div>
@@ -143,14 +167,17 @@
                 <!-- Search Box -->
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="search" class="form-control" placeholder="ស្វែងរកវិក្កយបត្រ (លេខវិក្កយបត្រ, ឈ្មោះអ្នកជំងឺ, លេខទូរស័ព្ទ)...">
+                    <input type="text" id="search" class="form-control"
+                        placeholder="ស្វែងរកវិក្កយបត្រ (លេខវិក្កយបត្រ, ឈ្មោះអ្នកជំងឺ, លេខទូរស័ព្ទ)...">
                 </div>
 
                 {{-- Date Filter --}}
                 <div class="d-flex align-items-center" style="gap: 6px;">
-                    <input type="date" id="dateFrom" class="form-control" placeholder="ចាប់ពីថ្ងៃ" style="border-radius: 8px;">
+                    <input type="date" id="dateFrom" class="form-control" placeholder="ចាប់ពីថ្ងៃ"
+                        style="border-radius: 8px;">
                     <span class="text-muted">-</span>
-                    <input type="date" id="dateTo" class="form-control" placeholder="ដល់ថ្ងៃ" style="border-radius: 8px;">
+                    <input type="date" id="dateTo" class="form-control" placeholder="ដល់ថ្ងៃ"
+                        style="border-radius: 8px;">
                 </div>
 
                 <!-- Status Filter -->
@@ -187,8 +214,10 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-custom">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice-dollar mr-2"></i> បង្កើតវិក្កយបត្រថ្មី</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice-dollar mr-2"></i>
+                    បង្កើតវិក្កយបត្រថ្មី</h5>
+                <button type="button" class="close text-white" data-dismiss="modal"
+                    aria-label="Close"><span>&times;</span></button>
             </div>
             <form id="formCreateInvoice" action="{{ route('billing.store') }}" method="POST">
                 @csrf
@@ -199,11 +228,13 @@
                     <div class="form-group mb-3">
                         <label class="font-weight-bold">ប្រភេទការចូលពិនិត្យ <span class="text-danger">*</span></label>
                         <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                            <label class="btn btn-outline-indigo active" id="labelVisitOpd" style="border-radius: 8px 0 0 8px;">
+                            <label class="btn btn-outline-indigo active" id="labelVisitOpd"
+                                style="border-radius: 8px 0 0 8px;">
                                 <input type="radio" name="visit_type" value="opd" checked autocomplete="off">
                                 <i class="fas fa-walking mr-1"></i> អ្នកជំងឺក្រៅ (OPD)
                             </label>
-                            <label class="btn btn-outline-indigo" id="labelVisitIpd" style="border-radius: 0 8px 8px 0;">
+                            <label class="btn btn-outline-indigo" id="labelVisitIpd"
+                                style="border-radius: 0 8px 8px 0;">
                                 <input type="radio" name="visit_type" value="ipd" autocomplete="off">
                                 <i class="fas fa-bed mr-1"></i> អ្នកជំងឺសម្រាកព្យាបាល (IPD)
                             </label>
@@ -212,12 +243,17 @@
 
                     <!-- Admission picker for IPD -->
                     <div class="form-group mb-3 d-none" id="admissionPickerWrap">
-                        <label class="font-weight-bold">ជ្រើសរើសការចូលសម្រាកព្យាបាល <span class="text-danger">*</span></label>
+                        <label class="font-weight-bold">ជ្រើសរើសការចូលសម្រាកព្យាបាល <span
+                                class="text-danger">*</span></label>
                         <select id="create_admission_id" name="admission_id" class="form-control custom-select">
                             <option value="">-- ជ្រើសរើសការចូលសម្រាកព្យាបាល --</option>
                             @foreach($admissions as $adm)
-                                <option value="{{ $adm->admission_id }}" data-patient-id="{{ $adm->patient_id }}" data-name="{{ optional($adm->patient)->full_name }}" data-phone="{{ optional($adm->patient)->phone }}">
-                                    {{ optional($adm->patient)->full_name }} — បន្ទប់ {{ optional($adm->room)->room_number ?? '—' }} (ចូលសម្រាក {{ $adm->admission_date ? $adm->admission_date->format('d/m/Y') : '' }})
+                                <option value="{{ $adm->admission_id }}" data-patient-id="{{ $adm->patient_id }}"
+                                    data-name="{{ optional($adm->patient)->full_name }}"
+                                    data-phone="{{ optional($adm->patient)->phone }}">
+                                    {{ optional($adm->patient)->full_name }} — បន្ទប់
+                                    {{ optional($adm->room)->room_number ?? '—' }} (ចូលសម្រាក
+                                    {{ $adm->admission_date ? $adm->admission_date->format('d/m/Y') : '' }})
                                 </option>
                             @endforeach
                         </select>
@@ -230,7 +266,8 @@
                             <select id="select_patient_id" name="patient_id" class="form-control custom-select">
                                 <option value="">-- ជ្រើសរើសអ្នកជំងឺ ឬបញ្ចូលឈ្មោះខាងស្តាំ --</option>
                                 @foreach($patients as $pt)
-                                    <option value="{{ $pt->patient_id }}" data-name="{{ $pt->full_name }}" data-phone="{{ $pt->phone }}">
+                                    <option value="{{ $pt->patient_id }}" data-name="{{ $pt->full_name }}"
+                                        data-phone="{{ $pt->phone }}">
                                         {{ $pt->full_name }} ({{ $pt->patient_code }}) - {{ $pt->phone }}
                                     </option>
                                 @endforeach
@@ -238,23 +275,28 @@
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="font-weight-bold">ឈ្មោះអ្នកជំងឺ <span class="text-danger">*</span></label>
-                            <input type="text" name="patient_name" id="create_patient_name" class="form-control" placeholder="បញ្ចូលឈ្មោះអ្នកជំងឺ" required>
+                            <input type="text" name="patient_name" id="create_patient_name" class="form-control"
+                                placeholder="បញ្ចូលឈ្មោះអ្នកជំងឺ" required>
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="font-weight-bold">លេខទូរស័ព្ទ</label>
-                            <input type="tel" maxlength="10" name="patient_phone" id="create_patient_phone" class="form-control" placeholder="012 345 678">
+                            <input type="tel" maxlength="10" name="patient_phone" id="create_patient_phone"
+                                class="form-control" placeholder="012 345 678">
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="font-weight-bold">ចំណាំ</label>
-                            <input type="text" name="notes" id="create_notes" class="form-control" placeholder="កំណត់ចំណាំផ្សេងៗ">
+                            <input type="text" name="notes" id="create_notes" class="form-control"
+                                placeholder="កំណត់ចំណាំផ្សេងៗ">
                         </div>
                     </div>
 
                     <!-- Itemized Fee Builder -->
                     <hr>
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h6 class="font-weight-bold text-primary mb-0"><i class="fas fa-list mr-1"></i> បញ្ជីសេវាកម្ម/បន្ទប់/ថ្នាំ/មន្ទីរពិសោធន៍</h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddInvoiceItem" style="border-radius: 8px;">
+                        <h6 class="font-weight-bold text-primary mb-0"><i class="fas fa-list mr-1"></i>
+                            បញ្ជីសេវាកម្ម/បន្ទប់/ថ្នាំ/មន្ទីរពិសោធន៍</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddInvoiceItem"
+                            style="border-radius: 8px;">
                             <i class="fas fa-plus mr-1"></i> បន្ថែមមុខសេវា
                         </button>
                     </div>
@@ -273,7 +315,8 @@
                         <tbody id="invoiceItemsTbody">
                             <tr class="item-row">
                                 <td>
-                                    <select name="items[0][item_type]" class="form-control form-control-sm item-type" required>
+                                    <select name="items[0][item_type]" class="form-control form-control-sm item-type"
+                                        required>
                                         <option value="" disabled selected>-- ជ្រើសរើសប្រភេទសេវា --</option>
                                         <option value="service">សេវាកម្ម</option>
                                         <option value="room">បន្ទប់សម្រាក</option>
@@ -282,19 +325,28 @@
                                     </select>
                                 </td>
                                 <td>
-                                    <input type="text" name="items[0][description]" class="form-control form-control-sm item-desc" placeholder="បរិយាយសេវា" value="ថ្លៃពិគ្រោះជំងឺទូទៅ" required>
+                                    <input type="text" name="items[0][description]"
+                                        class="form-control form-control-sm item-desc" placeholder="បរិយាយសេវា"
+                                        value="ថ្លៃពិគ្រោះជំងឺទូទៅ" required>
                                 </td>
                                 <td>
-                                    <input type="number" name="items[0][qty]" class="form-control form-control-sm item-qty text-center" value="1" min="1" required>
+                                    <input type="number" name="items[0][qty]"
+                                        class="form-control form-control-sm item-qty text-center" value="1" min="1"
+                                        required>
                                 </td>
                                 <td>
-                                    <input type="number" step="0.01" name="items[0][unit_price]" class="form-control form-control-sm item-price text-right" value="15.00" min="0" required>
+                                    <input type="number" step="0.01" name="items[0][unit_price]"
+                                        class="form-control form-control-sm item-price text-right" value="15.00" min="0"
+                                        required>
                                 </td>
                                 <td>
-                                    <input type="text" class="form-control form-control-sm item-subtotal text-right bg-light" value="15.00" readonly>
+                                    <input type="text"
+                                        class="form-control form-control-sm item-subtotal text-right bg-light"
+                                        value="15.00" readonly>
                                 </td>
                                 <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item" style="border-radius: 6px;"><i class="fas fa-trash-alt"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item"
+                                        style="border-radius: 6px;"><i class="fas fa-trash-alt"></i></button>
                                 </td>
                             </tr>
                         </tbody>
@@ -303,14 +355,16 @@
                     <div class="d-flex justify-content-end align-items-center">
                         <div class="text-right">
                             <span class="text-muted font-weight-bold">តម្លៃសរុប៖ </span>
-                            <h4 class="d-inline font-weight-bold text-primary ml-2 mb-0">$<span id="createGrandTotal">15.00</span></h4>
+                            <h4 class="d-inline font-weight-bold text-primary ml-2 mb-0">$<span
+                                    id="createGrandTotal">15.00</span></h4>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-primary" id="btnSubmitCreateInvoice"><i class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitCreateInvoice"><i
+                            class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ</button>
                 </div>
             </form>
         </div>
@@ -322,8 +376,10 @@
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-pay">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-dollar-sign mr-2"></i> ទូទាត់ប្រាក់វិក្កយបត្រ</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-dollar-sign mr-2"></i> ទូទាត់ប្រាក់វិក្កយបត្រ
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal"
+                    aria-label="Close"><span>&times;</span></button>
             </div>
             <form id="formPayInvoice">
                 @csrf
@@ -340,7 +396,8 @@
                             <span>ប្រាក់សរុប:</span> <strong id="payTotalAmount" class="text-dark"></strong>
                         </div>
                         <div class="d-flex justify-content-between border-top pt-2 mt-2">
-                            <span class="font-weight-bold text-danger">ប្រាក់ជំពាក់នៅសល់:</span> <strong id="payBalanceAmount" class="text-danger h5 mb-0"></strong>
+                            <span class="font-weight-bold text-danger">ប្រាក់ជំពាក់នៅសល់:</span> <strong
+                                id="payBalanceAmount" class="text-danger h5 mb-0"></strong>
                         </div>
                     </div>
 
@@ -365,17 +422,20 @@
 
                     <!-- Amount Paid -->
                     <div class="form-group mb-3">
-                        <label for="pay_amount" class="font-weight-bold">ចំនួនប្រាក់ត្រូវបង់ ($) <span class="text-danger">*</span></label>
+                        <label for="pay_amount" class="font-weight-bold">ចំនួនប្រាក់ត្រូវបង់ ($) <span
+                                class="text-danger">*</span></label>
                         <div class="input-group">
                             <div class="input-group-prepend"><span class="input-group-text bg-light">$</span></div>
-                            <input type="number" step="0.01" name="amount" id="pay_amount" class="form-control form-control-lg font-weight-bold text-success" required>
+                            <input type="number" step="0.01" name="amount" id="pay_amount"
+                                class="form-control form-control-lg font-weight-bold text-success" required>
                         </div>
                     </div>
                 </div>
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-success px-4" id="btnSubmitPayInvoice"><i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់</button>
+                    <button type="submit" class="btn btn-success px-4" id="btnSubmitPayInvoice"><i
+                            class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់</button>
                 </div>
             </form>
         </div>
@@ -388,18 +448,201 @@
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-custom text-white">
                 <h5 class="modal-title font-weight-bold"><i class="fas fa-print mr-2"></i> ប័ណ្ណទូទាត់ប្រាក់</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close"><span>&times;</span></button>
+                <button type="button" class="close text-white" data-dismiss="modal"
+                    aria-label="Close"><span>&times;</span></button>
             </div>
             <div class="modal-body p-4" id="modalReceiptBody">
                 <div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-muted"></i></div>
             </div>
             <div class="modal-footer bg-light">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">បិទ</button>
-                <button type="button" class="btn btn-primary px-4" id="btnPrintReceipt"><i class="fas fa-print mr-1"></i> បោះពុម្ពវិក្កយបត្រ</button>
+                <button type="button" class="btn btn-primary px-4" id="btnPrintReceipt"><i
+                        class="fas fa-print mr-1"></i> បោះពុម្ពវិក្កយបត្រ</button>
             </div>
         </div>
     </div>
 </div>
+
+
+{{-- ====== Modal Invoice Detail ====== --}}
+<div class="modal fade" id="modalInvoiceDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header modal-header-custom text-white">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-file-invoice mr-2"></i>
+                    ព័ត៌មានលម្អិតវិក្កយបត្រ</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body p-4">
+                <div id="viewCancelledBanner" class="alert alert-danger d-none">
+                    <strong>បានលុបចោល</strong><br>
+                    មូលហេតុ: <span id="viewCancelReason"></span><br>
+                    ដោយ: <span id="viewCancelledBy"></span> — <span id="viewCancelledAt"></span>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p class="mb-1"><b>លេខវិក្កយបត្រ:</b> <span id="viewInvoiceNumber"></span></p>
+                        <p class="mb-1"><b>ស្ថានភាព:</b> <span id="viewInvoiceStatus"></span></p>
+                        <p class="mb-1"><b>កាលបរិច្ឆេទ:</b> <span id="viewInvoiceDate"></span></p>
+                        <p class="mb-1"><b>បង្កើតដោយ:</b> <span id="viewCreatedBy"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="mb-1"><b>លេខកូដអ្នកជំងឺ:</b> <span id="viewPatientCode"></span></p>
+                        <p class="mb-1"><b>ឈ្មោះ:</b> <span id="viewPatientName"></span></p>
+                        <p class="mb-1"><b>ភេទ:</b> <span id="viewPatientGender"></span></p>
+                        <p class="mb-1"><b>ទូរស័ព្ទ:</b> <span id="viewPatientPhone"></span></p>
+                        <p class="mb-1"><b>ប្រភេទ:</b> <span id="viewVisitType"></span></p>
+                        <p class="mb-1 d-none" id="viewAdmissionWrap"><b>លេខចូលសម្រាក:</b> <span
+                                id="viewAdmissionNumber"></span></p>
+                        <p class="mb-1 d-none" id="viewRoomWrap"><b>បន្ទប់:</b> <span id="viewRoomNumber"></span></p>
+                    </div>
+                </div>
+
+                <table class="table table-bordered table-sm">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>បរិយាយ</th>
+                            <th>ប្រភេទ</th>
+                            <th class="text-center">ចំនួន</th>
+                            <th class="text-right">តម្លៃរាយ</th>
+                            <th class="text-right">សរុប</th>
+                        </tr>
+                    </thead>
+                    <tbody id="viewInvoiceItems"></tbody>
+                </table>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="font-weight-bold">ប្រវត្តិទូទាត់</h6>
+                        <div id="viewPaymentsList"></div>
+                        <p class="mt-3 mb-1"><b>ចំណាំ:</b> <span id="viewNotes"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless text-right mb-0">
+                            <tr>
+                                <td>សរុប:</td>
+                                <td class="font-weight-bold" id="viewInvoiceTotal"></td>
+                            </tr>
+                            <tr>
+                                <td>បានបង់:</td>
+                                <td class="font-weight-bold text-success" id="viewInvoicePaid"></td>
+                            </tr>
+                            <tr>
+                                <td>ជំពាក់:</td>
+                                <td class="font-weight-bold text-danger" id="viewInvoiceBalance"></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">បិទ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ====== Modal Edit Invoice ====== --}}
+<div class="modal fade" id="modalEditInvoice" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold"><i class="fas fa-pen mr-2"></i> កែប្រែវិក្កយបត្រ</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="editInvoiceForm" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="alert alert-danger d-none" id="editInvoiceAlert"></div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="font-weight-bold">ឈ្មោះអ្នកជំងឺ <span class="text-danger">*</span></label>
+                            <input type="text" name="patient_name" id="edit_patient_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="font-weight-bold">លេខទូរស័ព្ទ</label>
+                            <input type="tel" maxlength="10" name="patient_phone" id="edit_patient_phone"
+                                class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="font-weight-bold">ចំណាំ</label>
+                            <input type="text" name="notes" id="edit_notes" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="font-weight-bold text-primary mb-0">បញ្ជីសេវាកម្ម</h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddEditInvoiceItem">
+                            <i class="fas fa-plus mr-1"></i> បន្ថែមមុខសេវា
+                        </button>
+                    </div>
+
+                    <table class="table table-bordered mb-3">
+                        <thead class="bg-light">
+                            <tr>
+                                <th style="width:24%">ប្រភេទ</th>
+                                <th>បរិយាយ</th>
+                                <th style="width:100px">ចំនួន</th>
+                                <th style="width:130px">តម្លៃ ($)</th>
+                                <th style="width:130px">សរុប ($)</th>
+                                <th style="width:45px"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="editInvoiceItemsTbody"></tbody>
+                    </table>
+
+                    <div class="text-right">
+                        <span class="text-muted font-weight-bold">តម្លៃសរុប៖</span>
+                        <h4 class="d-inline font-weight-bold text-primary ml-2" id="editInvoiceGrandTotal">$0.00</h4>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitEditInvoice">
+                        <i class="fas fa-save mr-1"></i> រក្សាទុកការកែប្រែ (Save Changes)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ====== Modal Cancel Invoice ====== --}}
+<div class="modal fade" id="modalCancelInvoice" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title font-weight-bold text-danger"><i class="fas fa-ban mr-2"></i> លុបចោលវិក្កយបត្រ
+                </h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="cancelInvoiceForm" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="alert alert-danger d-none" id="cancelInvoiceAlert"></div>
+                    <p>តើអ្នកចង់លុបចោលវិក្កយបត្រ <strong id="cancelInvoiceNumber"></strong> មែនទេ?</p>
+                    <div class="form-group mb-0">
+                        <label class="font-weight-bold">មូលហេតុ <span class="text-danger">*</span></label>
+                        <textarea name="cancel_reason" id="cancel_reason" class="form-control" rows="3"
+                            required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បិទ</button>
+                    <button type="submit" class="btn btn-danger" id="btnSubmitCancelInvoice">
+                        <i class="fas fa-ban mr-1"></i> បញ្ជាក់ការលុបចោល (Confirm Cancel)
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+
 
 @stop
 

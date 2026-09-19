@@ -30,13 +30,13 @@ class PaymentNotification extends Notification
         $patientName = optional($this->payment->invoice)->patient_name ?? 'a patient';
 
         return [
-            'type'    => 'payment',
-            'title'   => 'New Payment Received',
+            'type' => 'payment',
+            'title' => 'New Payment Received',
             'message' => "A payment of \${$amount} was recorded for {$patientName}",
-            'icon'    => 'fa-money-bill-wave',
-            'color'   => 'text-success',
-            // Payments are viewed through their invoice, not their own page
-            'url'     => route('billing.show', $this->payment->invoice_id),
+            'icon' => 'fa-money-bill-wave',
+            'color' => 'text-success',
+            'url' => route('billing.index', ['view' => $this->payment->invoice_id]),
+            
         ];
     }
 }
