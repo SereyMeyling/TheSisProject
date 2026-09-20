@@ -547,7 +547,47 @@ $(document).ready(function () {
         });
     });
 
-    $("#btnPrintReceipt").on("click", function () {
+    $(document).on("click", "#btnPrintReceipt", function () {
+        const sheet = document.querySelector(
+            "#modalReceiptBody .invoice-sheet",
+        );
+        if (!sheet) return;
+
+        const area = document.createElement("div");
+        area.id = "print-area";
+        area.style.display = "block";
+        area.appendChild(sheet.cloneNode(true));
+        document.body.appendChild(area);
+
+        const hidden = [];
+        Array.from(document.body.children).forEach(function (el) {
+            if (el === area) return;
+            hidden.push({
+                el: el,
+                value: el.style.getPropertyValue("display"),
+                priority: el.style.getPropertyPriority("display"),
+            });
+            el.style.setProperty("display", "none", "important");
+        });
+
+        const style = document.createElement("style");
+        style.textContent =
+            "@media print { @page { size: A4; margin: 10mm; } " +
+            "html, body { height: auto !important; overflow: visible !important; background: #fff !important; } }";
+        document.head.appendChild(style);
+
+        const cleanup = function () {
+            window.removeEventListener("afterprint", cleanup);
+            area.remove();
+            style.remove();
+            hidden.forEach(function (h) {
+                if (h.value)
+                    h.el.style.setProperty("display", h.value, h.priority);
+                else h.el.style.removeProperty("display");
+            });
+        };
+        window.addEventListener("afterprint", cleanup);
+
         window.print();
     });
 

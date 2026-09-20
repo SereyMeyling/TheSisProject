@@ -24,21 +24,6 @@
 
 <div class="card shadow-sm">
 
-    <div class="card-header p-0">
-        <ul class="nav nav-tabs" id="pharmacyTab" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="stock-tab" data-toggle="tab" href="#stockPane" role="tab">
-                    <i class="fas fa-boxes"></i> ស្តុកថ្នាំ (Medicine Stock)
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="sell-tab" data-toggle="tab" href="#sellPane" role="tab">
-                    <i class="fas fa-cash-register"></i> លក់ថ្នាំ (Point of Sale)
-                </a>
-            </li>
-        </ul>
-    </div>
-
     <div class="tab-content">
         {{-- ================= STOCK TAB ================= --}}
         <div class="tab-pane fade show active" id="stockPane" role="tabpanel">
@@ -144,129 +129,6 @@
                 </div>
             </div>
         </div>
-        {{-- ================= END STOCK TAB ================= --}}
-
-
-        {{-- ================= SELL TAB (POS) ================= --}}
-        <div class="tab-pane fade" id="sellPane" role="tabpanel">
-            <div class="row">
-                {{-- Left POS Form --}}
-                <div class="col-lg-7 mb-4">
-                    <div class="card-modern">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <span><i class="fas fa-cash-register text-primary mr-2"></i> ព័ត៌មានលក់ថ្នាំ </span>
-                            <span class="badge badge-light border"><i class="fas fa-user mr-1"></i>
-                                អតិថិជន/អ្នកជំងឺ</span>
-                        </div>
-
-                        <div class="card-body p-4">
-                            <form id="sellForm">
-                                @csrf
-                                <div class="alert alert-danger d-none" id="sellErrors" style="border-radius: 10px;">
-                                </div>
-
-                                <div class="form-group mb-4">
-                                    <label>
-                                        លេខសម្គាល់អ្នកជំងឺ ឬកូដអ្នកជំងឺ
-                                        (ទុកទទេប្រសិនបើជាអតិថិជនចរណ៍)
-                                    </label>
-
-                                    <select name="patient_id" id="patientSelect" class="form-control"
-                                        style="width: 100%;">
-                                        <option value="">-- អតិថិជនចរណ៍ --</option>
-                                    </select>
-                                </div>
-
-                                <h6 class="font-weight-bold text-dark mb-3"><i
-                                        class="fas fa-shopping-cart text-info mr-1"></i> បញ្ជីថ្នាំត្រូវលក់
-                                </h6>
-
-                                <div class="table-responsive mb-3">
-                                    <table class="table table-bordered align-middle mb-0" id="sellItemsTable">
-                                        <thead class="bg-light">
-                                            <tr>
-                                                <th>ថ្នាំ</th>
-                                                <th style="width: 140px;">ចំនួន</th>
-                                                <th style="width: 50px;" class="text-center"><i
-                                                        class="fas fa-trash-alt"></i></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="sellItemsBody">
-                                            <tr>
-                                                <td>
-                                                    <select class="form-control sell-medicine" required>
-                                                        <option value="">-- កំពុងផ្ទុកបញ្ជីថ្នាំ... --</option>
-                                                    </select>
-                                                </td>
-                                                <td>
-                                                    <input type="number" class="form-control sell-qty" min="1" value="1"
-                                                        required>
-                                                </td>
-                                                <td class="text-center">
-                                                    <button type="button"
-                                                        class="btn btn-sm btn-outline-danger btn-remove-row"
-                                                        style="border-radius: 6px;">&times;</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <button type="button" class="btn btn-outline-primary btn-sm mb-4" id="btnAddSellRow"
-                                    style="border-radius: 8px; font-weight: 600;">
-                                    <i class="fas fa-plus mr-1"></i> បន្ថែមថ្នាំ
-                                </button>
-
-                                {{-- Checkout Summary Box --}}
-                                <div
-                                    class="checkout-summary-box d-flex flex-wrap justify-content-between align-items-center">
-                                    <div>
-                                        <small class="text-light opacity-75 d-block">តម្លៃសរុបត្រូវទូទាត់</small>
-                                        <div class="total-price-display">$<span id="sellTotalPreview">0.00</span></div>
-                                    </div>
-                                    <button class="btn checkout-btn" type="submit">
-                                        <i class="fas fa-cash-register mr-2"></i> លក់
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Right Recent Sales History --}}
-                <div class="col-lg-5 mb-4">
-                    <div class="card-modern">
-                        <div class="card-header d-flex align-items-center justify-content-between">
-                            <span><i class="fas fa-history text-info mr-2"></i> ប្រវត្តិការលក់ថ្មីៗ </span>
-
-                        </div>
-                        <div class="card-body p-0">
-                            <div class="table-responsive">
-                                <table class="table align-middle mb-0">
-                                    <thead class="bg-light">
-                                        <tr>
-                                            <th>កាលបរិច្ឆេទ</th>
-                                            <th>អតិថិជន</th>
-                                            <th class="text-right">សរុប ($)</th>
-                                            <th class="text-center">វិក្កយបត្រ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="saleHistoryBody">
-                                        <tr>
-                                            <td colspan="4" class="text-center text-muted py-4">កំពុងផ្ទុកប្រវត្តិ...
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {{-- ================= END SELL TAB ================= --}}
-
-        </div>
-        {{-- ================= END SELL TAB ================= --}}
     </div>
 </div>
 
@@ -764,44 +626,18 @@
         supplierStore: "{{ route('pharmacy.suppliers.store') }}",
         stats: "{{ route('pharmacy.stats') }}",
         detailsBase: "{{ url('pharmacy') }}",
-        // sell
-        sellSearch: "{{ route('pharmacy.sell.search') }}",
-        sellStore: "{{ route('pharmacy.sell.store') }}",
-        sellHistory: "{{ route('pharmacy.sell.history') }}",
-          patientSearch: "{{ route('pharmacy.patients.search') }}",
+
     };
 
 
     $(function () {
         const $stockActionBtns = $('#stockActionBtns');
-        // Open modal when clicking a receipt button in sale history
-        $(document).on('click', '.btn-view-receipt', function () {
-            const url = $(this).data('url');
-            $('#receiptFrame').attr('src', url);
-            $('#modalReceipt').modal('show');
-        });
 
-        // Print only the iframe's content
-        $(document).on('click', '#btnPrintReceipt', function () {
-            const frame = document.getElementById('receiptFrame');
-            frame.contentWindow.focus();
-            frame.contentWindow.print();
-        });
-        let sellScriptLoaded = false;
+
 
         $.extend(true, $.fn.dataTable.defaults, {
             language: {
                 paginate: { previous: '‹', next: '›' }
-            }
-        });
-
-        $(document).on('shown.bs.tab', '#sell-tab', function () {
-            $stockActionBtns.hide();
-            if (!sellScriptLoaded) {
-                sellScriptLoaded = true;
-                const s = document.createElement('script');
-                s.src = "{{ asset('js/pharmacy-sell.js') }}";
-                document.body.appendChild(s);
             }
         });
 
@@ -819,12 +655,6 @@
                 }
             }, 400);
         });
-
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('tab') === 'sell' || window.location.hash === '#sellPane') {
-            $('#sell-tab').tab('show');
-        }
-
 
 
         // Auto-open detail modal if arriving from a notification link (?detail=ID)

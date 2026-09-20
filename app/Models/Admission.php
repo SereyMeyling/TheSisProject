@@ -48,4 +48,8 @@ class Admission extends Model
     {
         return $this->hasMany(Invoice::class, 'admission_id', 'admission_id');
     }
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id', 'department_id');
+    }
 }

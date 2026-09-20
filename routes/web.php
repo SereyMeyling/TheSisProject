@@ -153,6 +153,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
         Route::post('/lab-order', [DoctorController::class, 'storeLabOrder'])->name('lab-order.store');
         Route::post('/admit', [DoctorController::class, 'storeAdmission'])->name('admit.store');
         Route::post('/vitals', [DoctorController::class, 'updateVitals'])->name('vitals.update');
+
     });
 
     // Patient Routes
@@ -165,14 +166,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
     Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
 
-    // Medical Records & Vitals
-    Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
-    Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
-    Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
-    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
-    Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
-    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
-    Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
 
     // Room & Inpatient Admissions
     Route::get('/room', [RoomController::class, 'index'])->name('room.index');
@@ -201,6 +194,22 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
 });
 
 // =========================================================================
+// MEDICAL RECORDS — DOCTOR ONLY
+// =========================================================================
+Route::group([
+    'middleware' => ['auth', '2fa', 'role:doctor']
+], function () {
+    // Medical Records & Vitals
+    Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
+    Route::get('/medical-records/create', [MedicalRecordController::class, 'create'])->name('medical-records.create');
+    Route::post('/medical-records', [MedicalRecordController::class, 'store'])->name('medical-records.store');
+    Route::get('/medical-records/{id}', [MedicalRecordController::class, 'show'])->name('medical-records.show');
+    Route::get('/medical-records/{id}/edit', [MedicalRecordController::class, 'edit'])->name('medical-records.edit');
+    Route::put('/medical-records/{id}', [MedicalRecordController::class, 'update'])->name('medical-records.update');
+    Route::delete('/medical-records/{id}', [MedicalRecordController::class, 'destroy'])->name('medical-records.destroy');
+});
+
+// =========================================================================
 // 4. PHARMACY STAFF ROUTES (Role: admin|pharmacist)
 // Medicines, stock batches, supplier management, prescription dispensing
 // =========================================================================
@@ -218,8 +227,8 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
     Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
     Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
-     Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
-    ->name('pharmacy.show');
+    Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
+        ->name('pharmacy.show');
 
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
 
@@ -229,13 +238,13 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/sell/history', [PharmacySaleController::class, 'history'])->name('pharmacy.sell.history');
     Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
     Route::get('/sell/{sale}/receipt', [PharmacySaleController::class, 'receipt'])
-    ->name('pharmacy.sell.receipt');
+        ->name('pharmacy.sell.receipt');
 
 
 
     // Patient search for POS
     Route::get('/sell/patients/search', [PharmacySaleController::class, 'patientSearch'])
-    ->name('pharmacy.patients.search');
+        ->name('pharmacy.patients.search');
 
     Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
 

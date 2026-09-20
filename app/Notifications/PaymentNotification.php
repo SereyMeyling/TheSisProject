@@ -35,8 +35,8 @@ class PaymentNotification extends Notification
             'message' => "A payment of \${$amount} was recorded for {$patientName}",
             'icon' => 'fa-money-bill-wave',
             'color' => 'text-success',
-            'url' => route('billing.index', ['view' => $this->payment->invoice_id]),
-            
+            'url' => route('form.billing.index', ['view' => $this->payment->invoice_id]),
+
         ];
     }
 }

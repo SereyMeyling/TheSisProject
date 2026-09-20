@@ -19,6 +19,7 @@ use App\Models\Pharmacy\MedicineBatch;
 use App\Models\Pharmacy\Medicine;
 use App\Models\Pharmacy\Sale;
 use App\Models\Setting\BackupLog;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -71,49 +72,43 @@ class DashboardController extends Controller
         // --- vars the dashboard.blade.php view also needs ---
 
         $todayAppointments = Appointment::whereDate('appointment_date', today())->count();
-        $emergencyCases = 0;
+        $emergencyCases = Appointment::whereDate('appointment_date', today())
+            ->where('is_emergency', true)
+            ->count();
 
         $totalRooms = Room::count();
         $availableRooms = Room::where('status', 'available')->count();
         $occupiedRooms = Room::where('status', 'occupied')->count();
         $occupancyPercent = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100) : 0;
-        $activePatientsTotal = Admission::where('status', 'admitted')->distinct('patient_id')->count('patient_id');
+        // $activePatientsTotal = Admission::where('status', 'admitted')->distinct('patient_id')->count('patient_id');
 
-        $departmentBreakdown = Department::withCount('users')->get()->map(function ($dept) use ($activePatientsTotal) {
-            $count = $dept->users_count;
-            return [
-                'name'    => $dept->department_name,
-                'total'   => $count,
-                'percent' => $activePatientsTotal > 0 ? round(($count / $activePatientsTotal) * 100) : 0,
-            ];
-        })->filter(fn($d) => $d['total'] > 0)->values()->toArray();
+        $deptNames = Department::pluck('department_name', 'department_id');
+
+        $admittedByDept = Admission::where('status', 'admitted')
+            ->selectRaw('department_id, COUNT(DISTINCT patient_id) as total')
+            ->groupBy('department_id')
+            ->get();
+
+        $admittedTotal = $admittedByDept->sum('total');
+
+        $departmentBreakdown = $admittedByDept->map(fn($row) => [
+            'name' => $row->department_id ? ($deptNames[$row->department_id] ?? 'មិនបានកំណត់') : 'មិនបានកំណត់',
+            'total' => (int) $row->total,
+            'percent' => $admittedTotal > 0 ? round($row->total / $admittedTotal * 100) : 0,
+        ])->sortByDesc('total')->values()->toArray();
 
         // Last 6 months income/expense chart data
-        $months = [];
-        $incomeByMonth = [];
-        $expenseByMonth = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $months[] = $date->format('M');
+        $finance = [
+            'yearly' => $this->monthlyFinance(now()->startOfYear(), now()->endOfYear()),
+            'monthly' => $this->monthlyFinance(now()->startOfMonth()->subMonths(5), now()->endOfMonth()),
+        ];
 
-            $incomeByMonth[] = InvoicePayment::whereYear('paid_at', $date->year)
-                ->whereMonth('paid_at', $date->month)
-                ->sum('amount')
-                + Sale::whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->sum('total_amount');
+        $patientSeries = [
+            'weekly' => $this->weeklyNewPatients(8),
+            'monthly' => $this->monthlyNewPatients(now()->startOfYear(), now()->endOfYear()),
+        ];
 
 
-            $expenseByMonth[] = 0;
-        }
-
-        // Last 4 weeks of admissions
-        $weeklyAdmissions = [];
-        for ($i = 3; $i >= 0; $i--) {
-            $start = now()->subWeeks($i)->startOfWeek();
-            $end = now()->subWeeks($i)->endOfWeek();
-            $weeklyAdmissions[] = Admission::whereBetween('created_at', [$start, $end])->count();
-        }
 
         return view('form.dashboard.dashboard', compact(
             'totalPatients',
@@ -130,10 +125,8 @@ class DashboardController extends Controller
             'availableRooms',
             'occupancyPercent',
             'departmentBreakdown',
-            'months',
-            'incomeByMonth',
-            'expenseByMonth',
-            'weeklyAdmissions'
+            'finance',
+            'patientSeries'
         ));
     }
 
@@ -264,5 +257,60 @@ class DashboardController extends Controller
             'activeAdmissions',
             'recentPatients'
         ));
+    }
+
+    private function monthlyFinance(Carbon $from, Carbon $to): array
+    {
+        $income = InvoicePayment::selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as ym, SUM(amount) as total")
+            ->whereBetween('paid_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+
+        $sales = Sale::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(total_amount) as total")
+            ->whereBetween('created_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+
+        $expense = MedicineBatch::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(purchase_price * quantity_initial) as total")
+            ->whereBetween('created_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+
+        $labels = $inc = $exp = [];
+        for ($d = $from->copy()->startOfMonth(); $d->lte($to); $d->addMonth()) {
+            $key = $d->format('Y-m');
+            $labels[] = $d->format('M');
+            $inc[] = round(($income[$key] ?? 0) + ($sales[$key] ?? 0), 2);
+            $exp[] = round($expense[$key] ?? 0, 2);
+        }
+
+        return ['labels' => $labels, 'income' => $inc, 'expense' => $exp];
+    }
+
+    private function weeklyNewPatients(int $weeks): array
+    {
+        $from = now()->startOfWeek()->subWeeks($weeks - 1);
+        $to = now()->endOfWeek();
+
+        $counts = Patient::selectRaw("DATE_SUB(DATE(created_at), INTERVAL WEEKDAY(created_at) DAY) as week_start, COUNT(*) as total")
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('week_start')->pluck('total', 'week_start');
+
+        $labels = $data = [];
+        for ($d = $from->copy(); $d->lte($to); $d->addWeek()) {
+            $labels[] = $d->format('d/m') . '–' . $d->copy()->endOfWeek()->format('d/m');
+            $data[] = (int) ($counts[$d->format('Y-m-d')] ?? 0);
+        }
+
+        return ['labels' => $labels, 'data' => $data];
+    }
+
+    private function monthlyNewPatients(Carbon $from, Carbon $to): array
+    {
+        $counts = Patient::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, COUNT(*) as total")
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('ym')->pluck('total', 'ym');
+
+        $labels = $data = [];
+        for ($d = $from->copy()->startOfMonth(); $d->lte($to); $d->addMonth()) {
+            $labels[] = $d->format('M');
+            $data[] = (int) ($counts[$d->format('Y-m')] ?? 0);
+        }
+
+        return ['labels' => $labels, 'data' => $data];
     }
 }

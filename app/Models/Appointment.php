@@ -18,6 +18,7 @@ class Appointment extends Model
         'appointment_date',
         'status',
         'reason',
+        'is_emergency' => 'boolean',
     ];
 
     protected $casts = [

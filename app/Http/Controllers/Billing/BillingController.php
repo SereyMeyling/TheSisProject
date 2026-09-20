@@ -12,6 +12,7 @@ use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
 use App\Models\Patient;
 use App\Models\Admission;
+use App\Models\Setting\GeneralSettings;
 use App\Notifications\PaymentNotification;
 use App\Helpers\NotifiesRoles;
 use Illuminate\Http\JsonResponse;
@@ -110,14 +111,14 @@ class BillingController extends Controller
 
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('billing.partials.table', compact('invoices'))->render(),
+                'html' => view('form.billing.partials.table', compact('invoices'))->render(),
                 'totalInvoices' => $totalInvoices,
                 'totalRevenue' => number_format($totalRevenue, 2),
                 'totalUnpaid' => number_format($totalUnpaid, 2),
             ]);
         }
 
-        return view('billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions'));
+        return view('form.billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions'));
     }
 
     /**
@@ -128,13 +129,16 @@ class BillingController extends Controller
         $invoice = Invoice::with(['items', 'patient', 'payments.processor', 'creator', 'canceller', 'admission.room'])
             ->findOrFail($id);
 
+        $setting = GeneralSettings::first();
+
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'data' => $invoice,
-                'html' => view('billing.partials.receipt', compact('invoice'))->render(),
+                'html' => view('form.billing.partials.receipt', compact('invoice', 'setting'))->render(),
             ]);
         }
+
 
         // Normal browser visit (e.g. from a notification link): open the list and auto-show the modal
         return redirect()->route('billing.index', ['view' => $invoice->id]);

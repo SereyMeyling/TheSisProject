@@ -203,7 +203,7 @@
 
             {{-- Table Container --}}
             <div id="billingTableContainer">
-                @include('billing.partials.table')
+                @include('form.billing.partials.table')
             </div>
         </div>
     </div>
@@ -547,7 +547,7 @@
 <div class="modal fade" id="modalEditInvoice" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header">
+            <div class="modal-header modal-header-custom ">
                 <h5 class="modal-title font-weight-bold"><i class="fas fa-pen mr-2"></i> កែប្រែវិក្កយបត្រ</h5>
                 <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
             </div>

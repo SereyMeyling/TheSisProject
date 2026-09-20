@@ -18,5 +18,8 @@ class Department extends Model
         return $this->hasMany(user::class, 'department_id', 'department_id');
     }
 
-
+    public function admissions()
+    {
+        return $this->hasMany(Admission::class, 'department_id', 'department_id');
+    }
 }
