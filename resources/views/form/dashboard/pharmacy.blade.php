@@ -12,9 +12,7 @@
                 <p class="mb-0 text-white-50">ការគ្រប់គ្រងស្តុកថ្នាំ ថ្នាំជិតផុតកំណត់ ការលក់ និងវេជ្ជបញ្ជា។</p>
             </div>
             <div>
-                <a href="{{ route('pharmacy.sell.index') }}" class="btn btn-light font-weight-bold px-4 py-2 text-success mr-2" style="border-radius: 20px;">
-                    <i class="fas fa-cash-register mr-1"></i> លក់ថ្នាំ (POS)
-                </a>
+             
                 <a href="{{ route('pharmacy.index') }}" class="btn btn-outline-light font-weight-bold px-3 py-2" style="border-radius: 20px;">
                     <i class="fas fa-boxes mr-1"></i> បញ្ជីស្តុក
                 </a>

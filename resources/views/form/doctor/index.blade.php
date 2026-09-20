@@ -402,19 +402,19 @@
                                 {{-- Refer to Lab Test --}}
                                 <button type="button" class="btn btn-action-lab" data-toggle="modal"
                                     data-target="#labModal">
-                                    <i class="fas fa-vials mr-1"></i> Refer to Lab Test
+                                    <i class="fas fa-vials mr-1"></i> បញ្ចូនទៅមន្ទីរពិសោធន៏
                                 </button>
 
                                 {{-- Admit as Inpatient --}}
                                 <button type="button" class="btn btn-action-admit" data-toggle="modal"
                                     data-target="#admitModal">
-                                    <i class="fas fa-bed mr-1"></i> Admit as Inpatient
+                                    <i class="fas fa-bed mr-1"></i> បញ្វូនទៅបន្ទប់សម្រាក
                                 </button>
                             </div>
 
                             {{-- Confirm & Prescribe --}}
                             <button type="submit" name="status_destination" value="pharmacy" class="btn btn-action-confirm">
-                                <i class="fas fa-check-circle mr-1"></i> Confirm & Prescribe
+                                <i class="fas fa-check-circle mr-1"></i> បញ្ជាក់
                             </button>
                         </div>
 
@@ -432,7 +432,7 @@
                         @csrf
                         <input type="hidden" name="record_id" value="{{ $activeRecord->record_id }}">
 
-                        <div class="modal-header bg-primary text-white">
+                        <div class="modal-header modal-header-custom">
                             <h5 class="modal-title font-weight-bold"><i class="fas fa-flask mr-2"></i>
                                 បញ្ជូនទៅពិនិត្យមន្ទីរពិសោធន៍ (Refer to Lab Test)</h5>
                             <button type="button" class="close text-white"
@@ -486,9 +486,9 @@
                         @csrf
                         <input type="hidden" name="patient_id" value="{{ $activeRecord->patient_id }}">
 
-                        <div class="modal-header bg-dark text-white">
+                        <div class="modal-header modal-header-custom">
                             <h5 class="modal-title font-weight-bold"><i class="fas fa-procedures mr-2"></i>
-                                បញ្ចូលសម្រាកព្យាបាល (Admit as Inpatient)</h5>
+                                បញ្ចូលការសម្រាកព្យាបាល</h5>
                             <button type="button" class="close text-white"
                                 data-dismiss="modal"><span>&times;</span></button>
                         </div>
