@@ -219,12 +219,12 @@
                                 class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                                 <h5 class="card-title font-weight-bold m-0 text-success">ព័ត៌មានអ្នកជំងឺ
                                     (ត្រូវបំពេញគ្រប់ចន្លោះ)</h5>
-                                <span class="badge badge-primary px-3 py-1">NEW RECORD</span>
+                                <span class="badge badge-primary px-3 py-1">កំណត់ត្រាថ្មី</span>
                             </div>
                             <div class="card-body bg-light p-4">
                                 <div class="row bg-white p-3 rounded shadow-sm mb-4">
                                     <div class="col-md-6 form-group">
-                                        <label class="small font-weight-bold text-secondary">ឈ្មោះពេញ (Full Name) <span
+                                        <label class="small font-weight-bold text-secondary">ឈ្មោះពេញ <span
                                                 class="text-danger">*</span></label>
                                         <input type="text" name="full_name" class="form-control border-light-gray"
                                             placeholder="បញ្ចូលឈ្មោះពេញ..." required value="{{ old('full_name') }}">
@@ -239,8 +239,12 @@
                                     <div class="col-md-6 form-group">
                                         <label class="small font-weight-bold text-secondary">ថ្ងៃខែឆ្នាំកំណើត <span
                                                 class="text-danger">*</span></label>
-                                        <input type="date" name="date_of_birth" class="form-control border-light-gray"
-                                            required value="{{ old('date_of_birth') }}">
+                                        <input type="text" id="dob_display" name="dob_display"
+                                            class="form-control border-light-gray"
+                                            placeholder="ថ្ងៃ/ខែ/ឆ្នាំ  (ឧ. 15/03/1990)" inputmode="numeric"
+                                            maxlength="10" autocomplete="off" required value="{{ old('dob_display') }}">
+                                        <input type="hidden" name="date_of_birth" id="dob_value">
+                                        <small id="dob_hint" class="form-text"></small>
                                     </div>
                                     <div class="col-md-6 form-group">
                                         <label class="small font-weight-bold text-secondary">ភេទ <span
@@ -270,7 +274,7 @@
                                     </div>
                                 </div>
                                 <div class="d-flex justify-content-end">
-                                    <button type="reset" class="btn btn-light border px-4 mr-2">Clear Form</button>
+                                    <button type="reset" class="btn btn-light border px-4 mr-2">សម្អាត</button>
                                     <button type="submit" class="btn btn-success px-5 font-weight-bold shadow-sm"
                                         style="background-color: #00695c; border-color: #00695c;">
                                         <i class="fas fa-save mr-2"></i> ចុះឈ្មោះអ្នកជំងឺ
@@ -474,5 +478,66 @@
             });
         }
     });
+
+    (function () {
+        const display = document.getElementById('dob_display');
+        const value = document.getElementById('dob_value');
+        const hint = document.getElementById('dob_hint');
+        const pad = n => String(n).padStart(2, '0');
+
+        function check(text) {
+            value.value = '';
+            display.setCustomValidity('');
+            hint.textContent = '';
+            hint.className = 'form-text';
+
+            if (text.length === 0) return;
+
+            if (text.length < 10) {
+                display.setCustomValidity('សូមបញ្ចូលជាទម្រង់ ថ្ងៃ/ខែ/ឆ្នាំ');
+                return;
+            }
+
+            const [dd, mm, yyyy] = text.split('/').map(Number);
+            const d = new Date(yyyy, mm - 1, dd);
+            const today = new Date();
+            const valid = yyyy >= 1900 &&
+                d.getFullYear() === yyyy && d.getMonth() === mm - 1 && d.getDate() === dd &&
+                d <= today;
+
+            if (!valid) {
+                display.setCustomValidity('ថ្ងៃខែឆ្នាំកំណើតមិនត្រឹមត្រូវ');
+                hint.textContent = 'ថ្ងៃខែឆ្នាំមិនត្រឹមត្រូវ';
+                hint.className = 'form-text text-danger';
+                return;
+            }
+
+            value.value = yyyy + '-' + pad(mm) + '-' + pad(dd);
+
+            let age = today.getFullYear() - yyyy;
+            if (today < new Date(today.getFullYear(), mm - 1, dd)) age--;
+            hint.textContent = 'អាយុ ' + age + ' ឆ្នាំ';
+            hint.className = 'form-text text-success';
+        }
+
+        display.addEventListener('input', function () {
+            const d = this.value.replace(/\D/g, '').slice(0, 8);
+            let out = d;
+            if (d.length > 4) out = d.slice(0, 2) + '/' + d.slice(2, 4) + '/' + d.slice(4);
+            else if (d.length > 2) out = d.slice(0, 2) + '/' + d.slice(2);
+            this.value = out;
+            check(out);
+        });
+
+        // Clear Form button
+        display.form.addEventListener('reset', function () {
+            setTimeout(function () { check(''); }, 0);
+        });
+
+        // Restore after a failed validation (old input) or on the edit page
+        check(display.value);
+    })();
+
+
 </script>
 @stop

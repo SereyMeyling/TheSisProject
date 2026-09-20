@@ -31,13 +31,13 @@
                         <div
                             class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
                             <h5 class="card-title font-weight-bold m-0 text-success">ព័ត៌មានអ្នកជំងឺ</h5>
-                            <span class="badge badge-primary px-3 py-1">NEW RECORD</span>
+                            <span class="badge badge-primary px-3 py-1">កំណត់ត្រាថ្មី</span>
                         </div>
 
                         <div class="card-body bg-light p-4">
                             <div class="row bg-white p-3 rounded shadow-sm mb-4">
                                 <div class="col-md-6 form-group">
-                                    <label class="small font-weight-bold text-secondary">ឈ្មោះពេញ (Full Name) <span
+                                    <label class="small font-weight-bold text-secondary">ឈ្មោះពេញ <span
                                             class="text-danger">*</span></label>
                                     <input type="text" name="full_name" class="form-control border-light-gray"
                                         placeholder="បញ្ចូលឈ្មោះពេញ..." required value="{{ old('full_name') }}">
@@ -77,7 +77,7 @@
                             </div>
 
                             <div class="d-flex justify-content-end">
-                                <button type="reset" class="btn btn-light border px-4 mr-2">Clear Form</button>
+                                <button type="reset" class="btn btn-light border px-4 mr-2">សម្អាត</button>
                                 <button type="submit" class="btn btn-success px-5 font-weight-bold shadow-sm"
                                     style="background-color: #00695c; border-color: #00695c;">
                                     <i class="fas fa-save mr-2"></i> ចុះឈ្មោះអ្នកជំងឺ

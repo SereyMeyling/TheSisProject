@@ -156,16 +156,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
 
     });
 
-    // Patient Routes
-    Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
-    Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
-    Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
-    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
-    Route::get('/patients/{id}/edit', [PatientController::class, 'edit'])->name('patients.edit');
-    Route::put('/patients/{id}', [PatientController::class, 'update'])->name('patients.update');
-    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
-    Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
-
 
     // Room & Inpatient Admissions
     Route::get('/room', [RoomController::class, 'index'])->name('room.index');
@@ -191,6 +181,24 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::put('/lab/tests/update/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
     Route::delete('/lab/tests/delete/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
     Route::get('/lab/results/{id}', [LabController::class, 'showResult'])->name('lab-results.show');
+});
+
+
+// =========================================================================
+// PATIENT ROUTES
+// Roles: admin | doctor | nurse | cashier
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']], function () {
+
+    Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
+    Route::get('/patients/create', [PatientController::class, 'create'])->name('patients.create');
+    Route::post('/patients', [PatientController::class, 'store'])->name('patients.store');
+    Route::get('/patients/{id}', [PatientController::class, 'show'])->name('patients.show');
+    Route::get('/patients/{id}/edit', [PatientController::class, 'edit'])->name('patients.edit');
+    Route::put('/patients/{id}', [PatientController::class, 'update'])->name('patients.update');
+    Route::delete('/patients/{id}', [PatientController::class, 'destroy'])->name('patients.destroy');
+    Route::get('/patients/{id}/print', [PatientController::class, 'print'])->name('patients.print');
+
 });
 
 // =========================================================================
