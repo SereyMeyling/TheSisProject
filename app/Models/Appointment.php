@@ -52,5 +52,12 @@ class Appointment extends Model
             'user_id',
             'id'
         );
+
+    }
+    public function getIsOverdueAttribute(): bool
+    {
+        return $this->status === 'scheduled'
+            && $this->appointment_date
+            && $this->appointment_date->isPast();
     }
 }

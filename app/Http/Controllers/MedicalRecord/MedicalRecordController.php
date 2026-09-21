@@ -23,56 +23,55 @@ class MedicalRecordController extends Controller
             ->latest('visit_date')
             ->paginate(10);
 
-        return view('form.medical_records.index', compact('records'));
+        $patients = Patient::orderBy('patient_id', 'desc')->get();
+
+        return view('form.medical_records.index', compact('records', 'patients'));
     }
 
     public function create(Request $request)
     {
-        $patients = Patient::orderBy('patient_id', 'desc')->get();
-        $doctors = User::all();
-        $selectedPatientId = $request->query('patient_id');
-
-        return view('form.medical_records.create', compact('patients', 'doctors', 'selectedPatientId'));
+        return redirect()->route('medical-records.index', [
+            'create' => 1,
+            'patient_id' => $request->query('patient_id'),
+        ]);
     }
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'patient_id' => 'required|exists:patients,patient_id',
+            'visit_date' => 'required|date',
+            'diagnosis' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'bp_systolic' => 'nullable|numeric',
+            'bp_diastolic' => 'nullable|numeric',
+            'heart_rate' => 'nullable|numeric',
+            'respiratory_rate' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric',
+            'spo2' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
         ]);
 
         try {
-            DB::beginTransaction();
+            $record = MedicalRecord::create($data + ['user_id' => auth()->id()]);
+            $record->load(['patient', 'doctor']);
 
-            $userId = $request->user_id ?? user::value('user_id');
-
-            MedicalRecord::create([
-                'patient_id' => $request->patient_id,
-                'user_id' => $userId,
-                'visit_date' => $request->visit_date ?? now(),
-                'diagnosis' => $request->diagnosis,
-                'notes' => $request->notes,
-                'bp_systolic' => $request->bp_systolic,
-                'bp_diastolic' => $request->bp_diastolic,
-                'heart_rate' => $request->heart_rate,
-                'respiratory_rate' => $request->respiratory_rate,
-                'temperature' => $request->temperature,
-                'spo2' => $request->spo2,
-                'weight' => $request->weight,
-            ]);
-
-            DB::commit();
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'រក្សាទុក Medical Record បានជោគជ័យ!',
+                    'row' => view('form.medical_records._row', compact('record'))->render(),
+                ]);
+            }
 
             return redirect()->route('medical-records.index')
                 ->with('success', 'រក្សាទុក Medical Record បានជោគជ័យ!');
         } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'មានបញ្ហា៖ ' . $e->getMessage())
-                ->withInput();
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'មានបញ្ហា៖ ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'មានបញ្ហា៖ ' . $e->getMessage())->withInput();
         }
     }
-
     public function show($id)
     {
         $record = MedicalRecord::with(['patient', 'doctor'])->findOrFail($id);
@@ -90,13 +89,37 @@ class MedicalRecordController extends Controller
 
     public function update(Request $request, $id)
     {
+        $data = $request->validate([
+            'patient_id' => 'required|exists:patients,patient_id',
+            'diagnosis' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'bp_systolic' => 'nullable|numeric',
+            'bp_diastolic' => 'nullable|numeric',
+            'heart_rate' => 'nullable|numeric',
+            'respiratory_rate' => 'nullable|numeric',
+            'temperature' => 'nullable|numeric',
+            'spo2' => 'nullable|numeric',
+            'weight' => 'nullable|numeric',
+        ]);
+
         try {
             $record = MedicalRecord::findOrFail($id);
-            $record->update($request->all());
+            $record->update($data);
+            $record->load(['patient', 'doctor']);
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'message' => 'កែប្រែ Medical Record បានជោគជ័យ!',
+                    'row' => view('form.medical_records._row', compact('record'))->render(),
+                ]);
+            }
 
             return redirect()->route('medical-records.index')
                 ->with('success', 'កែប្រែ Medical Record បានជោគជ័យ!');
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'មានបញ្ហា៖ ' . $e->getMessage()], 500);
+            }
             return redirect()->back()->with('error', 'មានបញ្ហា៖ ' . $e->getMessage())->withInput();
         }
     }

@@ -316,7 +316,7 @@ return [
             'icon' => 'fas fa-sitemap',
             'can' => 'manage-departments',
         ],
-    
+
         [
             'text' => 'វេជ្ជបណ្ឌិត',
             'url' => 'doctor',
@@ -343,22 +343,10 @@ return [
         ],
         [
             'text' => 'កំណត់ត្រាវេជ្ជសាស្ត្រ',
+            'route' => 'medical-records.index',
             'icon' => 'fas fa-notes-medical',
             'can' => 'view-medical-records',
-            'submenu' => [
-                [
-                    'text' => 'បញ្ចូលលទ្ធផល',
-                    'route' => 'medical-records.create',
-                    'icon' => 'fas fa-vial',
-                    'can' => 'create-medical-records',
-                ],
-                [
-                    'text' => 'មើលលទ្ធផល',
-                    'route' => 'medical-records.index',
-                    'icon' => 'fas fa-eye',
-                    'can' => 'view-medical-records',
-                ]
-            ]
+
         ],
         [
             'text' => 'បន្ទប់',

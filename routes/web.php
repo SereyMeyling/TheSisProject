@@ -138,6 +138,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:doctor']], function () {
     Route::prefix('doctor')->name('doctor.')->group(function () {
         Route::get('/consultation/{id}', [DoctorController::class, 'edit'])->name('consultation');
         Route::put('/consultation/{id}', [DoctorController::class, 'update'])->name('update');
+        Route::get('/medicines/search', [DoctorController::class, 'searchMedicines'])->name('medicines.search');
     });
 });
 

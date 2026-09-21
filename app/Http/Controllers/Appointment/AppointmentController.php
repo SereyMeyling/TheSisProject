@@ -42,17 +42,14 @@ class AppointmentController extends Controller
     public function index(Request $request)
     {
         $appointments = $this->getFilteredAppointments($request);
-
         $totalAppointments = Appointment::count();
-
         $scheduledCount = Appointment::where('status', 'scheduled')->count();
-
         $completedCount = Appointment::where('status', 'completed')->count();
-
         $cancelledCount = Appointment::where('status', 'cancelled')->count();
-
+        $overdueCount = Appointment::where('status', 'scheduled')
+            ->where('appointment_date', '<', now())
+            ->count();
         $patients = Patient::orderBy('full_name', 'asc')->get();
-
         // Spatie roles
         $doctors = User::role('doctor')
             ->orderBy('name', 'asc')
@@ -69,21 +66,20 @@ class AppointmentController extends Controller
                 'scheduled' => $scheduledCount,
                 'completed' => $completedCount,
                 'cancelled' => $cancelledCount,
+                'overdue' => $overdueCount,
             ]);
         }
-
-        return view(
-            'form.appointment.appointment',
-            compact(
-                'appointments',
-                'totalAppointments',
-                'scheduledCount',
-                'completedCount',
-                'cancelledCount',
-                'patients',
-                'doctors'
-            )
-        );
+        return view('form.appointment.appointment', [
+            'appointments' => $appointments,
+            'totalAppointments' => $totalAppointments,
+            'scheduledCount' => $scheduledCount,
+            'completedCount' => $completedCount,
+            'cancelledCount' => $cancelledCount,
+            'overdueCount' => $overdueCount,
+            'patients' => $patients,
+            'doctors' => $doctors,
+            'isDoctorOnly' => $this->isDoctorOnly(),
+        ]);
     }
 
     /**
@@ -126,9 +122,13 @@ class AppointmentController extends Controller
         }
 
         if ($request->filled('status')) {
-            $query->where('status', $request->status);
+            if ($request->status === 'overdue') {
+                $query->where('status', 'scheduled')
+                    ->where('appointment_date', '<', now());
+            } else {
+                $query->where('status', $request->status);
+            }
         }
-
         if ($request->filled('date')) {
             $query->whereDate(
                 'appointment_date',
@@ -147,6 +147,9 @@ class AppointmentController extends Controller
      */
     public function store(Request $request)
     {
+        if ($this->isDoctorOnly()) {
+            $request->merge(['user_id' => auth()->id()]);
+        }
         $validator = Validator::make($request->all(), [
             'patient_id' => ['required', 'exists:patients,patient_id'],
             'user_id' => ['required', 'exists:users,id'],
@@ -226,17 +229,13 @@ class AppointmentController extends Controller
 
         return response()->json([
             'appointment_id' => $appointment->appointment_id,
-
             'patient_id' => $appointment->patient_id,
-
             'user_id' => $appointment->user_id,
-
+            'doctor_name' => $appointment->doctor->name ?? '',
             'appointment_date' => $appointment->appointment_date
                 ? $appointment->appointment_date->format('Y-m-d\TH:i')
                 : '',
-
             'status' => $appointment->status,
-
             'reason' => $appointment->reason,
         ]);
     }
@@ -247,7 +246,9 @@ class AppointmentController extends Controller
     public function update(Request $request, $id)
     {
         $appointment = Appointment::find($id);
-
+        if ($this->isDoctorOnly()) {
+            $request->merge(['user_id' => $appointment->user_id]);
+        }
         if (!$appointment) {
             return redirect()->back()->with('error', 'រកមិនឃើញការណាត់ជួបទេ');
         }
@@ -316,5 +317,11 @@ class AppointmentController extends Controller
                 'success',
                 'ការណាត់ជួបត្រូវបានលុបដោយជោគជ័យ'
             );
+    }
+
+    protected function isDoctorOnly(): bool
+    {
+        $user = auth()->user();
+        return $user->hasRole('doctor') && !$user->hasRole('admin');
     }
 }

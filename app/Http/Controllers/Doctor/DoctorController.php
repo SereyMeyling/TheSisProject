@@ -11,6 +11,9 @@ use App\Models\LabResult;
 use App\Models\LabTest;
 use App\Models\MedicalRecord;
 use App\Models\Patient;
+use App\Models\Pharmacy\Medicine;
+use App\Models\Pharmacy\MedicineBatch;
+use App\Models\Prescription;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -127,59 +130,34 @@ class DoctorController extends Controller
         // ------------------------------------------------------------------
         $doctoruser = auth()->user();
         $doctoruser->load('department');
+
         $activeRecord = null;
         if ($request->filled('record_id')) {
             $activeRecord = MedicalRecord::with(['patient', 'doctor'])->find($request->record_id);
         }
 
         if (!$activeRecord) {
-            $activeRecord = MedicalRecord::with(['patient', 'doctor'])->latest('visit_date')->first();
+            $activeRecord = MedicalRecord::with(['patient', 'doctor'])
+                ->waiting()
+                ->oldest('visit_date')
+                ->first();
         }
 
-        // Fallback demo record if table is empty
-        if (!$activeRecord) {
-            $samplePatient = Patient::first();
-            if (!$samplePatient) {
-                $samplePatient = Patient::firstOrCreate(
-                    ['patient_code' => 'ID-2001-0023'],
-                    [
-                        'full_name' => 'លោក ពាក់ មី',
-                        'id_card' => '012345678901',
-                        'sex' => 'Male',
-                        'date_of_birth' => '2006-05-12',
-                        'phone' => '012 345 678',
-                        'address' => 'រាជធានីភ្នំពេញ',
-                    ]
-                );
-            }
+        $activeRecord?->load('prescription.items.medicine');
 
-            $userId = $doctoruser?->id ?? $user->id;
+        $historyRecords = $activeRecord
+            ? MedicalRecord::where('patient_id', $activeRecord->patient_id)
+                ->where('record_id', '!=', $activeRecord->record_id)
+                ->latest()
+                ->take(5)
+                ->get()
+            : collect();
 
-            $activeRecord = MedicalRecord::create([
-                'patient_id' => $samplePatient->patient_id,
-                'user_id' => $userId,
-                'visit_date' => now(),
-                'bp_systolic' => 120,
-                'bp_diastolic' => 80,
-                'heart_rate' => 75,
-                'temperature' => 38.6,
-                'spo2' => 98,
-                'weight' => 65,
-                'diagnosis' => 'Acute Pharyngitis',
-                'notes' => 'ក្ដៅខ្លួន ឈឺបំពង់ក និងអស់កម្លាំង (Fever, Sore Throat & Fatigue) | អ្នកជំងឺមានអាការៈឈឺបំពង់ក ២ថ្ងៃមកហើយ។',
-                'prescription_notes' => 'Paracetamol 500mg (2 tabs x 3 times/day after meal), Amoxicillin 500mg (1 tab x 2 times/day)',
-                'status_destination' => 'pharmacy',
-            ]);
-            $activeRecord->load(['patient', 'doctor']);
-        }
-
-        $historyRecords = MedicalRecord::where('patient_id', $activeRecord->patient_id)
-            ->where('record_id', '!=', $activeRecord->record_id)
-            ->latest()
-            ->take(5)
+        $patientQueue = MedicalRecord::with('patient')
+            ->waiting()
+            ->oldest('visit_date')
+            ->take(10)
             ->get();
-
-        $patientQueue = MedicalRecord::with('patient')->latest()->take(10)->get();
         $labTests = LabTest::orderBy('test_name', 'asc')->get();
         $availableRooms = Room::where('status', 'available')->orderBy('room_number', 'asc')->get();
 
@@ -224,13 +202,19 @@ class DoctorController extends Controller
         $request->validate([
             'diagnosis' => 'required|string',
             'status_destination' => 'required|in:admit,pharmacy,done',
+            'items' => 'nullable|array',
+            'items.*.medicine_id' => 'required|distinct|exists:medicines,medicine_id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.dosage' => 'required|string|max:255',
+            'items.*.frequency' => 'required|string|max:255',
+            'items.*.duration_days' => 'required|integer|min:1',
         ]);
 
         try {
             $record = MedicalRecord::findOrFail($id);
             $doctoruser = auth()->user();
-            $doctoruser->load('department');
             $empId = $doctoruser ? $doctoruser->id : auth()->id();
+
             $updateData = [
                 'user_id' => $empId,
                 'diagnosis' => $request->diagnosis,
@@ -250,7 +234,10 @@ class DoctorController extends Controller
                 }
             }
 
-            $record->update($updateData);
+            DB::transaction(function () use ($record, $updateData, $request) {
+                $record->update($updateData);
+                $this->syncPrescription($record, $request->input('items', []));
+            });
 
             $message = 'កត់ត្រាការព្យាបាល និងចេញវេជ្ជបញ្ជាជោគជ័យ!';
             if ($request->status_destination == 'admit') {
@@ -259,11 +246,77 @@ class DoctorController extends Controller
                 $message = 'បានរក្សាទុក និងបញ្ជូនអ្នកជំងឺទៅឱសថស្ថាន (Pharmacy)!';
             }
 
-            return redirect()->route('doctor.index', ['record_id' => $record->record_id])->with('success', $message);
+            if ($request->status_destination === 'admit') {
+                return redirect()->route('doctor.index', ['record_id' => $record->record_id])
+                    ->with('success', $message);
+            }
+
+            return redirect()->route('doctor.index')->with('success', $message);
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'មានបញ្ហា៖ ' . $e->getMessage())->withInput();
         }
     }
+
+    /**
+     * Replace the prescription lines of this record. NO stock is touched here.
+     */
+    protected function syncPrescription(MedicalRecord $record, array $items): void
+    {
+        $prescription = Prescription::where('record_id', $record->record_id)->first();
+
+        if (empty($items)) {
+            if ($prescription) {
+                $prescription->items()->delete();
+                $prescription->delete();
+            }
+            return;
+        }
+
+        if (!$prescription) {
+            $prescription = Prescription::create([
+                'record_id' => $record->record_id,
+                'prescribed_date' => now(),
+            ]);
+        }
+
+        $prescription->items()->delete();
+
+        foreach ($items as $row) {
+            $prescription->items()->create([
+                'medicine_id' => $row['medicine_id'],
+                'quantity' => $row['quantity'],
+                'dosage' => $row['dosage'],
+                'frequency' => $row['frequency'],
+                'duration_days' => $row['duration_days'],
+            ]);
+        }
+    }
+
+    /**
+     * Medicine list for the doctor's prescription dropdown
+     */
+    public function searchMedicines(Request $request)
+    {
+        $term = trim($request->get('q', ''));
+
+        $medicines = Medicine::where('is_active', true)
+            ->when($term !== '', fn($q) => $q->where('medicine_name', 'like', "%{$term}%"))
+            ->select('medicine_id', 'medicine_name', 'strength', 'unit')
+            ->selectSub(
+                MedicineBatch::selectRaw('COALESCE(SUM(remaining_quantity), 0)')
+                    ->whereColumn('medicine_batches.medicine_id', 'medicines.medicine_id'),
+                'stock_total'
+            )
+            ->having('stock_total', '>', 0)
+            ->orderBy('medicine_name')
+            ->limit(300)
+            ->get();
+
+        return response()->json($medicines);
+    }
+
+
+
 
     /**
      * Store Referral to Lab Test
@@ -313,17 +366,29 @@ class DoctorController extends Controller
 
         DB::beginTransaction();
         try {
-            Admission::create([
+            // lock the room row so two doctors can't take the same room
+            $room = Room::where('room_id', $request->room_id)->lockForUpdate()->firstOrFail();
+
+            if ($room->status !== 'available') {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'បន្ទប់នេះមិនទំនេរទេ សូមជ្រើសរើសបន្ទប់ផ្សេង។');
+            }
+
+            if (Admission::where('patient_id', $request->patient_id)->where('status', 'admitted')->exists()) {
+                DB::rollBack();
+                return redirect()->back()->with('error', 'អ្នកជំងឺនេះកំពុងសម្រាកព្យាបាលរួចហើយ។');
+            }
+
+            $admission = new Admission([
                 'patient_id' => $request->patient_id,
                 'room_id' => $request->room_id,
                 'admission_date' => now(),
                 'status' => 'admitted',
             ]);
+            $admission->admission_number = $this->generateAdmissionNumber();
+            $admission->save();
 
-            $room = Room::find($request->room_id);
-            if ($room) {
-                $room->update(['status' => 'occupied']);
-            }
+            $room->update(['status' => 'occupied']);
 
             DB::commit();
             return redirect()->back()->with('success', 'បានបញ្ចូលអ្នកជំងឺឱ្យសម្រាកព្យាបាល (Admitted as Inpatient) រួចរាល់!');
@@ -331,6 +396,19 @@ class DoctorController extends Controller
             DB::rollBack();
             return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបញ្ចូលសម្រាកព្យាបាល៖ ' . $e->getMessage());
         }
+    }
+
+    protected function generateAdmissionNumber(): string
+    {
+        $prefix = 'ADM-' . now()->format('Ymd') . '-';
+        $count = Admission::where('admission_number', 'like', $prefix . '%')->count();
+
+        do {
+            $count++;
+            $number = $prefix . str_pad($count, 3, '0', STR_PAD_LEFT); // ADM-20260921-001
+        } while (Admission::where('admission_number', $number)->exists());
+
+        return $number;
     }
 
     /**

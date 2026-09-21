@@ -134,7 +134,7 @@
 
 {{-- Top Stats Section --}}
 <div class="row mb-4 align-items-center mt-2">
-    <div class="col-md-3 col-sm-6 mb-2">
+    <div class="col-md col-sm-6 mb-2">
         <div class="stat-card">
             <div class="icon bg-light-primary">
                 <i class="fas fa-calendar-alt"></i>
@@ -145,7 +145,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-2">
+    <div class="col-md col-sm-6 mb-2">
         <div class="stat-card">
             <div class="icon bg-light-info">
                 <i class="fas fa-clock"></i>
@@ -156,7 +156,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-2">
+    <div class="col-md col-sm-6 mb-2">
         <div class="stat-card">
             <div class="icon bg-light-success">
                 <i class="fas fa-check-circle"></i>
@@ -167,7 +167,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-3 col-sm-6 mb-2">
+    <div class="col-md col-sm-6 mb-2">
         <div class="stat-card">
             <div class="icon bg-light-danger">
                 <i class="fas fa-times-circle"></i>
@@ -175,6 +175,17 @@
             <div>
                 <small class="text-muted d-block">បានបោះបង់ (Cancelled)</small>
                 <h3 id="statCancelled" class="m-0 font-weight-bold">{{ $cancelledCount }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md col-sm-6 mb-2">
+        <div class="stat-card">
+            <div class="icon bg-light-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <small class="text-muted d-block">ហួសកំណត់ (Overdue)</small>
+                <h3 id="statOverdue" class="m-0 font-weight-bold text-danger">{{ $overdueCount }}</h3>
             </div>
         </div>
     </div>
@@ -196,6 +207,7 @@
                     <option value="scheduled">បានណាត់ទុក (Scheduled)</option>
                     <option value="completed">បានរួចរាល់ (Completed)</option>
                     <option value="cancelled">បានបោះបង់ (Cancelled)</option>
+                    <option value="overdue">ហួសកំណត់ (Overdue)</option>
                 </select>
 
                 <input type="date" id="filterDate" class="form-control" style="width: 160px; border-radius: 8px;">
@@ -241,19 +253,22 @@
                                 @endforeach
                             </select>
                         </div>
-
                         <div class="col-md-6 mb-3">
                             <label class="font-weight-bold">វេជ្ជបណ្ឌិត (Doctor) <span
                                     class="text-danger">*</span></label>
-                            <select name="user_id" class="form-control" required>
-                                <option value="">-- ជ្រើសរើសវេជ្ជបណ្ឌិត --</option>
-                                @foreach ($doctors as $doc)
-                                    <option value="{{ $doc->id }}">
-                                        Dr. {{ $doc->name }}
-                                        ({{ $doc->specialization ?? 'ទូទៅ' }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            @if($isDoctorOnly)
+                                <input type="text" class="form-control bg-light" value="Dr. {{ auth()->user()->name }}"
+                                    readonly>
+                            @else
+                                <select name="user_id" class="form-control" required>
+                                    <option value="">-- ជ្រើសរើសវេជ្ជបណ្ឌិត --</option>
+                                    @foreach ($doctors as $doc)
+                                        <option value="{{ $doc->id }}">
+                                            Dr. {{ $doc->name }} ({{ $doc->specialization ?? 'ទូទៅ' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -314,19 +329,21 @@
                                 @endforeach
                             </select>
                         </div>
-
                         <div class="col-md-6 mb-3">
                             <label class="font-weight-bold">វេជ្ជបណ្ឌិត (Doctor) <span
                                     class="text-danger">*</span></label>
-                            <select id="edit_user_id" name="user_id" class="form-control" required>
-                                <option value="">-- ជ្រើសរើសវេជ្ជបណ្ឌិត --</option>
-                                @foreach ($doctors as $doc)
-                                    <option value="{{ $doc->id }}">
-                                        Dr. {{ $doc->name }}
-                                        ({{ $doc->specialization ?? 'ទូទៅ' }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            @if($isDoctorOnly)
+                                <input type="text" id="edit_doctor_name" class="form-control bg-light" readonly>
+                            @else
+                                <select id="edit_user_id" name="user_id" class="form-control" required>
+                                    <option value="">-- ជ្រើសរើសវេជ្ជបណ្ឌិត --</option>
+                                    @foreach ($doctors as $doc)
+                                        <option value="{{ $doc->id }}">
+                                            Dr. {{ $doc->name }} ({{ $doc->specialization ?? 'ទូទៅ' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
 
                         <div class="col-md-6 mb-3">
@@ -415,7 +432,7 @@
             $(this).find('input[name="appointment_date"]').attr('min', nowLocalString());
         });
 
-      
+
 
         function loadAppointments(page = 1) {
             const params = currentParams(page);
@@ -432,6 +449,7 @@
                     if (res.scheduled !== undefined) $('#statScheduled').text(res.scheduled);
                     if (res.completed !== undefined) $('#statCompleted').text(res.completed);
                     if (res.cancelled !== undefined) $('#statCancelled').text(res.cancelled);
+                    if (res.overdue !== undefined) $('#statOverdue').text(res.overdue);
 
                     const qs = $.param(params);
                     history.replaceState(null, '', "{{ route('appointment.index') }}?" + qs);
@@ -471,6 +489,7 @@
             $.get("{{ url('appointment/edit') }}/" + id, function (data) {
                 $('#edit_patient_id').val(data.patient_id);
                 $('#edit_user_id').val(data.user_id);
+                $('#edit_doctor_name').val(data.doctor_name ? 'Dr. ' + data.doctor_name : '');
                 $('#edit_appointment_date').val(data.appointment_date);
                 $('#edit_status').val(data.status);
                 $('#edit_reason').val(data.reason);

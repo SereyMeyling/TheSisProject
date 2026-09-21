@@ -178,10 +178,27 @@
         </div>
     @endif
 
+    @if($errors->any())
+        <div class="alert alert-danger border-0 shadow-sm rounded-lg mb-4">
+            <ul class="mb-0 pl-3">
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- ======================================================================== --}}
     {{-- ROLE 1: DOCTOR CONSULTATION WORKSPACE --}}
     {{-- ======================================================================== --}}
-    @if($userRole === 'doctor')
+    @if($userRole === 'doctor' && !$activeRecord)
+
+        <div class="text-center text-muted py-5">
+            <i class="fas fa-user-check fa-3x mb-3"></i>
+            <h5>គ្មានអ្នកជំងឺរង់ចាំទេ</h5>
+        </div>
+
+    @elseif($userRole === 'doctor')
 
         {{-- Top Bar Profile Header --}}
         <div class="doc-top-bar d-flex flex-wrap justify-content-between align-items-center mb-4">
@@ -302,7 +319,7 @@
                     <h6 class="font-weight-bold text-dark mb-2"><i class="fas fa-notes-medical text-warning mr-2"></i>
                         មូលហេតុមកពិនិត្យ (Chief Complaint)</h6>
                     <p class="text-secondary small mb-0 bg-light p-3 rounded-lg border">
-                        {{ $activeRecord->chief_complaint ?? 'អ្នកជំងឺមានអាការៈក្ដៅខ្លួន ឈឺបំពង់ក និងអស់កម្លាំង (Fever, Sore Throat & Fatigue) រយៈពេល ២ ថ្ងៃមកហើយ។' }}
+                        {{ $activeRecord->chief_complaint ?? 'មិនមាន' }}
                     </p>
                 </div>
 
@@ -386,13 +403,71 @@
                                 placeholder="បញ្ចូលរោគវិនិច្ឆ័យ ឬជ្រើសរើស Tag ខាងលើ..." required>
                         </div>
 
-                        {{-- Pharmacy Instruction Note Box --}}
+                        {{-- Prescription Items --}}
+                        @php
+                            $rxRows = old('items');
+                            if ($rxRows === null) {
+                                $rxRows = [];
+                                if ($activeRecord->prescription) {
+                                    foreach ($activeRecord->prescription->items as $it) {
+                                        $rxRows[] = [
+                                            'medicine_id' => $it->medicine_id,
+                                            'medicine_label' => trim(($it->medicine->medicine_name ?? '') . ' ' . ($it->medicine->strength ?? '')),
+                                            'quantity' => $it->quantity,
+                                            'dosage' => $it->dosage,
+                                            'frequency' => $it->frequency,
+                                            'duration_days' => $it->duration_days,
+                                        ];
+                                    }
+                                }
+                            }
+                        @endphp
+
+                        <div class="form-group mb-4" id="rxApp" data-search-url="{{ route('doctor.medicines.search') }}"
+                            data-rows="{{ json_encode($rxRows) }}">
+
+                            <label class="font-weight-bold text-dark mb-2">
+                                <i class="fas fa-pills text-success mr-1"></i> វេជ្ជបញ្ជាថ្នាំ (Prescription)
+                            </label>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm mb-1" id="rxTable" style="min-width: 760px;">
+                                    <thead>
+                                        <tr>
+                                            <th>ឈ្មោះថ្នាំ</th>
+                                            <th style="width:90px">ចំនួន</th>
+                                            <th style="width:200px">កម្រិតប្រើ</th>
+                                            <th style="width:190px">ចំនួនដង/ថ្ងៃ</th>
+                                            <th style="width:90px">រយៈពេល (ថ្ងៃ)</th>
+                                            <th style="width:40px"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rxBody"></tbody>
+                                </table>
+                            </div>
+
+                            <p id="rxEmpty" class="text-muted small text-center py-3 mb-2">មិនទាន់មានថ្នាំក្នុងវេជ្ជបញ្ជា
+                            </p>
+
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="btnAddRx">
+                                <i class="fas fa-plus"></i> បន្ថែមថ្នាំ
+                            </button>
+
+                            <datalist id="rxFreqList">
+                                <option value="1 ដង/ថ្ងៃ (ព្រឹក)">
+                                <option value="2 ដង/ថ្ងៃ (ព្រឹក, ល្ងាច)">
+                                <option value="3 ដង/ថ្ងៃ (ព្រឹក, ថ្ងៃត្រង់, ល្ងាច)">
+                                <option value="4 ដង/ថ្ងៃ">
+                                <option value="ពេលចាំបាច់">
+                            </datalist>
+                        </div>
+
+                        {{-- Extra note for pharmacist (kept) --}}
                         <div class="form-group mb-4">
-                            <label class="font-weight-bold text-dark"><i class="fas fa-pills text-success mr-1"></i>
-                                វេជ្ជបញ្ជាថ្នាំ (Pharmacy Instructions)</label>
-                            <textarea name="prescription_notes" class="form-control p-3" rows="3"
+                            <label class="font-weight-bold text-dark">ចំណាំបន្ថែមសម្រាប់ឱសថការី</label>
+                            <textarea name="prescription_notes" class="form-control p-3" rows="2"
                                 style="border-radius: 12px;"
-                                placeholder="បញ្ចូលឈ្មោះថ្នាំ កម្រិតប្រើប្រាស់ និងការណែនាំសម្រាប់ឱសថការី...">{{ old('prescription_notes', $activeRecord->prescription_notes) }}</textarea>
+                                placeholder="ការណែនាំបន្ថែម...">{{ old('prescription_notes', $activeRecord->prescription_notes) }}</textarea>
                         </div>
 
                         {{-- ACTION BUTTONS BOTTOM ROW --}}
@@ -506,15 +581,15 @@
                                         class="text-danger">*</span></label>
                                 <select name="room_id" class="form-control font-weight-bold" required>
                                     <option value="">-- ជ្រើសរើសបន្ទប់ --</option>
-                                    @forelse($availableRooms as $rm)
+                                    @foreach($availableRooms as $rm)
                                         <option value="{{ $rm->room_id }}">បន្ទប់ {{ $rm->room_number }} (ប្រភេទ:
                                             {{ $rm->room_type }} - ${{ number_format($rm->price_per_day, 2) }}/ថ្ងៃ)
                                         </option>
-                                    @empty
-                                        <option value="1">បន្ទប់ 101 (Private Room - $50.00/day)</option>
-                                        <option value="2">បន្ទប់ 102 (General Ward - $25.00/day)</option>
-                                    @endforelse
+                                    @endforeach
                                 </select>
+                                @if($availableRooms->isEmpty())
+                                    <small class="text-danger">មិនមានបន្ទប់ទំនេរទេ</small>
+                                @endif
                             </div>
                         </div>
 
@@ -859,5 +934,97 @@
             input.value = text;
         }
     }
+    (function () {
+        const app = document.getElementById('rxApp');
+        if (!app) return; // admin / nurse views
+
+        const body = document.getElementById('rxBody');
+        const emptyMsg = document.getElementById('rxEmpty');
+        let medicines = [];
+        let nextIndex = 0;
+
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+            ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+        const medicineLabel = m =>
+            `${m.medicine_name} ${m.strength ?? ''} (ស្តុក ${m.stock_total})`.replace(/\s+/g, ' ').trim();
+
+        function rowHtml(i, r) {
+            r = r || {};
+            const chosen = r.medicine_id
+                ? `<option value="${esc(r.medicine_id)}" selected>${esc(r.medicine_label || '#' + r.medicine_id)}</option>`
+                : '';
+            return `
+        <tr>
+            <td>
+                <select name="items[${i}][medicine_id]" class="form-control form-control-sm rx-medicine" required>
+                    <option value="">-- ជ្រើសរើសថ្នាំ --</option>${chosen}
+                </select>
+            </td>
+            <td><input type="number" name="items[${i}][quantity]" class="form-control form-control-sm" min="1" value="${esc(r.quantity)}" required></td>
+            <td><input type="text" name="items[${i}][dosage]" class="form-control form-control-sm" maxlength="255" value="${esc(r.dosage)}" placeholder="1 គ្រាប់ ក្រោយអាហារ" required></td>
+            <td><input type="text" name="items[${i}][frequency]" list="rxFreqList" class="form-control form-control-sm" maxlength="255" value="${esc(r.frequency)}" placeholder="3 ដង/ថ្ងៃ" required></td>
+            <td><input type="number" name="items[${i}][duration_days]" class="form-control form-control-sm" min="1" value="${esc(r.duration_days)}" required></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger rx-remove">&times;</button></td>
+        </tr>`;
+        }
+
+        // Fill one dropdown from the loaded list, keeping the already-selected medicine
+        function fillSelect(select) {
+            const chosen = select.value;
+            const fallbackText = select.selectedOptions[0] ? select.selectedOptions[0].text : '#' + chosen;
+            let html = '<option value="">-- ជ្រើសរើសថ្នាំ --</option>';
+            let found = false;
+
+            medicines.forEach(m => {
+                const isSel = String(m.medicine_id) === String(chosen);
+                if (isSel) found = true;
+                html += `<option value="${m.medicine_id}"${isSel ? ' selected' : ''}>${esc(medicineLabel(m))}</option>`;
+            });
+
+            // a saved medicine that is now out of stock must not disappear
+            if (chosen && !found) {
+                html += `<option value="${esc(chosen)}" selected>${esc(fallbackText)}</option>`;
+            }
+            select.innerHTML = html;
+        }
+
+        function toggleEmpty() {
+            emptyMsg.classList.toggle('d-none', body.children.length > 0);
+        }
+
+        function addRow(data) {
+            body.insertAdjacentHTML('beforeend', rowHtml(nextIndex++, data));
+            if (medicines.length) fillSelect(body.lastElementChild.querySelector('.rx-medicine'));
+            toggleEmpty();
+        }
+
+        document.getElementById('btnAddRx').addEventListener('click', () => addRow());
+
+        body.addEventListener('click', e => {
+            const btn = e.target.closest('.rx-remove');
+            if (!btn) return;
+            btn.closest('tr').remove();
+            toggleEmpty();
+        });
+
+        // Existing / old() rows
+        let initial = [];
+        try { initial = Object.values(JSON.parse(app.dataset.rows || '[]')); } catch (e) { }
+        initial.forEach(r => addRow(r));
+        toggleEmpty();
+
+        // Load medicines once, then fill every dropdown
+        fetch(app.dataset.searchUrl, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin'
+        })
+            .then(r => r.ok ? r.json() : Promise.reject(r.status))
+            .then(list => {
+                medicines = Array.isArray(list) ? list : [];
+                body.querySelectorAll('.rx-medicine').forEach(fillSelect);
+            })
+            .catch(() => { });
+    })();
 </script>
 @stop
