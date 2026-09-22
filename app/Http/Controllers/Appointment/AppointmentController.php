@@ -176,12 +176,7 @@ class AppointmentController extends Controller
         $appointment = Appointment::create($validated);
 
         // Notify the assigned doctor AND everyone with the admin role
-        $doctor = User::find($validated['user_id']);
-        $recipients = NotifiesRoles::specificUserPlusRoles($doctor, ['admin']);
 
-        if ($recipients->isNotEmpty()) {
-            Notification::send($recipients, new AppointmentNotification($appointment, 'created'));
-        }
 
         return redirect()->back()->with('success', 'ការណាត់ជួបត្រូវបានបង្កើតដោយជោគជ័យ');
     }
@@ -276,19 +271,20 @@ class AppointmentController extends Controller
 
         $oldStatus = $appointment->status;
 
+        $dateChanged = !$appointment->appointment_date
+            || !$appointment->appointment_date->equalTo(Carbon::parse($validated['appointment_date']));
+
         $appointment->update($validated);
 
-        // Notify the assigned doctor AND everyone with the admin role
-        $doctor = User::find($validated['user_id']);
-        $recipients = NotifiesRoles::specificUserPlusRoles($doctor, ['admin']);
-
-        if ($recipients->isNotEmpty()) {
-            $action = ($validated['status'] === 'cancelled' && $oldStatus !== 'cancelled')
-                ? 'cancelled'
-                : 'updated';
-
-            Notification::send($recipients, new AppointmentNotification($appointment, $action));
+        if ($dateChanged) {
+            $appointment->forceFill([
+                'reminder_sent_at' => null,
+                'reminder_called_at' => null,
+                'reminder_called_by' => null,
+            ])->save();
         }
+
+        // Notify the assigned doctor AND everyone with the admin role
 
         return redirect()->back()->with('success', 'ការណាត់ជួបត្រូវបានកែប្រែដោយជោគជ័យ');
     }

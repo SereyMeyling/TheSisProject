@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Appointment\AppointmentReminderController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\DashboardController;
@@ -111,9 +112,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
 
-        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
-        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
-
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
         Route::post('/qrcode', [SettingsController::class, 'qrcodeUpdate'])->name('settingsqrcode.update');
 
@@ -129,6 +127,18 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
     });
 });
+
+// =========================================================================
+//  Billing exchnage money ROUTES (Role: admin & cashier)
+// Medical diagnoses and treatments reserved strictly for doctors
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
+    Route::group(['prefix' => 'settings','middleware' => ['permission:manage-billing-settings']], function () {
+    Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+    Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
+    });
+});
+
 
 // =========================================================================
 // 2. DOCTOR CONSULTATION ROUTES (Role: doctor)
@@ -289,4 +299,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unreadCount');
+});
+
+// remind cashier to call patient about appointment
+Route::group(['middleware' => ['auth', '2fa', 'role:cashier']], function () {
+    Route::get('/appointment-reminders', [AppointmentReminderController::class, 'index'])
+        ->name('appointment.reminders');
+    Route::post('/appointment-reminders/{id}/called', [AppointmentReminderController::class, 'markCalled'])
+        ->name('appointment.reminders.called');
 });

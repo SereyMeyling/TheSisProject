@@ -384,12 +384,7 @@ return [
                     'icon' => 'fas fa-users',
                     'can' => 'manage-users',
                 ],
-                [
-                    'text' => 'ការកំណត់វិក្កយបត្រ',
-                    'url' => 'settings/billing',
-                    'icon' => 'fas fa-file-invoice-dollar',
-                    'can' => 'manage-system-settings',
-                ],
+
                 [
                     'text' => 'ការកំណត់ QR Code',
                     'url' => 'settings/qrcode',
@@ -403,6 +398,12 @@ return [
                     'can' => 'manage-backups',
                 ],
             ],
+        ],
+        [
+            'text' => 'ការកំណត់វិក្កយបត្រ',
+            'url' => 'settings/billing',
+            'icon' => 'fas fa-file-invoice-dollar',
+            'can' => 'manage-billing-settings',
         ],
         [
             'text' => 'Support',

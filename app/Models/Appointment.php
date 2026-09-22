@@ -23,6 +23,8 @@ class Appointment extends Model
 
     protected $casts = [
         'appointment_date' => 'datetime',
+        'reminder_sent_at' => 'datetime',
+        'reminder_called_at' => 'datetime',
     ];
 
     /**
@@ -59,5 +61,9 @@ class Appointment extends Model
         return $this->status === 'scheduled'
             && $this->appointment_date
             && $this->appointment_date->isPast();
+    }
+    public function caller()
+    {
+        return $this->belongsTo(User::class, 'reminder_called_by', 'id');
     }
 }

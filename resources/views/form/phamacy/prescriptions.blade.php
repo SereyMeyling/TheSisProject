@@ -24,7 +24,7 @@
     }
     .bg-light-primary { background: #e8f0fe; color: #1a73e8; }
     .bg-light-success { background: #e8f5e9; color: #2e7d32; }
-    
+
     .toolbar {
         display: flex;
         gap: 12px;
@@ -96,9 +96,7 @@
         <a href="{{ route('pharmacy.index') }}" class="btn btn-outline-secondary mr-2">
             <i class="fas fa-pills mr-1"></i> ឱសថស្ថាន (Stock & Medicine)
         </a>
-        <button class="btn btn-primary" data-toggle="modal" data-target="#modalCreatePrescription">
-            <i class="fas fa-plus-circle mr-1"></i> បង្កើតវេជ្ជបញ្ជាថ្មី (Create Prescription)
-        </button>
+     
     </div>
 </div>
 
@@ -120,84 +118,7 @@
     </div>
 </div>
 
-{{-- ====== Modal Create Prescription ====== --}}
-<div class="modal fade" id="modalCreatePrescription" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header modal-header-custom">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-file-prescription mr-2"></i> បង្កើតវេជ្ជបញ្ជាថ្មី (Create Prescription)</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <form action="{{ route('pharmacy.prescriptions.store') }}" method="POST">
-                @csrf
-                <div class="modal-body p-4">
-                    <div class="row mb-3">
-                        <div class="col-md-7 mb-2">
-                            <label class="font-weight-bold">ជ្រើសរើសកំណត់ត្រាវេជ្ជសាស្ត្រ/អ្នកជំងឺ (Medical Record) <span class="text-danger">*</span></label>
-                            <select name="record_id" class="form-control" required>
-                                <option value="">-- ជ្រើសរើសកំណត់ត្រាវេជ្ជសាស្ត្រ --</option>
-                                @foreach ($medicalRecords as $rec)
-                                    <option value="{{ $rec->record_id }}">
-                                        Record #{{ $rec->record_id }} - {{ $rec->patient ? $rec->patient->full_name : 'Patient #' . $rec->patient_id }} 
-                                        ({{ $rec->visit_date ? \Carbon\Carbon::parse($rec->visit_date)->format('d M Y') : '' }})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-5 mb-2">
-                            <label class="font-weight-bold">កាលបរិច្ឆេទចេញវេជ្ជបញ្ជា (Prescribed Date) <span class="text-danger">*</span></label>
-                            <input type="datetime-local" name="prescribed_date" class="form-control" value="{{ date('Y-m-d\TH:i') }}" required>
-                        </div>
-                    </div>
 
-                    <h6 class="font-weight-bold text-primary mb-3"><i class="fas fa-pills mr-1"></i> បញ្ជីថ្នាំក្នុងវេជ្ជបញ្ជា (Prescription Items)</h6>
-                    
-                    <div id="itemsContainer">
-                        <div class="prescription-item-row">
-                            <div class="row">
-                                <div class="col-md-4 mb-2">
-                                    <label class="small font-weight-bold">ឈ្មោះថ្នាំ (Medicine)</label>
-                                    <select name="items[0][medicine_id]" class="form-control form-control-sm" required>
-                                        <option value="">-- ជ្រើសរើសថ្នាំ --</option>
-                                        @foreach ($medicines as $med)
-                                            <option value="{{ $med->medicine_id }}">{{ $med->medicine_name }} ({{ $med->unit }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="small font-weight-bold">កម្រិតប្រើ (Dosage)</label>
-                                    <input type="text" name="items[0][dosage]" class="form-control form-control-sm" placeholder="ឧ. 1 គ្រាប់" required>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="small font-weight-bold">ពិសារ (Frequency)</label>
-                                    <input type="text" name="items[0][frequency]" class="form-control form-control-sm" placeholder="ឧ. 3 ដង/ថ្ងៃ ក្រោយបាយ" required>
-                                </div>
-                                <div class="col-md-2 mb-2">
-                                    <label class="small font-weight-bold">ចំនួនថ្ងៃ (Days)</label>
-                                    <input type="number" min="1" name="items[0][duration_days]" class="form-control form-control-sm" value="5" required>
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="small font-weight-bold">ចំនួនសរុប (Total Qty)</label>
-                                    <input type="number" min="1" name="items[0][quantity]" class="form-control form-control-sm" value="15" required>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="button" id="btnAddRow" class="btn btn-sm btn-outline-primary mt-2">
-                        <i class="fas fa-plus mr-1"></i> បន្ថែមមុខថ្នាំ (Add Row)
-                    </button>
-                </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-success"><i class="fas fa-save mr-1"></i> រក្សាទុកវេជ្ជបញ្ជា</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 
 @stop
 
