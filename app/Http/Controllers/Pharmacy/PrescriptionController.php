@@ -80,6 +80,7 @@ class PrescriptionController extends Controller
             $prescription = Prescription::create([
                 'record_id' => $request->record_id,
                 'prescribed_date' => $request->prescribed_date,
+                'status' => 'pending',
             ]);
 
             foreach ($request->items as $item) {
@@ -115,36 +116,61 @@ class PrescriptionController extends Controller
     public function dispense(Request $request, $id)
     {
         $prescription = Prescription::with(['items.medicine'])->find($id);
+
         if (!$prescription) {
-            return redirect()->back()->with(['error' => 'រកមិនឃើញវេជ្ជបញ្ជាទេ']);
+            return redirect()->back()->with([
+                'error' => 'រកមិនឃើញវេជ្ជបញ្ជាទេ'
+            ]);
+        }
+
+        // Prevent dispensing the same prescription twice
+        if ($prescription->status === 'dispensed') {
+            return redirect()->back()->with([
+                'error' => 'វេជ្ជបញ្ជានេះបានចេញថ្នាំរួចហើយ'
+            ]);
         }
 
         DB::beginTransaction();
-        try {
-            foreach ($prescription->items as $item) {
-                $qtyNeeded = $item->quantity;
 
-                // Deduct from batches ordered by FIFO (expiring soonest first)
+        try {
+
+            foreach ($prescription->items as $item) {
+
+                $qtyNeeded = (int) $item->quantity;
+
                 $batches = MedicineBatch::where('medicine_id', $item->medicine_id)
                     ->where(function ($q) {
                         $q->where('quantity_remaining', '>', 0)
                             ->orWhere('remaining_quantity', '>', 0);
                     })
                     ->orderBy('expiry_date', 'asc')
+                    ->lockForUpdate()
                     ->get();
 
                 foreach ($batches as $batch) {
-                    if ($qtyNeeded <= 0)
-                        break;
 
-                    $available = $batch->quantity_remaining ?? $batch->remaining_quantity ?? 0;
+                    if ($qtyNeeded <= 0) {
+                        break;
+                    }
+
+                    $available = $batch->quantity_remaining
+                        ?? $batch->remaining_quantity
+                        ?? 0;
+
+                    $available = (int) $available;
+
+                    if ($available <= 0) {
+                        continue;
+                    }
+
                     $deduct = min($qtyNeeded, $available);
 
-                    $batch->quantity_remaining = max(0, $available - $deduct);
-                    $batch->remaining_quantity = max(0, $available - $deduct);
+                    $newQuantity = $available - $deduct;
+
+                    $batch->quantity_remaining = $newQuantity;
+                    $batch->remaining_quantity = $newQuantity;
                     $batch->save();
 
-                    // Record stock movement
                     MedicineStockMovement::create([
                         'batch_id' => $batch->batch_id,
                         'movement_type' => 'OUT',
@@ -156,13 +182,37 @@ class PrescriptionController extends Controller
 
                     $qtyNeeded -= $deduct;
                 }
+
+                // Not enough stock
+                if ($qtyNeeded > 0) {
+                    throw new \Exception(
+                        'ថ្នាំ ' .
+                        ($item->medicine->medicine_name ?? 'Unknown') .
+                        ' មានស្តុកមិនគ្រប់គ្រាន់។ ខ្វះចំនួន ' .
+                        $qtyNeeded
+                    );
+                }
             }
 
+            // Mark prescription as dispensed
+            $prescription->status = 'dispensed';
+            $prescription->dispensed_at = now();
+            $prescription->dispensed_by = auth()->id();
+            $prescription->save();
+
             DB::commit();
-            return redirect()->back()->with(['success' => 'បានចេញថ្នាំតាមវេជ្ជបញ្ជាដោយជោគជ័យ (Prescription dispensed successfully)']);
+
+            return redirect()->back()->with([
+                'success' => 'បានចេញថ្នាំតាមវេជ្ជបញ្ជាដោយជោគជ័យ'
+            ]);
+
         } catch (\Exception $e) {
+
             DB::rollBack();
-            return redirect()->back()->with(['error' => 'មានបញ្ហាក្នុងការចេញថ្នាំ៖ ' . $e->getMessage()]);
+
+            return redirect()->back()->with([
+                'error' => 'មានបញ្ហាក្នុងការចេញថ្នាំ៖ ' . $e->getMessage()
+            ]);
         }
     }
 }

@@ -167,8 +167,24 @@ class DashboardController extends Controller
 
     private function pharmacistDashboard()
     {
-        $lowStockBatches = MedicineBatch::with('medicine')
-            ->where('remaining_quantity', '<=', 10)
+        $lowStockMedicines = Medicine::where('is_active', true)
+            ->select(
+                'medicines.medicine_id',
+                'medicines.medicine_name',
+                'medicines.reorder_level'
+            )
+            ->selectSub(
+                MedicineBatch::selectRaw('COALESCE(SUM(remaining_quantity), 0)')
+                    ->whereColumn(
+                        'medicine_batches.medicine_id',
+                        'medicines.medicine_id'
+                    ),
+                'stock_total'
+            )
+            ->havingRaw(
+                'stock_total <= COALESCE(medicines.reorder_level, 20)'
+            )
+            ->orderBy('stock_total', 'asc')
             ->take(10)
             ->get();
 
@@ -187,7 +203,7 @@ class DashboardController extends Controller
         $recentSales = Sale::latest()->take(5)->get();
 
         return view('form.dashboard.pharmacy', compact(
-            'lowStockBatches',
+            'lowStockMedicines',
             'expiringBatches',
             'pendingPrescriptions',
             'todaySalesTotal',

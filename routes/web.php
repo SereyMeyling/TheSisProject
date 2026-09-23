@@ -246,8 +246,8 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
     Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
     Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
-    Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
-        ->name('pharmacy.show');
+    // Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
+    //     ->name('pharmacy.show');
 
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
 

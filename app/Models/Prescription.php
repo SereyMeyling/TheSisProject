@@ -15,6 +15,9 @@ class Prescription extends Model
     protected $fillable = [
         'record_id',
         'prescribed_date',
+        'record_id',
+        'prescribed_date',
+        'status',
     ];
 
     protected $casts = [

@@ -24,13 +24,16 @@
                         {{ $pres->medicalRecord && $pres->medicalRecord->patient ? $pres->medicalRecord->patient->full_name : 'N/A' }}
                     </div>
                     <small class="text-muted">
-                        <i class="fas fa-phone mr-1"></i> {{ $pres->medicalRecord && $pres->medicalRecord->patient ? $pres->medicalRecord->patient->phone : '-' }}
+                        <i class="fas fa-phone mr-1"></i>
+                        {{ $pres->medicalRecord && $pres->medicalRecord->patient ? $pres->medicalRecord->patient->phone : '-' }}
                     </small>
                 </td>
                 <td>
                     <div class="font-weight-bold text-primary">
                         <i class="fas fa-user-md mr-1"></i>
-                        {{ $pres->medicalRecord && $pres->medicalRecord->doctor ? $pres->medicalRecord->doctor->first_name . ' ' . $pres->medicalRecord->doctor->last_name : 'N/A' }}
+                        {{ $pres->medicalRecord && $pres->medicalRecord->doctor
+            ? $pres->medicalRecord->doctor->name
+            : 'N/A' }}
                     </div>
                 </td>
                 <td>
@@ -41,7 +44,7 @@
                                     {{ $item->medicine ? $item->medicine->medicine_name : 'Medicine #' . $item->medicine_id }}
                                 </span>
                                 <small class="text-muted">
-                                    ({{ $item->quantity }} {{ $item->medicine ? $item->medicine->unit : 'unit' }}) - 
+                                    ({{ $item->quantity }} {{ $item->medicine ? $item->medicine->unit : 'unit' }}) -
                                     {{ $item->dosage }}, {{ $item->frequency }}, {{ $item->duration_days }} ថ្ងៃ
                                 </small>
                             </li>
@@ -49,12 +52,31 @@
                     </ul>
                 </td>
                 <td>
-                    <form action="{{ route('pharmacy.prescriptions.dispense', $pres->prescription_id) }}" method="POST" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('តើអ្នកពិតជាចង់ចេញថ្នាំតាមវេជ្ជបញ្ជានេះមែនទេ? (Confirm Dispense)');">
-                            <i class="fas fa-pills mr-1"></i> ចេញថ្នាំ (Dispense)
+                    @if ($pres->status === 'dispensed')
+
+                        <button type="button" class="btn btn-sm btn-secondary" disabled>
+                            <i class="fas fa-check-circle mr-1"></i>
+                            បានចេញថ្នាំរួច
                         </button>
-                    </form>
+
+                    @else
+
+                        <form action="{{ route('pharmacy.prescriptions.dispense', $pres->prescription_id) }}" method="POST"
+                            class="d-inline">
+
+                            @csrf
+
+                            <button type="submit" class="btn btn-sm btn-success"
+                                onclick="return confirm('តើអ្នកពិតជាចង់ចេញថ្នាំតាមវេជ្ជបញ្ជានេះមែនទេ? (Confirm Dispense)');">
+
+                                <i class="fas fa-pills mr-1"></i>
+                                ចេញថ្នាំ (Dispense)
+
+                            </button>
+
+                        </form>
+
+                    @endif
                 </td>
             </tr>
         @empty

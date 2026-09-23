@@ -34,8 +34,8 @@ class LowStockNotification extends Notification
             'icon' => 'fa-pills',
             'color' => 'text-warning',
 
-            'url' => route('pharmacy.show', [
-                'medicine' => $this->medicine->medicine_id,
+            'url' => route('pharmacy.index', [
+                'detail' => $this->medicine->medicine_id,
             ]),
         ];
     }
