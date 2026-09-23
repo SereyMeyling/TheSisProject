@@ -400,7 +400,7 @@ return [
             ],
         ],
         [
-            'text' => 'ការកំណត់វិក្កយបត្រ',
+            'text' => 'រូបិយប័ណ្ណ',
             'url' => 'settings/billing',
             'icon' => 'fas fa-file-invoice-dollar',
             'can' => 'manage-billing-settings',

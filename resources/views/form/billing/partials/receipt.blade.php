@@ -2,6 +2,7 @@
     $setting = $setting ?? null;
 
     $clinicName  = data_get($setting, 'system_name') ?: config('app.name');
+    
     $clinicPhone = data_get($setting, 'phone');
     $clinicEmail = data_get($setting, 'email');
     $clinicAddr  = data_get($setting, 'address');
@@ -17,6 +18,11 @@
     $room   = optional(optional($invoice->admission)->room)->room_number;
     $cashier = optional(optional($invoice->payments->last())->processor)->name
                ?? optional($invoice->creator)->name;
+
+    $footerText = data_get($billing, 'invoice_footer') ?: 'សូមអរគុណ · សូមរក្សាសុខភាពឲ្យបានល្អ';
+    $curSym     = data_get($billing, 'currency_symbol', '$');
+    $curSym2    = data_get($billing, 'secondary_currency_symbol', '៛');
+    $rate       = (float) data_get($billing, 'exchange_rate', 0);
 @endphp
 
 <style>
@@ -98,6 +104,7 @@
             @endif
             <div>
                 <div class="inv-clinic-name">{{ $clinicName }}</div>
+              
                 @if($clinicHours)<div class="inv-muted">{{ $clinicHours }}</div>@endif
                 @if($clinicAddr)<div class="inv-muted">{{ $clinicAddr }}</div>@endif
                 @if($clinicPhone || $clinicEmail)
@@ -181,11 +188,15 @@
             @endif
         </div>
 
-        <table class="inv-totals">
-            <tr class="grand"><td>សរុបរួម</td><td>${{ number_format($invoice->total_amount, 2) }}</td></tr>
-            <tr class="paid"><td>បានបង់</td><td>${{ number_format($invoice->paid_amount, 2) }}</td></tr>
-            <tr class="due"><td>ប្រាក់ជំពាក់</td><td>${{ number_format($invoice->balance, 2) }}</td></tr>
-        </table>
+          <table class="inv-totals">
+                    <tr class="grand"><td>សរុបរួម</td><td>{{ $curSym }}{{ number_format($invoice->total_amount, 2) }}</td></tr>
+                    @if($rate > 0)
+                        <tr><td>ស្មើនឹង</td><td>{{ number_format($invoice->total_amount * $rate, 0) }} {{ $curSym2 }}</td></tr>
+                    @endif
+                    <tr class="paid"><td>បានបង់</td><td>{{ $curSym }}{{ number_format($invoice->paid_amount, 2) }}</td></tr>
+                    <tr class="due"><td>ប្រាក់ជំពាក់</td><td>{{ $curSym }}{{ number_format($invoice->balance, 2) }}</td></tr>
+                </table>
+      
     </div>
 
     {{-- Signatures --}}
@@ -204,5 +215,5 @@
         </div>
     </div>
 
-    <div class="inv-footer">សូមអរគុណ · សូមរក្សាសុខភាពឲ្យបានល្អ</div>
+ <div class="inv-footer">{{ $footerText }}</div>
 </div>

@@ -25,22 +25,25 @@ class SettingsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'currency_symbol' => 'required|string|max:10',
-            'tax_percent' => 'nullable|numeric|min:0|max:100',
-            'invoice_prefix' => 'nullable|string|max:20',
+            'secondary_currency_symbol' => 'required|string|max:10',
+            'exchange_rate' => 'required|numeric|min:0.01',
+            'tax_percent' => 'required|numeric|min:0|max:100',
             'invoice_footer' => 'nullable|string|max:255',
-            'invoice_auto_number' => 'nullable|boolean',
-            'next_invoice_number' => 'nullable|integer|min:1',
-            'print_size' => 'required|in:A4,80mm',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
         }
 
         $settings = InvoiceSetting::firstOrCreate(['id' => 1]);
+
         $settings->update($validator->validated());
 
-        return response()->json(['message' => 'រក្សាទុកជោគជ័យ']);
+        return response()->json([
+            'message' => 'រក្សាទុកជោគជ័យ'
+        ]);
     }
 
     public function qrcodeindex(Request $request)
@@ -151,8 +154,8 @@ class SettingsController extends Controller
     public function generateKhqr(Request $request)
     {
         $request->validate([
-            'amount'      => 'required|numeric|min:0.01',
-            'currency'    => 'required|in:KHR,USD',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required|in:KHR,USD',
             'bill_number' => 'nullable|string|max:25',
         ]);
 
@@ -168,11 +171,11 @@ class SettingsController extends Controller
             }
 
             return response()->json([
-                'success'        => true,
-                'mode'           => 'manual',
-                'qr_image_url'   => Storage::url($setting->manual_qr_image),
-                'bank_name'      => $setting->bank_name,
-                'account_name'   => $setting->account_name,
+                'success' => true,
+                'mode' => 'manual',
+                'qr_image_url' => Storage::url($setting->manual_qr_image),
+                'bank_name' => $setting->bank_name,
+                'account_name' => $setting->account_name,
                 'account_number' => $setting->account_number,
             ]);
         }
@@ -216,9 +219,9 @@ class SettingsController extends Controller
 
         return response()->json([
             'success' => true,
-            'mode'    => 'bakong',
-            'qr'      => $result->data['qr'],
-            'md5'     => $result->data['md5'],
+            'mode' => 'bakong',
+            'qr' => $result->data['qr'],
+            'md5' => $result->data['md5'],
         ]);
     }
 

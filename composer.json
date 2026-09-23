@@ -11,7 +11,6 @@
         "php": "^7.3|^8.0",
         "bacon/bacon-qr-code": "^3.1",
         "barryvdh/laravel-dompdf": "^2.2",
-        "doctrine/dbal": "^4.4",
         "fidele007/bakong-khqr-php": "^1.2",
         "fruitcake/laravel-cors": "^2.0",
         "guzzlehttp/guzzle": "^7.0.1",

@@ -12,5 +12,5 @@
 | Guzzle HTTP              | `composer require guzzlehttp/guzzle:^7.0.1`           |
 | Laravel CORS (Laravel 8) | `composer require fruitcake/laravel-cors:^2.0`        |
 | Tinker                   | `composer require laravel/tinker:^2.5`                |
-|                          |                                                       |
+| doctrine|dbal            |  composer require doctrine/dbal                       |
 

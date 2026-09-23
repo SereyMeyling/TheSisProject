@@ -13,6 +13,7 @@ use App\Models\InvoicePayment;
 use App\Models\Patient;
 use App\Models\Admission;
 use App\Models\Setting\GeneralSettings;
+use App\Models\Setting\InvoiceSetting;
 use App\Notifications\PaymentNotification;
 use App\Helpers\NotifiesRoles;
 use Illuminate\Http\JsonResponse;
@@ -60,6 +61,7 @@ class BillingController extends Controller
     public function index(Request $request)
     {
         $query = Invoice::with(['items', 'patient', 'payments', 'admission.room']);
+        $billing = InvoiceSetting::first();
 
         // Search filter: invoice_number, patient_name, patient_phone
         if ($request->filled('search')) {
@@ -118,7 +120,7 @@ class BillingController extends Controller
             ]);
         }
 
-        return view('form.billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions'));
+        return view('form.billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions', 'billing'));
     }
 
     /**
@@ -130,20 +132,18 @@ class BillingController extends Controller
             ->findOrFail($id);
 
         $setting = GeneralSettings::first();
+        $billing = InvoiceSetting::first();
 
         if (request()->ajax() || request()->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'data' => $invoice,
-                'html' => view('form.billing.partials.receipt', compact('invoice', 'setting'))->render(),
+                'html' => view('form.billing.partials.receipt', compact('invoice', 'setting', 'billing'))->render(),
             ]);
         }
 
-
-        // Normal browser visit (e.g. from a notification link): open the list and auto-show the modal
         return redirect()->route('billing.index', ['view' => $invoice->id]);
     }
-
 
     // Edit an existing invoice (only allowed while unpaid and nothing has been paid against it yet).
 

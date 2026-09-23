@@ -656,6 +656,10 @@
         generateKhqrUrl: "{{ Route::has('qr.generateInvoice') ? route('qr.generateInvoice') : url('billing/khqr/generate') }}",
         checkKhqrStatusUrlBase: "{{ url('qr/status') }}",
         csrfToken: "{{ csrf_token() }}",
+        currency: "{{ $billing->currency_symbol ?? '$' }}",
+        currency2: "{{ $billing->secondary_currency_symbol ?? '៛' }}",
+        exchangeRate: {{ $billing->exchange_rate ?? 4100 }},
+        taxPercent: {{ $billing->tax_percent ?? 0 }},
     };
 </script>
 <script src="{{ asset('js/billing.js') }}"></script>
