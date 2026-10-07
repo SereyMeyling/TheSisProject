@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\View;
 use Illuminate\Pagination\Paginator;
+use URL;
 
 class AppServiceProvider extends ServiceProvider
 {
