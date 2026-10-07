@@ -67,5 +67,8 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Throwable $e) {
             View::share('setting', null);
         }
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
     }
 }
