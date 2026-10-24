@@ -46,14 +46,14 @@ class BackupController extends Controller
 
         return response()->json(['data' => $backups]);
     }
+
     public function store(Request $request)
     {
         set_time_limit(300);
 
         $config = config('database.connections.' . config('database.default'));
 
-        $mysqldump = rtrim(config('backup.mysql_bin_path'), '/\\')
-            . DIRECTORY_SEPARATOR . 'mysqldump.exe';
+        $mysqldump = $this->binary('mysqldump');
 
         $backupDir = $this->backupName;
         Storage::disk($this->disk)->makeDirectory($backupDir);
@@ -73,12 +73,7 @@ class BackupController extends Controller
                 $config['database'],
             ]);
 
-            $process->setEnv([
-                'MYSQL_PWD' => $config['password'],
-                'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows',
-                'windir' => getenv('windir') ?: 'C:\\Windows',
-                'PATH' => getenv('PATH'),
-            ]);
+            $process->setEnv($this->processEnv($config));
             $process->setTimeout(300);
             $process->run();
 
@@ -153,6 +148,54 @@ class BackupController extends Controller
         }
     }
 
+    public function restore(Request $request)
+    {
+        $request->validate([
+            'backup_file' => 'required|file|max:512000',
+        ]);
+
+        $config = config('database.connections.' . config('database.default'));
+
+        $mysql = $this->binary('mysql');
+
+        try {
+            $process = new Process([
+                $mysql,
+                '--host=' . $config['host'],
+                '--port=' . $config['port'],
+                '--user=' . $config['username'],
+                $config['database'],
+            ]);
+
+            $process->setEnv($this->processEnv($config));
+            $process->setInput(fopen($request->file('backup_file')->getRealPath(), 'r'));
+            $process->setTimeout(300);
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                Log::error('Restore failed', ['error' => $process->getErrorOutput()]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Restore failed.',
+                    'debug' => config('app.debug') ? $process->getErrorOutput() : null,
+                ], 500);
+            }
+
+            BackupLog::create(['action' => 'restore', 'user_id' => auth()->id()]);
+
+            return response()->json(['success' => true, 'message' => 'Restore បានសម្រេច។']);
+
+        } catch (Throwable $e) {
+            Log::error('Restore exception', ['message' => $e->getMessage()]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Restore failed.',
+                'debug' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
     public function download(string $filename)
     {
         $path = $this->backupName . '/' . basename($filename);
@@ -190,59 +233,32 @@ class BackupController extends Controller
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 
-    public function restore(Request $request)
+    private function binary(string $name): string
     {
-        $request->validate([
-            'backup_file' => 'required|file|max:512000',
-        ]);
+        $file = DIRECTORY_SEPARATOR === '\\'
+            ? $name . '.exe'
+            : $name;
 
-        $config = config('database.connections.' . config('database.default'));
+        $dir = config('backup.mysql_bin_path');
 
-        $mysql = rtrim(config('backup.mysql_bin_path'), '/\\')
-            . DIRECTORY_SEPARATOR . 'mysql.exe';
-
-        try {
-            $process = new Process([
-                $mysql,
-                '--host=' . $config['host'],
-                '--port=' . $config['port'],
-                '--user=' . $config['username'],
-                $config['database'],
-            ]);
-
-            $process->setEnv([
-                'MYSQL_PWD' => $config['password'],
-                'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows',
-                'windir' => getenv('windir') ?: 'C:\\Windows',
-                'PATH' => getenv('PATH'),
-            ]);
-
-            $process->setInput(fopen($request->file('backup_file')->getRealPath(), 'r'));
-            $process->setTimeout(300);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                Log::error('Restore failed', ['error' => $process->getErrorOutput()]);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Restore failed.',
-                    'debug' => config('app.debug') ? $process->getErrorOutput() : null,
-                ], 500);
-            }
-
-            BackupLog::create(['action' => 'restore', 'user_id' => auth()->id()]);
-
-            return response()->json(['success' => true, 'message' => 'Restore បានសម្រេច។']);
-
-        } catch (Throwable $e) {
-            Log::error('Restore exception', ['message' => $e->getMessage()]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Restore failed.',
-                'debug' => config('app.debug') ? $e->getMessage() : null,
-            ], 500);
-        }
+        return $dir
+            ? rtrim($dir, '/\\') . DIRECTORY_SEPARATOR . $file
+            : $file;
     }
+
+    private function processEnv(array $config): array
+    {
+        $env = [
+            'MYSQL_PWD' => $config['password'] ?? '',
+        ];
+
+        if (DIRECTORY_SEPARATOR === '\\') {
+            $env['SystemRoot'] = getenv('SystemRoot') ?: 'C:\\Windows';
+            $env['windir'] = getenv('windir') ?: 'C:\\Windows';
+            $env['PATH'] = getenv('PATH') ?: '';
+        }
+
+        return $env;
+    }
+
 }
