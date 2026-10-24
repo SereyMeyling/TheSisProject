@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'mysql_bin_path' => env('MYSQL_BIN_PATH'),
 
     'backup' => [
 

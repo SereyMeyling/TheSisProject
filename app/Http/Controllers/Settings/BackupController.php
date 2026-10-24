@@ -46,16 +46,14 @@ class BackupController extends Controller
 
         return response()->json(['data' => $backups]);
     }
-
     public function store(Request $request)
     {
-
         set_time_limit(300);
 
         $config = config('database.connections.' . config('database.default'));
 
-        // Adjust this to match your actual mysqldump.exe location
-        $mysqldump = 'C:\wamp64\bin\mysql\mysql9.1.0\bin\mysqldump.exe';
+        $mysqldump = rtrim(config('backup.mysql_bin_path'), '/\\')
+            . DIRECTORY_SEPARATOR . 'mysqldump.exe';
 
         $backupDir = $this->backupName;
         Storage::disk($this->disk)->makeDirectory($backupDir);
@@ -64,7 +62,7 @@ class BackupController extends Controller
         $sqlFullPath = Storage::disk($this->disk)->path("$backupDir/$sqlFilename");
 
         try {
-            $process = new \Symfony\Component\Process\Process([
+            $process = new Process([
                 $mysqldump,
                 '--host=' . $config['host'],
                 '--port=' . $config['port'],
@@ -74,7 +72,6 @@ class BackupController extends Controller
                 '--triggers',
                 $config['database'],
             ]);
-
 
             $process->setEnv([
                 'MYSQL_PWD' => $config['password'],
@@ -95,7 +92,6 @@ class BackupController extends Controller
                 ], 500);
             }
 
-            // Write the raw SQL dump to disk
             file_put_contents($sqlFullPath, $process->getOutput());
 
             if (!file_exists($sqlFullPath) || filesize($sqlFullPath) === 0) {
@@ -107,7 +103,6 @@ class BackupController extends Controller
                     'debug' => config('app.debug') ? 'Dump file was empty.' : null,
                 ], 500);
             }
-
 
             $zipFilename = str_replace('.sql', '.zip', $sqlFilename);
             $zipFullPath = Storage::disk($this->disk)->path("$backupDir/$zipFilename");
@@ -126,7 +121,6 @@ class BackupController extends Controller
 
             $zip->addFile($sqlFullPath, $sqlFilename);
             $zip->close();
-
 
             unlink($sqlFullPath);
 
@@ -147,7 +141,6 @@ class BackupController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-
             if (file_exists($sqlFullPath)) {
                 @unlink($sqlFullPath);
             }
@@ -159,6 +152,7 @@ class BackupController extends Controller
             ], 500);
         }
     }
+
     public function download(string $filename)
     {
         $path = $this->backupName . '/' . basename($filename);
@@ -195,6 +189,7 @@ class BackupController extends Controller
         $bytes /= (1 << (10 * $pow));
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
+
     public function restore(Request $request)
     {
         $request->validate([
@@ -202,7 +197,9 @@ class BackupController extends Controller
         ]);
 
         $config = config('database.connections.' . config('database.default'));
-        $mysql = 'C:\wamp64\bin\mysql\mysql9.1.0\bin\mysql.exe';
+
+        $mysql = rtrim(config('backup.mysql_bin_path'), '/\\')
+            . DIRECTORY_SEPARATOR . 'mysql.exe';
 
         try {
             $process = new Process([
@@ -212,18 +209,21 @@ class BackupController extends Controller
                 '--user=' . $config['username'],
                 $config['database'],
             ]);
+
             $process->setEnv([
                 'MYSQL_PWD' => $config['password'],
                 'SystemRoot' => getenv('SystemRoot') ?: 'C:\\Windows',
                 'windir' => getenv('windir') ?: 'C:\\Windows',
                 'PATH' => getenv('PATH'),
             ]);
+
             $process->setInput(fopen($request->file('backup_file')->getRealPath(), 'r'));
             $process->setTimeout(300);
             $process->run();
 
             if (!$process->isSuccessful()) {
                 Log::error('Restore failed', ['error' => $process->getErrorOutput()]);
+
                 return response()->json([
                     'success' => false,
                     'message' => 'Restore failed.',
@@ -234,8 +234,10 @@ class BackupController extends Controller
             BackupLog::create(['action' => 'restore', 'user_id' => auth()->id()]);
 
             return response()->json(['success' => true, 'message' => 'Restore បានសម្រេច។']);
+
         } catch (Throwable $e) {
             Log::error('Restore exception', ['message' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Restore failed.',
