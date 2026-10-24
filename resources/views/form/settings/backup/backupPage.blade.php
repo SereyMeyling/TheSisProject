@@ -79,8 +79,9 @@
                         <div class="form-group">
                             <label>Upload Backup File</label>
                             <div class="custom-file">
+                            
                                 <input type="file" class="custom-file-input" id="backupFile" name="backup_file"
-                                    accept=".sql">
+                                    accept=".sql,.zip">
                                 <label class="custom-file-label" for="backupFile">Choose file</label>
                             </div>
                             <small class="text-danger d-none" id="restoreFileError"></small>
