@@ -111,6 +111,8 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
+        Route::get('/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
+        Route::get('/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
 
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
         Route::post('/qrcode', [SettingsController::class, 'qrcodeUpdate'])->name('settingsqrcode.update');
@@ -133,9 +135,9 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
 // Medical diagnoses and treatments reserved strictly for doctors
 // =========================================================================
 Route::group(['middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
-    Route::group(['prefix' => 'settings','middleware' => ['permission:manage-billing-settings']], function () {
-    Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
-    Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
+    Route::group(['prefix' => 'settings', 'middleware' => ['permission:manage-billing-settings']], function () {
+        Route::get('/billing', [SettingsController::class, 'bilingindex'])->name('settingsbillings.index');
+        Route::post('/billing', [SettingsController::class, 'billingUpdate'])->name('settingsbillings.update');
     });
 });
 

@@ -9,7 +9,7 @@
     <title>@yield('page-title', config('adminlte.title', 'Hospital Management System'))</title>
 
     {{-- Favicon --}}
-    <link rel="icon" href="{{ asset('favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ optional($setting)->favicon_url ?? asset('favicon.ico') }}">
 
     {{-- Google Fonts: Khmer + Latin support --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,10 +37,8 @@
 
         {{-- Logo --}}
         <div class="hms-logo-wrap">
-            <img src="{{ $setting && $setting->logo
-    ? asset('storage/' . $setting->logo)
-    : asset('vendor/adminlte/dist/img/logo.jpg')
-    }}" alt="Hospital Logo">
+            <img src="{{ optional($setting)->logo_url ?? asset('vendor/adminlte/dist/img/logo.jpg') }}"
+                alt="Hospital Logo">
 
         </div>
 
@@ -56,7 +54,8 @@
     </div>
 
     <div class="hms-page-footer">
-        <div>&copy; {{ date('Y') }} {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }} ||  All rights reserved.</div>
+        <div>&copy; {{ date('Y') }} {{ $setting->system_name ?? 'មន្ទីរសម្រាកព្យាបាលព្រំ សន្តិភាព' }} || All rights
+            reserved.</div>
         <div class="hms-footer-links">
             <a href="#">Privacy Policy</a>
             <span class="hms-dot">&middot;</span>

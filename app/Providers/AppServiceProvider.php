@@ -31,6 +31,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        if (app()->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         Paginator::useBootstrap();
         Schema::defaultStringLength(191);
 
@@ -39,37 +43,39 @@ class AppServiceProvider extends ServiceProvider
         try {
             if (Schema::hasTable('general_settings')) {
 
-                $setting = GeneralSettings::first();
+                // Select only small columns, never logo_data / favicon_data
+                $setting = GeneralSettings::select(
+                    'id',
+                    'system_name',
+                    'phone',
+                    'email',
+                    'address',
+                    'facebook',
+                    'telegram',
+                    'working_hours',
+                    'logo_mime',
+                    'favicon_mime',
+                    'updated_at'
+                )->first();
 
                 View::share('setting', $setting);
 
                 if ($setting) {
-
-                    Config::set(
-                        'adminlte.logo',
-                        '<b>' . $setting->system_name . '</b>'
-                    );
+                    Config::set('adminlte.logo', '<b>' . e($setting->system_name) . '</b>');
 
                     Config::set(
                         'adminlte.logo_img',
-                        $setting->logo
-                        ? 'storage/' . $setting->logo
+                        $setting->logo_mime
+                        ? url('settings/general/logo') . '?v=' . optional($setting->updated_at)->timestamp
                         : 'vendor/adminlte/dist/img/logo.jpg'
                     );
-
                 }
 
             } else {
-
-                // prevent undefined variable in views
                 View::share('setting', null);
-
             }
         } catch (\Throwable $e) {
             View::share('setting', null);
-        }
-        if (app()->environment('production')) {
-            URL::forceScheme('https');
         }
     }
 }

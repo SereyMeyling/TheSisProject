@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
     <h2 class="page-title mb-0">
-     
+
     </h2>
     <button type="submit" form="generalSettingsForm" class="btn btn-primary px-4">
         <i class="fas fa-save mr-2"></i>
@@ -16,7 +16,8 @@
 
 <div class="card setting-card">
     <div class="card-body">
-        <form id="generalSettingsForm" action="{{ route('settingsgeneral.update') }}" method="POST" enctype="multipart/form-data">
+        <form id="generalSettingsForm" action="{{ route('settingsgeneral.update') }}" method="POST"
+            enctype="multipart/form-data">
             @csrf
 
             <div class="row">
@@ -26,49 +27,57 @@
 
                     <div class="form-group">
                         <label>ឈ្មោះប្រព័ន្ធ</label>
-                        <input name="system_name" value="{{ old('system_name', $setting->system_name) }}" class="form-control">
+                        <input name="system_name" value="{{ old('system_name', $setting->system_name) }}"
+                            class="form-control">
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>លេខទូរសព្ទ</label>
-                                <input type="text" name="phone" value="{{ old('phone', $setting->phone) }}" class="form-control" placeholder="+855">
+                                <input type="text" name="phone" value="{{ old('phone', $setting->phone) }}"
+                                    class="form-control" placeholder="+855">
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>អ៊ីមែល</label>
-                                <input type="email" name="email" value="{{ old('email', $setting->email) }}" class="form-control" placeholder="@gmail.com">
+                                <input type="email" name="email" value="{{ old('email', $setting->email) }}"
+                                    class="form-control" placeholder="@gmail.com">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>អាសយដ្ឋាន</label>
-                        <textarea name="address" class="form-control" rows="3">{{ old('address', $setting->address) }}</textarea>
+                        <textarea name="address" class="form-control"
+                            rows="3">{{ old('address', $setting->address) }}</textarea>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Facebook</label>
-                                <input type="text" name="facebook" value="{{ old('facebook', $setting->facebook) }}" class="form-control">
+                                <input type="text" name="facebook" value="{{ old('facebook', $setting->facebook) }}"
+                                    class="form-control">
                             </div>
                         </div>
 
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label>Telegram</label>
-                                <input type="text" name="telegram" value="{{ old('telegram', $setting->telegram) }}" class="form-control">
+                                <input type="text" name="telegram" value="{{ old('telegram', $setting->telegram) }}"
+                                    class="form-control">
                             </div>
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>ម៉ោងធ្វើការ</label>
-                        <input type="text" name="working_hours" value="{{ old('working_hours', $setting->working_hours) }}" class="form-control" placeholder="ចន្ទ-សុក្រ 8:00AM - 5:00PM">
+                        <input type="text" name="working_hours"
+                            value="{{ old('working_hours', $setting->working_hours) }}" class="form-control"
+                            placeholder="ចន្ទ-សុក្រ 8:00AM - 5:00PM">
                     </div>
 
                 </div>
@@ -81,8 +90,8 @@
 
                         <div class="preview">
                             <img id="logoPreview"
-                                 src="{{ $setting->logo ? (str_starts_with($setting->logo, 'http') ? $setting->logo : asset('storage/' . $setting->logo)) : 'https://via.placeholder.com/150?text=Logo' }}"
-                                 alt="Logo">
+                                src="{{ $setting->logo_url ?? 'https://via.placeholder.com/150?text=Logo' }}"
+                                alt="Logo">
                         </div>
 
                         <input type="file" name="logo" accept="image/*" class="form-control mt-3" id="logoInput">
@@ -93,8 +102,8 @@
 
                         <div class="preview">
                             <img id="faviconPreview"
-                                 src="{{ $setting->favicon ? (str_starts_with($setting->favicon, 'http') ? $setting->favicon : asset('storage/' . $setting->favicon)) : 'https://via.placeholder.com/150?text=Favicon' }}"
-                                 alt="Favicon">
+                                src="{{ $setting->favicon_url ?? 'https://via.placeholder.com/150?text=Favicon' }}"
+                                alt="Favicon">
                         </div>
 
                         <input type="file" name="favicon" accept="image/*" class="form-control mt-3" id="faviconInput">
@@ -169,8 +178,6 @@
         max-height: 100%;
         object-fit: contain;
     }
-
-
 </style>
 @stop
 

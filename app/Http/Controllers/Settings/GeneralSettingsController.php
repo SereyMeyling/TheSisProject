@@ -11,58 +11,62 @@ class GeneralSettingsController extends Controller
     //
     public function index()
     {
-        $setting = GeneralSettings::first();
+        $setting = GeneralSettings::first() ?? new GeneralSettings();
 
         return view('form.settings.general.generalPage', compact('setting'));
     }
 
-
     public function update(Request $request)
     {
-
-        $setting = GeneralSettings::first();
-
-
-        if ($request->hasFile('logo')) {
-
-            $logo = $request->file('logo')
-                ->store('settings', 'public');
-
-            $setting->logo = $logo;
-        }
-
-
-        if ($request->hasFile('favicon')) {
-
-            $favicon = $request->file('favicon')
-                ->store('settings', 'public');
-
-            $setting->favicon = $favicon;
-        }
-
-
-        $setting->update([
-
-            'system_name' => $request->system_name,
-            'phone' => $request->phone,
-            'email' => $request->email,
-            'address' => $request->address,
-            'facebook' => $request->facebook,
-            'telegram' => $request->telegram,
-            'working_hours' => $request->working_hours,
-
-        ]);
-        $request->validate([
+        $validated = $request->validate([
             'system_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',
-            'logo' => 'nullable|image|mimes:jpg,jpeg,png,svg,webp|max:2048',
-            'favicon' => 'nullable|image|mimes:jpg,jpeg,png,ico|max:1024',
+            'address' => 'nullable|string',
+            'facebook' => 'nullable|string|max:255',
+            'telegram' => 'nullable|string|max:255',
+            'working_hours' => 'nullable|string|max:255',
+            'logo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'favicon' => 'nullable|file|mimes:jpg,jpeg,png,ico|max:1024',
         ]);
 
-        return back()->with(
-            'success',
-            'Setting updated successfully'
-        );
+        $data = collect($validated)->except(['logo', 'favicon'])->all();
+
+        if ($request->hasFile('logo')) {
+            $file = $request->file('logo');
+            $data['logo_data'] = base64_encode(file_get_contents($file->getRealPath()));
+            $data['logo_mime'] = $file->getMimeType();
+        }
+
+        if ($request->hasFile('favicon')) {
+            $file = $request->file('favicon');
+            $data['favicon_data'] = base64_encode(file_get_contents($file->getRealPath()));
+            $data['favicon_mime'] = $file->getMimeType();
+        }
+
+        $setting = GeneralSettings::first() ?? new GeneralSettings();
+        $setting->fill($data)->save();
+
+        return back()->with('success', 'Setting updated successfully');
+    }
+
+    public function logo()
+    {
+        $setting = GeneralSettings::select('logo_data', 'logo_mime')->first();
+        abort_unless($setting && $setting->logo_data, 404);
+
+        return response(base64_decode($setting->logo_data))
+            ->header('Content-Type', $setting->logo_mime ?: 'image/png')
+            ->header('Cache-Control', 'public, max-age=86400');
+    }
+
+    public function favicon()
+    {
+        $setting = GeneralSettings::select('favicon_data', 'favicon_mime')->first();
+        abort_unless($setting && $setting->favicon_data, 404);
+
+        return response(base64_decode($setting->favicon_data))
+            ->header('Content-Type', $setting->favicon_mime ?: 'image/png')
+            ->header('Cache-Control', 'public, max-age=86400');
     }
 }
