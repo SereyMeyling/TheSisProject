@@ -140,10 +140,10 @@
                             <div class="qr-upload-box">
 
                                 <div class="qr-preview">
-                                    <img src="{{ optional($qrSetting)->manual_qr_image
-                                        ? Storage::url($qrSetting->manual_qr_image)
-                                        : 'https://placehold.co/220x220?text=QR+Code' }}"
-                                        id="manualQrPreview" alt="QR Code">
+                               <img id="manualQrPreview" alt="QR Code"
+    src="{{ optional($qrSetting)->manual_qr_mime
+        ? route('payment.qrImage') . '?v=' . optional($qrSetting->updated_at)->timestamp
+        : 'https://placehold.co/220x220?text=QR+Code' }}">
                                 </div>
 
                                 <label for="manualQrInput" class="btn btn-outline-success mt-3 mb-2">

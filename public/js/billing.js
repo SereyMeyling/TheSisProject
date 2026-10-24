@@ -329,15 +329,22 @@ $(document).ready(function () {
     let khqrPollTimer = null;
     let khqrPollAttempts = 0;
 
-    $('input[name="payment_method"]').on("change", function () {
-        const isKhqr = $(this).val() === "khqr";
-        $("#khqrDisplayContainer").toggleClass("d-none", !isKhqr);
+    function resetKhqrPanel() {
         clearInterval(khqrPollTimer);
+        $("#khqrDisplayContainer").addClass("d-none");
+        $("#khqrQrWrap").empty();
+        $("#khqrBankInfo").addClass("d-none");
+        $("#khqrStatusMessage").html("");
+        $("#pay_transaction_ref").val("");
+    }
+
+    $(document).on("change", 'input[name="payment_method"]', function () {
+        const isKhqr = $(this).val() === "online";
+        resetKhqrPanel();
 
         if (isKhqr) {
+            $("#khqrDisplayContainer").removeClass("d-none");
             generateInvoiceKHQR();
-        } else {
-            $("#khqrStatusMessage").html("");
         }
     });
 
@@ -360,7 +367,6 @@ $(document).ready(function () {
         $("#khqrQrWrap").html(
             '<div class="spinner-border text-primary"></div>',
         );
-        $("#khqrBankInfo").addClass("d-none");
         $("#khqrStatusMessage").html(
             '<span class="text-muted">កំពុងបង្កើត QR...</span>',
         );
@@ -381,66 +387,46 @@ $(document).ready(function () {
                             (res.message || "មិនអាចបង្កើត QR បានទេ") +
                             "</span>",
                     );
+                    $("#khqrStatusMessage").html("");
                     return;
                 }
 
+                $("#khqrQrWrap").empty();
+
                 if (res.mode === "manual") {
-                    // Static bank QR — cashier confirms via the main "Confirm Payment" button below.
                     $("#khqrQrWrap").html(
-                        `<img src="${res.qr_image_url}" alt="KHQR" style="max-width: 200px;">`,
+                        `<img src="${res.qr_image_url}" alt="KHQR" style="max-width:220px;">`,
                     );
                     $("#khqrBankName").text(res.bank_name || "-");
                     $("#khqrAccountName").text(res.account_name || "-");
                     $("#khqrAccountNumber").text(res.account_number || "-");
                     $("#khqrBankInfo").removeClass("d-none");
-                    $("#khqrStatusMessage").html("");
+                    $("#khqrStatusMessage").html(
+                        '<span class="text-muted small">សូមបញ្ជាក់ការទូទាត់ ក្រោយពេលអតិថិជនបានបង់រួច</span>',
+                    );
                 } else {
-                    // Bakong dynamic mode — SVG/base64 image + live polling
-                    const src =
-                        String(res.qr).startsWith("data:") ||
-                        String(res.qr).startsWith("http")
-                            ? res.qr
-                            : res.qr; // qr string itself isn't an image — see note below
-                    $("#khqrQrWrap").html(
-                        `<img src="data:image/svg+xml;base64,${res.qr}" alt="KHQR" style="max-width: 200px;">`,
+                    // res.qr is the KHQR text string, so draw it as a QR image in the browser
+                    new QRCode(document.getElementById("khqrQrWrap"), {
+                        text: res.qr,
+                        width: 220,
+                        height: 220,
+                        correctLevel: QRCode.CorrectLevel.M,
+                    });
+                    $("#khqrStatusMessage").html(
+                        '<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>កំពុងរង់ចាំការទូទាត់...</span>',
                     );
                     pollPaymentStatus(res.md5);
                 }
             },
-        ).fail(function () {
+        ).fail(function (xhr) {
             $("#khqrQrWrap").html(
-                '<span class="text-danger small">មិនអាចបង្កើត QR បានទេ</span>',
+                '<span class="text-danger small">' +
+                    (xhr.responseJSON?.message || "មិនអាចបង្កើត QR បានទេ") +
+                    "</span>",
             );
+            $("#khqrStatusMessage").html("");
         });
     }
-
-    // Manual-mode confirm button — since there's no Bakong API to poll, the cashier vouches for it
-    $(document).on("click", "#btnConfirmManualPaid", function () {
-        const $btn = $(this);
-        $btn.prop("disabled", true).html(
-            '<i class="fas fa-spinner fa-spin mr-1"></i> កំពុងបញ្ជាក់...',
-        );
-
-        $.post(
-            `${window.billingConfig.baseUrl}/${$("#pay_invoice_id").val()}/pay`,
-            {
-                _token: window.billingConfig.csrfToken,
-                amount: $("#pay_amount").val(),
-                payment_method: "khqr_manual",
-                transaction_ref: "MANUAL-CONFIRMED",
-            },
-            function () {
-                showBillingToast("ការទូទាត់វិក្កយបត្របានជោគជ័យ!");
-                $("#modalPayInvoice").modal("hide");
-                loadInvoices(1);
-            },
-        ).fail(function (xhr) {
-            $btn.prop("disabled", false).html(
-                '<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ថាបានទទួលប្រាក់',
-            );
-            toastr.error(xhr.responseJSON?.message || "មានបញ្ហា");
-        });
-    });
 
     function pollPaymentStatus(md5) {
         clearInterval(khqrPollTimer);
@@ -462,19 +448,11 @@ $(document).ready(function () {
                     if (res.paid) {
                         clearInterval(khqrPollTimer);
                         $("#khqrStatusMessage").html(
-                            '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>ការទូទាត់បានជោគជ័យ</span>',
+                            '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>ទទួលបានការទូទាត់ កំពុងកត់ត្រា...</span>',
                         );
-                        showBillingToast("ការទូទាត់វិក្កយបត្របានជោគជ័យ!");
-
-                        setTimeout(function () {
-                            $("#modalPayInvoice").modal("hide");
-                            loadInvoices(1);
-                        }, 1200);
-                    } else if (res.expired) {
-                        clearInterval(khqrPollTimer);
-                        $("#khqrStatusMessage").html(
-                            '<span class="text-danger">QR បានផុតកំណត់ សូមព្យាយាមម្តងទៀត</span>',
-                        );
+                        // Record the payment on the invoice (the existing submit handler does the AJAX call)
+                        $("#pay_transaction_ref").val(md5);
+                        $("#formPayInvoice").trigger("submit");
                     }
                 },
             );
@@ -482,8 +460,12 @@ $(document).ready(function () {
     }
 
     $("#modalPayInvoice").on("hidden.bs.modal", function () {
-        clearInterval(khqrPollTimer);
+        resetKhqrPanel();
+        $('input[name="payment_method"][value="cash"]').prop("checked", true);
+        $("#labelMethodCash").addClass("active");
+        $("#labelMethodCard, #labelMethodOnline").removeClass("active");
     });
+
 
     $(document).on("submit", "#formPayInvoice, #payInvoiceForm", function (e) {
         e.preventDefault();

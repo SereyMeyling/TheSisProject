@@ -384,6 +384,7 @@
             <form id="formPayInvoice">
                 @csrf
                 <input type="hidden" id="pay_invoice_id" name="invoice_id">
+                <input type="hidden" name="transaction_ref" id="pay_transaction_ref">
                 <div class="modal-body p-4">
                     <div class="alert alert-info border-0 shadow-sm mb-3" style="border-radius: 10px;">
                         <div class="d-flex justify-content-between mb-1">
@@ -429,6 +430,16 @@
                             <input type="number" step="0.01" name="amount" id="pay_amount"
                                 class="form-control form-control-lg font-weight-bold text-success" required>
                         </div>
+                    </div>
+                    <div id="khqrDisplayContainer" class="d-none text-center border rounded p-3 mb-3">
+                        <div id="khqrQrWrap" class="d-flex justify-content-center align-items-center"
+                            style="min-height:220px;"></div>
+                        <div id="khqrBankInfo" class="d-none mt-3 text-left small">
+                            <div><span class="text-muted">ធនាគារ:</span> <strong id="khqrBankName"></strong></div>
+                            <div><span class="text-muted">ឈ្មោះគណនី:</span> <strong id="khqrAccountName"></strong></div>
+                            <div><span class="text-muted">លេខគណនី:</span> <strong id="khqrAccountNumber"></strong></div>
+                        </div>
+                        <div id="khqrStatusMessage" class="mt-2"></div>
                     </div>
                 </div>
 
@@ -647,14 +658,16 @@
 @stop
 
 @section('js')
+@parent
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
     window.billingConfig = {
         indexUrl: "{{ route('billing.index') }}",
         storeUrl: "{{ route('billing.store') }}",
         baseUrl: "{{ url('billing') }}",
         showUrl: "{{ url('billing') }}",
-        generateKhqrUrl: "{{ Route::has('qr.generateInvoice') ? route('qr.generateInvoice') : url('billing/khqr/generate') }}",
-        checkKhqrStatusUrlBase: "{{ url('qr/status') }}",
+        generateKhqrUrl: "{{ route('payment.generateKhqr') }}",
+        checkKhqrStatusUrlBase: "{{ url('billing/payment/check-status') }}",
         csrfToken: "{{ csrf_token() }}",
         currency: "{{ $billing->currency_symbol ?? '$' }}",
         currency2: "{{ $billing->secondary_currency_symbol ?? '៛' }}",

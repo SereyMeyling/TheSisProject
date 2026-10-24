@@ -92,7 +92,7 @@ class SettingsController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -102,46 +102,30 @@ class SettingsController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Save Manual QR Image
+        | Save Manual QR Image as Base64
         |--------------------------------------------------------------------------
         */
         if ($request->hasFile('manual_qr_image')) {
+            $file = $request->file('manual_qr_image');
 
-            if ($setting->manual_qr_image) {
-                Storage::disk('public')->delete($setting->manual_qr_image);
-            }
-
-            $data['manual_qr_image'] = $request
-                ->file('manual_qr_image')
-                ->store('qr_codes', 'public');
+            // Set directly, so $fillable cannot block it
+            $setting->manual_qr_data = base64_encode(file_get_contents($file->getRealPath()));
+            $setting->manual_qr_mime = $file->getMimeType();
         }
 
-        /*
-        |--------------------------------------------------------------------------
-        | Save Logo
-        |--------------------------------------------------------------------------
-        */
-        if ($request->hasFile('logo')) {
-
-            if ($setting->logo) {
-                Storage::disk('public')->delete($setting->logo);
-            }
-
-            $data['logo'] = $request
-                ->file('logo')
-                ->store('qr_logos', 'public');
-        }
+        // Do not save uploaded file paths for these fields.
+        unset($data['manual_qr_image'], $data['logo']);
 
         $setting->fill($data);
         $setting->save();
 
         return response()->json([
-            'manual_qr_url' => $setting->manual_qr_image
-                ? Storage::url($setting->manual_qr_image)
-                : null,
+            'message' => 'ការកំណត់ QR Code ត្រូវបានរក្សាទុកដោយជោគជ័យ',
+            'had_file' => $request->hasFile('manual_qr_image'),
+            'image_saved' => (bool) $setting->fresh()->manual_qr_mime,
+            'manual_qr_url' => $setting->manual_qr_mime ? route('payment.qrImage') : null,
         ]);
     }
-
     public function backupindex(Request $request)
     {
         return view('form.settings.backup.backupPage');
@@ -151,6 +135,7 @@ class SettingsController extends Controller
      * Generate a dynamic KHQR (with amount) for a specific invoice/payment.
      * POST /payment/generate-khqr  { amount, currency, bill_number }
      */
+
     public function generateKhqr(Request $request)
     {
         $request->validate([
@@ -160,29 +145,50 @@ class SettingsController extends Controller
         ]);
 
         $setting = QrSetting::first();
+
         if (!$setting) {
-            return response()->json(['success' => false, 'message' => 'មិនទាន់មានការកំណត់ QR Code'], 422);
+            return response()->json([
+                'success' => false,
+                'message' => 'មិនទាន់មានការកំណត់ QR Code',
+            ], 422);
         }
 
-        // ── MANUAL MODE: just hand back the uploaded static image, no live verification ──
+        /*
+        |--------------------------------------------------------------------------
+        | MANUAL MODE: Return the saved static QR image
+        |--------------------------------------------------------------------------
+        */
         if ($setting->mode === 'manual') {
-            if (!$setting->manual_qr_image) {
-                return response()->json(['success' => false, 'message' => 'សូមបញ្ចូលរូបភាព QR នៅក្នុងការកំណត់'], 422);
+            if (!$setting->manual_qr_mime || !$setting->manual_qr_data) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'សូមបញ្ចូលរូបភាព QR នៅក្នុងការកំណត់',
+                ], 422);
             }
 
             return response()->json([
                 'success' => true,
                 'mode' => 'manual',
-                'qr_image_url' => Storage::url($setting->manual_qr_image),
+                'qr_image_url' => route('payment.qrImage')
+                    . '?v=' . optional($setting->updated_at)->timestamp,
                 'bank_name' => $setting->bank_name,
                 'account_name' => $setting->account_name,
                 'account_number' => $setting->account_number,
             ]);
         }
 
-        // ── BAKONG MODE: existing dynamic KHQR generation ──
-        $currency = $request->currency === 'KHR' ? KHQRData::CURRENCY_KHR : KHQRData::CURRENCY_USD;
-        $expiration = strval(floor(microtime(true) * 1000) + (5 * 60 * 1000));
+        /*
+        |--------------------------------------------------------------------------
+        | BAKONG MODE: Generate dynamic KHQR
+        |--------------------------------------------------------------------------
+        */
+        $currency = $request->currency === 'KHR'
+            ? KHQRData::CURRENCY_KHR
+            : KHQRData::CURRENCY_USD;
+
+        $expiration = strval(
+            floor(microtime(true) * 1000) + (5 * 60 * 1000)
+        );
 
         if ($setting->account_type === 'merchant') {
             $info = new MerchantInfo(
@@ -198,6 +204,7 @@ class SettingsController extends Controller
                 expirationTimestamp: $expiration,
                 merchantCategoryCode: $setting->merchant_category_code,
             );
+
             $result = BakongKHQR::generateMerchant($info);
         } else {
             $info = new IndividualInfo(
@@ -210,11 +217,16 @@ class SettingsController extends Controller
                 expirationTimestamp: $expiration,
                 merchantCategoryCode: $setting->merchant_category_code,
             );
+
             $result = BakongKHQR::generateIndividual($info);
         }
 
         if ($result->status['code'] !== 0) {
-            return response()->json(['success' => false, 'message' => $result->status['message'] ?? 'មិនអាចបង្កើត QR Code'], 422);
+            return response()->json([
+                'success' => false,
+                'message' => $result->status['message']
+                    ?? 'មិនអាចបង្កើត QR Code',
+            ], 422);
         }
 
         return response()->json([
@@ -223,6 +235,24 @@ class SettingsController extends Controller
             'qr' => $result->data['qr'],
             'md5' => $result->data['md5'],
         ]);
+    }
+
+
+    public function qrImage()
+    {
+        $setting = QrSetting::first();
+
+        abort_unless(
+            $setting && $setting->manual_qr_data,
+            404
+        );
+
+        return response(base64_decode($setting->manual_qr_data))
+            ->header(
+                'Content-Type',
+                $setting->manual_qr_mime ?: 'image/png'
+            )
+            ->header('Cache-Control', 'private, max-age=3600');
     }
 
     /**

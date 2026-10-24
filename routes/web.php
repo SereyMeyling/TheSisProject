@@ -292,6 +292,7 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
     // KHQR & Payment status
     Route::post('/payment/generate-khqr', [SettingsController::class, 'generateKhqr'])->name('payment.generateKhqr');
     Route::get('/payment/check-status/{md5}', [SettingsController::class, 'checkPaymentStatus'])->name('payment.checkStatus');
+    Route::get('/payment/qr-image', [SettingsController::class, 'qrImage'])->name('payment.qrImage');
 });
 
 
