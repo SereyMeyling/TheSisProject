@@ -41,7 +41,7 @@
                 <div class="row">
 
                     {{-- MANUAL --}}
-                    <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="col-md-12 mb-3 mb-md-0">
                         <label
                             class="mode-card w-100 mb-0
                         {{ optional($qrSetting)->mode !== 'bakong' ? 'active' : '' }}"
@@ -67,32 +67,7 @@
                         </label>
                     </div>
 
-                    {{-- BAKONG --}}
-                    <div class="col-md-6">
-                        <label
-                            class="mode-card w-100 mb-0
-                        {{ optional($qrSetting)->mode === 'bakong' ? 'active' : '' }}"
-                            id="labelModeBakong">
 
-                            <input type="radio" name="mode" value="bakong" class="d-none" autocomplete="off"
-                                {{ optional($qrSetting)->mode === 'bakong' ? 'checked' : '' }}>
-
-                            <div class="mode-icon">
-                                <i class="fas fa-bolt"></i>
-                            </div>
-
-                            <div class="flex-grow-1">
-                                <div class="font-weight-bold">
-                                    Bakong API
-                                </div>
-                                <small class="text-muted">
-                                    បង្កើត Dynamic KHQR តាម Invoice
-                                </small>
-                            </div>
-
-                            <i class="fas fa-check-circle mode-check"></i>
-                        </label>
-                    </div>
 
                 </div>
 
@@ -105,11 +80,7 @@
                         មិនអាចផ្ទៀងផ្ទាត់ការទូទាត់ដោយស្វ័យប្រវត្តិបានទេ។
                     </span>
 
-                    <span id="bakongInfo" class="d-none">
-                        <strong>Bakong API:</strong>
-                        ត្រូវការគណនី Bakong និង API Token
-                        ដើម្បីបង្កើត Dynamic KHQR។
-                    </span>
+
                 </div>
 
             </div>
@@ -207,122 +178,6 @@
         </div>
 
 
-        {{-- BAKONG --}}
-        <div id="bakongModeSection" class="{{ optional($qrSetting)->mode === 'bakong' ? '' : 'd-none' }}">
-
-            <div class="card border-0 shadow-sm settings-card mb-4">
-                <div class="card-body p-4">
-
-                    <div class="section-title mb-4">
-                        <div class="section-icon bg-warning-light text-warning">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-0">Bakong API</h5>
-                            <small class="text-muted">
-                                ព័ត៌មានសម្រាប់ Dynamic KHQR
-                            </small>
-                        </div>
-                    </div>
-
-                    <div class="row">
-
-                        <div class="col-lg-6">
-
-                            <div class="form-group">
-                                <label>ប្រភេទគណនី</label>
-                                <span class="text-danger">*</span>
-
-                                <select name="account_type" class="form-control">
-                                    <option value="individual"
-                                        {{ optional($qrSetting)->account_type == 'individual' ? 'selected' : '' }}>
-                                        បុគ្គល (Individual)
-                                    </option>
-
-                                    <option value="merchant"
-                                        {{ optional($qrSetting)->account_type == 'merchant' ? 'selected' : '' }}>
-                                        ហាង / ក្រុមហ៊ុន (Merchant)
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>ធនាគារ</label>
-                                <span class="text-danger">*</span>
-                                <select name="bank_name" class="form-control" required>
-                                    @foreach (['ABA BANK', 'ACLEDA', 'WING', 'TRUE MONEY', 'BAKONG'] as $bank)
-                                        <option value="{{ $bank }}"
-                                            {{ optional($qrSetting)->bank_name == $bank ? 'selected' : '' }}>
-                                            {{ $bank }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>
-                                    Bakong Account ID
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <input type="text" name="bakong_account_id" class="form-control"
-                                    value="{{ optional($qrSetting)->bakong_account_id }}"
-                                    placeholder="ឧ. yourclinic@aclb">
-
-                                <small class="text-muted">
-                                    ឧ. yourclinic@aclb
-                                </small>
-                            </div>
-
-                            <div class="form-group" id="merchantIdGroup">
-                                <label>Merchant ID</label>
-
-                                <input type="text" name="merchant_id" class="form-control"
-                                    value="{{ optional($qrSetting)->merchant_id }}" placeholder="Merchant ID">
-                            </div>
-
-                        </div>
-
-                        <div class="col-lg-6">
-
-                            <div class="form-group">
-                                <label>ឈ្មោះគណនី</label>
-                                <span class="text-danger">*</span>
-
-                                <input type="text" name="account_name" class="form-control" required
-                                    value="{{ optional($qrSetting)->account_name }}" placeholder="ឈ្មោះមន្ទីរពេទ្យ">
-                            </div>
-
-                            <div class="form-group">
-                                <label>លេខគណនី</label>
-                                <span class="text-danger">*</span>
-
-                                <input type="text" name="account_number" class="form-control" required
-                                    value="{{ optional($qrSetting)->account_number }}">
-                            </div>
-
-                            <div class="form-group">
-                                <label>ទីក្រុង</label>
-
-                                <input type="text" name="merchant_city" class="form-control"
-                                    value="{{ optional($qrSetting)->merchant_city ?? 'Phnom Penh' }}">
-                            </div>
-
-                            <div class="form-group">
-                                <label>លេខទូរស័ព្ទ</label>
-
-                                <input type="text" name="mobile_number" class="form-control"
-                                    value="{{ optional($qrSetting)->mobile_number }}" placeholder="012345678">
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-            </div>
-
-        </div>
 
     </form>
 

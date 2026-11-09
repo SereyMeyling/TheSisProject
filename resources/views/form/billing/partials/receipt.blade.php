@@ -2,7 +2,7 @@
     $setting = $setting ?? null;
 
     $clinicName  = data_get($setting, 'system_name') ?: config('app.name');
-    
+
     $clinicPhone = data_get($setting, 'phone');
     $clinicEmail = data_get($setting, 'email');
     $clinicAddr  = data_get($setting, 'address');
@@ -12,7 +12,7 @@
 
     $typeLabels   = ['service' => 'សេវាកម្ម', 'room' => 'បន្ទប់សម្រាក', 'medicine' => 'ថ្នាំពេទ្យ', 'lab' => 'មន្ទីរពិសោធន៍'];
     $statusLabels = ['paid' => 'បានទូទាត់រួច', 'partial' => 'បង់ខ្លះ', 'unpaid' => 'មិនទាន់បង់', 'cancelled' => 'បានលុបចោល'];
-    $methodLabels = ['cash' => 'សាច់ប្រាក់', 'card' => 'កាតធនាគារ', 'online' => 'Online / KHQR'];
+    $methodLabels = ['cash' => 'សាច់ប្រាក់', 'online' => 'Online / KHQR'];
 
     $isIpd  = !empty($invoice->admission_id);
     $room   = optional(optional($invoice->admission)->room)->room_number;
@@ -104,7 +104,7 @@
             @endif
             <div>
                 <div class="inv-clinic-name">{{ $clinicName }}</div>
-              
+
                 @if($clinicHours)<div class="inv-muted">{{ $clinicHours }}</div>@endif
                 @if($clinicAddr)<div class="inv-muted">{{ $clinicAddr }}</div>@endif
                 @if($clinicPhone || $clinicEmail)
@@ -196,7 +196,7 @@
                     <tr class="paid"><td>បានបង់</td><td>{{ $curSym }}{{ number_format($invoice->paid_amount, 2) }}</td></tr>
                     <tr class="due"><td>ប្រាក់ជំពាក់</td><td>{{ $curSym }}{{ number_format($invoice->balance, 2) }}</td></tr>
                 </table>
-      
+
     </div>
 
     {{-- Signatures --}}

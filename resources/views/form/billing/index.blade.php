@@ -410,10 +410,7 @@
                                 <input type="radio" name="payment_method" value="cash" checked autocomplete="off">
                                 <i class="fas fa-money-bill-wave mr-1"></i> សាច់ប្រាក់
                             </label>
-                            <label class="btn btn-outline-success" id="labelMethodCard">
-                                <input type="radio" name="payment_method" value="card" autocomplete="off">
-                                <i class="fas fa-credit-card mr-1"></i> កាតធនាគារ
-                            </label>
+                        
                             <label class="btn btn-outline-success" id="labelMethodOnline">
                                 <input type="radio" name="payment_method" value="online" autocomplete="off">
                                 <i class="fas fa-qrcode mr-1"></i> Online / KHQR

@@ -163,13 +163,13 @@
                         <div class="today-label">ការណាត់ជួប</div>
                     </div>
                 </div>
-                <div class="today-row">
+                <!-- <div class="today-row">
                     <span class="today-icon bg-soft-red"><i class="fas fa-notes-medical"></i></span>
                     <div class="today-text">
                         <div class="today-value">{{ $emergencyCases }}</div>
                         <div class="today-label">ករណីបន្ទាន់</div>
                     </div>
-                </div>
+                </div> -->
                 <div class="today-row">
                     <span class="today-icon bg-soft-blue"><i class="fas fa-bed"></i></span>
                     <div class="today-text">
