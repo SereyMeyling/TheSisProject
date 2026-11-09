@@ -260,16 +260,16 @@ class SettingsController extends Controller
      * GET /payment/check-status/{md5}
      * Requires BAKONG_API_TOKEN in .env (register at https://api-bakong.nbc.gov.kh/register)
      */
-    public function checkPaymentStatus($md5)
-    {
-        $bakong = new BakongKHQR(config('services.bakong.token'));
+    // public function checkPaymentStatus($md5)
+    // {
+    //     $bakong = new BakongKHQR(config('services.bakong.token'));
 
-        try {
-            $response = $bakong->checkTransactionByMD5($md5);
-            $paid = $response->responseCode === 0; // 0 = transaction found/successful
-            return response()->json(['paid' => $paid, 'raw' => $response]);
-        } catch (\Throwable $e) {
-            return response()->json(['paid' => false, 'error' => $e->getMessage()]);
-        }
-    }
+    //     try {
+    //         $response = $bakong->checkTransactionByMD5($md5);
+    //         $paid = $response->responseCode === 0; // 0 = transaction found/successful
+    //         return response()->json(['paid' => $paid, 'raw' => $response]);
+    //     } catch (\Throwable $e) {
+    //         return response()->json(['paid' => false, 'error' => $e->getMessage()]);
+    //     }
+    // }
 }

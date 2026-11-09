@@ -93,6 +93,35 @@
         background: linear-gradient(135deg, #10b981 0%, #047857 100%);
         color: #ffffff;
     }
+
+    .btn-outline-indigo {
+        color: #4f46e5;
+        border: 2px solid #d1d5db !important;
+        background-color: #fff;
+        transition: all 0.2s ease;
+        font-weight: 600;
+    }
+
+    /* Selected button */
+    .btn-group-toggle .btn:has(input:checked) {
+        color: #4f46e5 !important;
+        background-color: #eef2ff !important;
+        border: 2px solid #4f46e5 !important;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+        z-index: 2;
+    }
+
+    /* Hover */
+    .btn-outline-indigo:hover {
+        color: #4338ca;
+        background-color: #f5f3ff;
+        border-color: #818cf8 !important;
+    }
+
+    /* Focus */
+    .btn-outline-indigo:focus-within {
+        outline: none;
+    }
 </style>
 
 <div class="billing-container">
@@ -410,7 +439,7 @@
                                 <input type="radio" name="payment_method" value="cash" checked autocomplete="off">
                                 <i class="fas fa-money-bill-wave mr-1"></i> សាច់ប្រាក់
                             </label>
-                        
+
                             <label class="btn btn-outline-success" id="labelMethodOnline">
                                 <input type="radio" name="payment_method" value="online" autocomplete="off">
                                 <i class="fas fa-qrcode mr-1"></i> Online / KHQR
