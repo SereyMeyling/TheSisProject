@@ -18,13 +18,14 @@ class Appointment extends Model
         'appointment_date',
         'status',
         'reason',
-        'is_emergency' => 'boolean',
+        'is_emergency',
     ];
 
     protected $casts = [
         'appointment_date' => 'datetime',
         'reminder_sent_at' => 'datetime',
         'reminder_called_at' => 'datetime',
+        'is_emergency' => 'boolean',
     ];
 
     /**

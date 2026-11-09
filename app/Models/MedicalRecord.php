@@ -33,6 +33,27 @@ class MedicalRecord extends Model
         'visit_date' => 'datetime',
     ];
 
+
+    public const VISIT_TYPES = [
+        'new' => 'New',
+        'mf' => 'MF',
+        'bf' => 'BF',
+        'fu' => 'FU',
+        'refill' => 'Refill',
+        'discharge' => 'Discharge',
+    ];
+    public const DIAGNOSIS_GROUPS = [
+        'DMII' => 'DMII',
+        'HTN' => 'HTN',
+        'RA' => 'RA',
+        'HYPERTHYROID' => 'Hyperthyroid',
+        'GAD' => 'GAD',
+        'LIVER' => 'Liver',
+        'CARDIOLOGY' => 'Cardiology',
+        'DYSPEPSIA' => 'Dyspepsia',
+        'DENGUE' => 'គ្រុនឈាម',
+        'OTHER' => 'Other',
+    ];
     public function getBloodPressureAttribute(): ?string
     {
         if (!is_null($this->bp_systolic) && !is_null($this->bp_diastolic)) {

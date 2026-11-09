@@ -14,6 +14,7 @@ use App\Models\Prescription;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
 use App\Models\Room;
+use App\Models\Expense;
 use App\Models\Admission;
 use App\Models\Pharmacy\MedicineBatch;
 use App\Models\Pharmacy\Medicine;
@@ -109,6 +110,57 @@ class DashboardController extends Controller
         ];
 
 
+        // ---------- Admin dashboard phase 1 ----------
+        $monthStart = now()->startOfMonth();
+        $monthEnd = now()->endOfMonth();
+
+        // Pending = unpaid + partial invoices (Excel "Pending")
+        $unpaidCount = Invoice::whereIn('status', ['unpaid', 'partial'])->count();
+        $unpaidBalance = Invoice::whereIn('status', ['unpaid', 'partial'])->sum('balance');
+
+        // Pharmacy alerts (same low-stock rule as the pharmacist dashboard)
+        $lowStockAll = Medicine::where('is_active', true)
+            ->select('medicines.medicine_id', 'medicines.medicine_name', 'medicines.reorder_level')
+            ->selectSub(
+                MedicineBatch::selectRaw('COALESCE(SUM(remaining_quantity), 0)')
+                    ->whereColumn('medicine_batches.medicine_id', 'medicines.medicine_id'),
+                'stock_total'
+            )
+            ->havingRaw('stock_total <= COALESCE(medicines.reorder_level, 20)')
+            ->orderBy('stock_total', 'asc')
+            ->get();
+        $lowStockCount = $lowStockAll->count();
+        $lowStockList = $lowStockAll->take(5);
+
+        $expiringAll = MedicineBatch::with('medicine')->expiringSoon(30)->get();
+        $expiringCount = $expiringAll->count();
+        $expiringList = $expiringAll->take(5);
+
+        // This month: income, expense, payment methods
+        $monthIncome = InvoicePayment::whereBetween('paid_at', [$monthStart, $monthEnd])->sum('amount')
+            + Sale::whereBetween('created_at', [$monthStart, $monthEnd])->sum('total_amount');
+
+        $monthExpense = (float) MedicineBatch::whereBetween('created_at', [$monthStart, $monthEnd])
+            ->selectRaw('COALESCE(SUM(purchase_price * quantity_initial), 0) as t')->value('t')
+            + (float) Expense::whereBetween('expense_date', [$monthStart->toDateString(), $monthEnd->toDateString()])
+                ->sum('amount');
+
+        $paymentMix = InvoicePayment::whereBetween('paid_at', [$monthStart, $monthEnd])
+            ->selectRaw('payment_method, SUM(amount) as total')
+            ->groupBy('payment_method')
+            ->pluck('total', 'payment_method')
+            ->map(fn($v) => round((float) $v, 2))
+            ->toArray();
+
+        // Disease + visit-type statistics for the selected month (?month=YYYY-MM)
+        $month = $this->resolveMonth(request('month'));
+        $selectedMonth = $month->format('Y-m');
+        $diseaseStats = $this->diseaseStats($month);
+        $visitTypeStats = $this->visitTypeStats($month);
+
+        // Today's patients table
+        $todayVisits = $this->todayVisits(15);
+
 
         return view('form.dashboard.dashboard', compact(
             'totalPatients',
@@ -126,7 +178,20 @@ class DashboardController extends Controller
             'occupancyPercent',
             'departmentBreakdown',
             'finance',
-            'patientSeries'
+            'patientSeries',
+            'unpaidCount',
+            'unpaidBalance',
+            'lowStockCount',
+            'lowStockList',
+            'expiringCount',
+            'expiringList',
+            'monthIncome',
+            'monthExpense',
+            'paymentMix',
+            'selectedMonth',
+            'diseaseStats',
+            'visitTypeStats',
+            'todayVisits'
         ));
     }
 
@@ -275,27 +340,77 @@ class DashboardController extends Controller
         ));
     }
 
+
     private function monthlyFinance(Carbon $from, Carbon $to): array
     {
-        $income = InvoicePayment::selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as ym, SUM(amount) as total")
-            ->whereBetween('paid_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+        // 1. Income from invoice payments
+        $income = InvoicePayment::selectRaw("
+            DATE_FORMAT(paid_at, '%Y-%m') as ym,
+            SUM(amount) as total
+        ")
+            ->whereBetween('paid_at', [$from, $to])
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
 
-        $sales = Sale::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(total_amount) as total")
-            ->whereBetween('created_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+        // 2. Income from sales
+        $sales = Sale::selectRaw("
+            DATE_FORMAT(created_at, '%Y-%m') as ym,
+            SUM(total_amount) as total
+        ")
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
 
-        $expense = MedicineBatch::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as ym, SUM(purchase_price * quantity_initial) as total")
-            ->whereBetween('created_at', [$from, $to])->groupBy('ym')->pluck('total', 'ym');
+        // 3. Medicine purchase expenses
+        $expense = MedicineBatch::selectRaw("
+            DATE_FORMAT(created_at, '%Y-%m') as ym,
+            SUM(purchase_price * quantity_initial) as total
+        ")
+            ->whereBetween('created_at', [$from, $to])
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
 
+        // 4. Other expenses (doctor fee, services, supplies, etc.)
+        $otherExpense = Expense::selectRaw("
+            DATE_FORMAT(expense_date, '%Y-%m') as ym,
+            SUM(amount) as total
+        ")
+            ->whereBetween('expense_date', [
+                $from->toDateString(),
+                $to->toDateString()
+            ])
+            ->groupBy('ym')
+            ->pluck('total', 'ym');
+
+        // 5. Prepare monthly chart data
         $labels = $inc = $exp = [];
+
         for ($d = $from->copy()->startOfMonth(); $d->lte($to); $d->addMonth()) {
+
             $key = $d->format('Y-m');
+
             $labels[] = $d->format('M');
-            $inc[] = round(($income[$key] ?? 0) + ($sales[$key] ?? 0), 2);
-            $exp[] = round($expense[$key] ?? 0, 2);
+
+            // Total income = invoice payments + sales
+            $inc[] = round(
+                ($income[$key] ?? 0) + ($sales[$key] ?? 0),
+                2
+            );
+
+            // Total expenses = medicine purchases + other expenses
+            $exp[] = round(
+                ($expense[$key] ?? 0) + ($otherExpense[$key] ?? 0),
+                2
+            );
         }
 
-        return ['labels' => $labels, 'income' => $inc, 'expense' => $exp];
+        return [
+            'labels' => $labels,
+            'income' => $inc,
+            'expense' => $exp
+        ];
     }
+
 
     private function weeklyNewPatients(int $weeks): array
     {
@@ -329,4 +444,89 @@ class DashboardController extends Controller
 
         return ['labels' => $labels, 'data' => $data];
     }
+
+
+    private function resolveMonth(?string $value): Carbon
+    {
+        try {
+            return Carbon::createFromFormat('!Y-m', $value ?: now()->format('Y-m'))->startOfMonth();
+        } catch (\Throwable $e) {
+            return now()->startOfMonth();
+        }
+    }
+    private function diseaseStats(Carbon $month): array
+    {
+        $rows = MedicalRecord::join('patients', 'patients.patient_id', '=', 'medical_records.patient_id')
+            ->whereBetween('medical_records.visit_date', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->selectRaw("COALESCE(NULLIF(medical_records.diagnosis_group, ''), 'OTHER') as grp, patients.sex, COUNT(*) as total")
+            ->groupBy('grp', 'patients.sex')
+            ->get();
+
+        $groups = MedicalRecord::DIAGNOSIS_GROUPS;
+        $male = $female = array_fill_keys(array_keys($groups), 0);
+
+        foreach ($rows as $r) {
+            $key = isset($groups[$r->grp]) ? $r->grp : 'OTHER';
+            if ($r->sex === 'male') {
+                $male[$key] += (int) $r->total;
+            } elseif ($r->sex === 'female') {
+                $female[$key] += (int) $r->total;
+            }
+        }
+
+        return [
+            'labels' => array_values($groups),
+            'male' => array_values($male),
+            'female' => array_values($female),
+            'maleTotal' => array_sum($male),
+            'femaleTotal' => array_sum($female),
+        ];
+    }
+
+    private function visitTypeStats(Carbon $month): array
+    {
+        $counts = MedicalRecord::whereBetween('visit_date', [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()])
+            ->selectRaw("COALESCE(NULLIF(visit_type, ''), 'unset') as vt, COUNT(*) as total")
+            ->groupBy('vt')
+            ->pluck('total', 'vt');
+
+        $types = MedicalRecord::VISIT_TYPES + ['unset' => 'មិនបានកំណត់'];
+        $labels = $data = [];
+        foreach ($types as $key => $label) {
+            $labels[] = $label;
+            $data[] = (int) ($counts[$key] ?? 0);
+        }
+
+        return ['labels' => $labels, 'data' => $data];
+    }
+
+    // Today's visits + what each patient paid today + what they still owe
+    private function todayVisits(int $limit = 15): array
+    {
+        $visits = MedicalRecord::with('patient')
+            ->whereDate('visit_date', today())
+            ->latest('visit_date')
+            ->take($limit)
+            ->get();
+
+        $total = MedicalRecord::whereDate('visit_date', today())->count();
+        $ids = $visits->pluck('patient_id')->unique()->all();
+
+        $paid = InvoicePayment::join('invoices', 'invoices.id', '=', 'invoice_payments.invoice_id')
+            ->whereDate('invoice_payments.paid_at', today())
+            ->whereIn('invoices.patient_id', $ids)
+            ->selectRaw('invoices.patient_id, SUM(invoice_payments.amount) as total, GROUP_CONCAT(DISTINCT invoice_payments.payment_method) as methods')
+            ->groupBy('invoices.patient_id')
+            ->get()
+            ->keyBy('patient_id');
+
+        $owing = Invoice::whereIn('status', ['unpaid', 'partial'])
+            ->whereIn('patient_id', $ids)
+            ->selectRaw('patient_id, SUM(balance) as balance')
+            ->groupBy('patient_id')
+            ->pluck('balance', 'patient_id');
+
+        return compact('visits', 'total', 'paid', 'owing');
+    }
+
 }
