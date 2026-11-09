@@ -339,7 +339,7 @@ $(document).ready(function () {
     }
 
     $(document).on("change", 'input[name="payment_method"]', function () {
-        const isKhqr = $(this).val() === "online";
+        const isKhqr = $(this).val() === "khqr";
         resetKhqrPanel();
 
         if (isKhqr) {
@@ -461,11 +461,11 @@ $(document).ready(function () {
 
     $("#modalPayInvoice").on("hidden.bs.modal", function () {
         resetKhqrPanel();
+        $("#payInvoiceAlert").addClass("d-none").text("");
         $('input[name="payment_method"][value="cash"]').prop("checked", true);
         $("#labelMethodCash").addClass("active");
-        $("#labelMethodCard, #labelMethodOnline").removeClass("active");
+        $("#labelMethodOnline").removeClass("active");
     });
-
 
     $(document).on("submit", "#formPayInvoice, #payInvoiceForm", function (e) {
         e.preventDefault();
@@ -475,6 +475,7 @@ $(document).ready(function () {
         $btn.prop("disabled", true).html(
             '<i class="fas fa-spinner fa-spin mr-1"></i> កំពុងដំណើរការ...',
         );
+        $("#payInvoiceAlert").addClass("d-none").text("");
 
         $.ajax({
             url: $form.attr("action"),
@@ -498,9 +499,17 @@ $(document).ready(function () {
                 $btn.prop("disabled", false).html(
                     '<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់',
                 );
-                alert(
-                    xhr.responseJSON?.message || "មានបញ្ហាក្នុងការទូទាត់ប្រាក់",
-                );
+
+                let msg =
+                    xhr.responseJSON?.message || "មានបញ្ហាក្នុងការទូទាត់ប្រាក់";
+
+                if (xhr.status === 422 && xhr.responseJSON?.errors) {
+                    msg = Object.values(xhr.responseJSON.errors)
+                        .flat()
+                        .join("<br>");
+                }
+
+                $("#payInvoiceAlert").removeClass("d-none").html(msg);
             },
         });
     });

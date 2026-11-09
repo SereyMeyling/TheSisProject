@@ -113,8 +113,10 @@
 
     /* Hover */
     .btn-outline-indigo:hover {
-        color: #4338ca;
-        background-color: #f5f3ff;
+        color: #006D36;
+        ;
+        background-color: #006D36;
+        ;
         border-color: #818cf8 !important;
     }
 
@@ -402,6 +404,7 @@
 
 {{-- ====== Modal Pay Invoice ====== --}}
 <div class="modal fade" id="modalPayInvoice" tabindex="-1" aria-hidden="true">
+
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-pay">
@@ -415,6 +418,7 @@
                 <input type="hidden" id="pay_invoice_id" name="invoice_id">
                 <input type="hidden" name="transaction_ref" id="pay_transaction_ref">
                 <div class="modal-body p-4">
+                    <div class="alert alert-danger d-none" id="payInvoiceAlert" style="border-radius: 10px;"></div>
                     <div class="alert alert-info border-0 shadow-sm mb-3" style="border-radius: 10px;">
                         <div class="d-flex justify-content-between mb-1">
                             <span>លេខវិក្កយបត្រ:</span> <strong id="payInvoiceNumber" class="text-dark"></strong>
@@ -439,10 +443,9 @@
                                 <input type="radio" name="payment_method" value="cash" checked autocomplete="off">
                                 <i class="fas fa-money-bill-wave mr-1"></i> សាច់ប្រាក់
                             </label>
-
                             <label class="btn btn-outline-success" id="labelMethodOnline">
-                                <input type="radio" name="payment_method" value="online" autocomplete="off">
-                                <i class="fas fa-qrcode mr-1"></i> Online / KHQR
+                                <input type="radio" name="payment_method" value="khqr" autocomplete="off">
+                                <i class="fas fa-qrcode mr-1"></i> KHQR
                             </label>
                         </div>
                     </div>

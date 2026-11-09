@@ -16,8 +16,8 @@ class ProcessPaymentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'payment_method'  => ['required', 'string', 'in:cash,khqr,card'],
-            'amount'          => ['required', 'numeric', 'min:0.01'],
+            'payment_method' => ['required', 'string', 'in:cash,khqr'],
+            'amount' => ['required', 'numeric', 'min:0.01'],
             'transaction_ref' => ['nullable', 'string', 'max:100'],
         ];
     }
@@ -26,8 +26,8 @@ class ProcessPaymentRequest extends FormRequest
     {
         return [
             'payment_method.required' => 'សូមជ្រើសរើសវិធីសាស្ត្រទូទាត់ (Payment method is required).',
-            'amount.required'         => 'សូមបញ្ចូលចំនួនប្រាក់ទូទាត់ (Amount is required).',
-            'amount.min'              => 'ចំនួនប្រាក់ទូទាត់ត្រូវតែធំជាង 0 (Amount must be at least 0.01).',
+            'amount.required' => 'សូមបញ្ចូលចំនួនប្រាក់ទូទាត់ (Amount is required).',
+            'amount.min' => 'ចំនួនប្រាក់ទូទាត់ត្រូវតែធំជាង 0 (Amount must be at least 0.01).',
         ];
     }
 
