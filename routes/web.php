@@ -107,13 +107,14 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{role}/permissions', [RolePermissionController::class, 'assignPermissionsToRole'])->name('roles.assign-permissions');
     });
 
+    // Public branding assets (needed on login / 2FA pages)
+        Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
+        Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
+
     // System Settings & Backup
     Route::group(['prefix' => 'settings'], function () {
         Route::get('/general', [GeneralSettingsController::class, 'index'])->name('settingsgeneral.index');
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
-        Route::get('/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
-        Route::get('/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
-
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
         Route::post('/qrcode', [SettingsController::class, 'qrcodeUpdate'])->name('settingsqrcode.update');
 
