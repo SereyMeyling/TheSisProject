@@ -46,6 +46,10 @@ Auth::routes([
 ]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+   // Public branding assets (needed on login / 2FA pages)
+Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
+Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
+
 
 // ------------------ 2FA (mandatory for logged in users) --------------------
 Route::middleware(['auth'])->group(function () {
@@ -108,9 +112,6 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/{role}/permissions', [RolePermissionController::class, 'assignPermissionsToRole'])->name('roles.assign-permissions');
     });
 
-    // Public branding assets (needed on login / 2FA pages)
-    Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
-    Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
 
     // System Settings & Backup
     Route::group(['prefix' => 'settings'], function () {
