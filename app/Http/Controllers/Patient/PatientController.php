@@ -17,13 +17,8 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $search = $request->get('search');
-        $date   = $request->get('date');
+        $date = $request->get('date');
         $gender = $request->get('gender');
-
-        $todayCount   = Patient::whereDate('created_at', now()->today())->count();
-        $newPatients  = Patient::whereDate('created_at', now()->today())->count();
-        $oldPatients  = Patient::whereDate('created_at', '<', now()->today())->count();
-        $waitingCount = MedicalRecord::whereDate('created_at', now()->today())->count();
 
         $patients = Patient::when($search, function ($query, $search) {
             return $query->where(function ($q) use ($search) {
@@ -32,19 +27,20 @@ class PatientController extends Controller
                     ->orWhere('phone', 'like', "%{$search}%");
             });
         })
-            ->when($date, function ($query, $date) {
-                return $query->whereDate('created_at', $date);
-            })
-            ->when($gender, function ($query, $gender) {
-                return $query->where('sex', $gender);
-            })
+            ->when($date, fn($q, $date) => $q->whereDate('created_at', $date))
+            ->when($gender, fn($q, $gender) => $q->where('sex', $gender))
             ->latest('patient_id')
             ->paginate(10);
 
-        $waitingPatients = MedicalRecord::with('patient')
-            ->latest('record_id')
-            ->take(10)
-            ->get();
+        if ($request->ajax()) {
+            return view('form.patient.partials.table', compact('patients'));
+        }
+
+        $todayCount = Patient::whereDate('created_at', now()->today())->count();
+        $newPatients = $todayCount; // same query, no need to run it twice
+        $oldPatients = Patient::whereDate('created_at', '<', now()->today())->count();
+        $waitingPatients = $this->todayQueue();
+        $waitingCount = $waitingPatients->count();
 
         return view('form.patient.patient', compact(
             'patients',
@@ -58,10 +54,7 @@ class PatientController extends Controller
 
     public function create()
     {
-        $waitingPatients = MedicalRecord::with('patient')
-            ->latest('record_id')
-            ->take(10)
-            ->get();
+        $waitingPatients = $this->todayQueue();
 
         return view('form.patient.create', compact('waitingPatients'));
     }
@@ -69,34 +62,34 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'full_name'     => 'required|string|max:255',
-            'id_card'       => 'required|string|max:100',
+            'full_name' => 'required|string|max:255',
+            'id_card' => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'sex'           => 'required|string',
-            'phone'         => 'required|string|max:20',
-            'address'       => 'required|string|max:255',
+            'sex' => 'required|string',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
         ], [
-            'full_name.required'     => 'សូមបញ្ចូលឈ្មោះពេញ!',
-            'id_card.required'       => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
+            'full_name.required' => 'សូមបញ្ចូលឈ្មោះពេញ!',
+            'id_card.required' => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
             'date_of_birth.required' => 'សូមជ្រើសរើសថ្ងៃខែឆ្នាំកំណើត!',
-            'sex.required'           => 'សូមជ្រើសរើសភេទ!',
-            'phone.required'         => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
-            'address.required'       => 'សូមបញ្ចូលអាសយដ្ឋាន!',
+            'sex.required' => 'សូមជ្រើសរើសភេទ!',
+            'phone.required' => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
+            'address.required' => 'សូមបញ្ចូលអាសយដ្ឋាន!',
         ]);
 
         try {
-            $maxId       = Patient::max('patient_id') ?? 0;
-            $nextId      = $maxId + 1;
+            $maxId = Patient::max('patient_id') ?? 0;
+            $nextId = $maxId + 1;
             $patientCode = '#PT-' . date('Y') . '-' . str_pad($nextId, 3, '0', STR_PAD_LEFT);
 
             Patient::create([
-                'patient_code'  => $patientCode,
-                'full_name'     => $request->full_name,
-                'id_card'       => $request->id_card,
+                'patient_code' => $patientCode,
+                'full_name' => $request->full_name,
+                'id_card' => $request->id_card,
                 'date_of_birth' => $request->date_of_birth,
-                'sex'           => $request->sex,
-                'phone'         => $request->phone,
-                'address'       => $request->address,
+                'sex' => $request->sex,
+                'phone' => $request->phone,
+                'address' => $request->address,
             ]);
 
             return redirect()->route('patients.index')->with('success', 'ចុះឈ្មោះអ្នកជំងឺជោគជ័យ!');
@@ -109,10 +102,7 @@ class PatientController extends Controller
     {
         $patient = Patient::where('patient_id', $id)->firstOrFail();
         $medicalRecords = MedicalRecord::where('patient_id', $id)->latest('record_id')->get();
-        $waitingPatients = MedicalRecord::with('patient')
-            ->latest('record_id')
-            ->take(10)
-            ->get();
+        $waitingPatients = $this->todayQueue();
 
         return view('form.patient.show', compact('patient', 'medicalRecords', 'waitingPatients'));
     }
@@ -120,10 +110,7 @@ class PatientController extends Controller
     public function edit($id)
     {
         $patient = Patient::where('patient_id', $id)->firstOrFail();
-        $waitingPatients = MedicalRecord::with('patient')
-            ->latest('record_id')
-            ->take(10)
-            ->get();
+        $waitingPatients = $this->todayQueue();
 
         return view('form.patient.edit', compact('patient', 'waitingPatients'));
     }
@@ -131,30 +118,30 @@ class PatientController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'full_name'     => 'required|string|max:255',
-            'id_card'       => 'required|string|max:100',
+            'full_name' => 'required|string|max:255',
+            'id_card' => 'required|string|max:100',
             'date_of_birth' => 'required|date',
-            'sex'           => 'required|string',
-            'phone'         => 'required|string|max:20',
-            'address'       => 'required|string|max:255',
+            'sex' => 'required|string',
+            'phone' => 'required|string|max:20',
+            'address' => 'required|string|max:255',
         ], [
-            'full_name.required'     => 'សូមបញ្ចូលឈ្មោះពេញ!',
-            'id_card.required'       => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
+            'full_name.required' => 'សូមបញ្ចូលឈ្មោះពេញ!',
+            'id_card.required' => 'សូមបញ្ចូលលេខអត្តសញ្ញាណប័ណ្ណ!',
             'date_of_birth.required' => 'សូមជ្រើសរើសថ្ងៃខែឆ្នាំកំណើត!',
-            'sex.required'           => 'សូមជ្រើសរើសភេទ!',
-            'phone.required'         => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
-            'address.required'       => 'សូមបញ្ចូលអាសយដ្ឋាន!',
+            'sex.required' => 'សូមជ្រើសរើសភេទ!',
+            'phone.required' => 'សូមបញ្ចូលលេខទូរស័ព្ទ!',
+            'address.required' => 'សូមបញ្ចូលអាសយដ្ឋាន!',
         ]);
 
         try {
             $patient = Patient::where('patient_id', $id)->firstOrFail();
             $patient->update([
-                'full_name'     => $request->full_name,
-                'id_card'       => $request->id_card,
+                'full_name' => $request->full_name,
+                'id_card' => $request->id_card,
                 'date_of_birth' => $request->date_of_birth,
-                'sex'           => $request->sex,
-                'phone'         => $request->phone,
-                'address'       => $request->address,
+                'sex' => $request->sex,
+                'phone' => $request->phone,
+                'address' => $request->address,
             ]);
 
             return redirect()->route('patients.index')->with('success', 'កែប្រែព័ត៌មានអ្នកជំងឺជោគជ័យ!');
@@ -179,5 +166,13 @@ class PatientController extends Controller
     {
         $patient = Patient::findOrFail($id);
         return view('form.patient.print', compact('patient'));
+    }
+
+    private function todayQueue()
+    {
+        return MedicalRecord::with('patient')
+            ->whereDate('created_at', now()->toDateString())
+            ->latest('record_id')
+            ->get();
     }
 }

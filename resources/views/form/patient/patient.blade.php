@@ -120,73 +120,8 @@
                                 </div>
                             </form>
 
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle border-0">
-                                    <thead class="bg-light">
-                                        <tr class="text-secondary small">
-                                            <th>លេខសម្គាល់</th>
-                                            <th>ឈ្មោះពេញ</th>
-                                            <th>ភេទ</th>
-                                            <th>ថ្ងៃខែឆ្នាំកំណើត</th>
-                                            <th>លេខទូរស័ព្ទ</th>
-                                            <th>ថ្ងៃចុះឈ្មោះ</th>
-                                            <th>សកម្មភាព</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($patients as $patient)
-                                            <tr>
-                                                <td class="font-weight-bold text-dark">{{ $patient->patient_code }}</td>
-                                                <td class="font-weight-bold">{{ $patient->full_name }}</td>
-                                                <td>{{ strtolower($patient->sex) == 'male' ? 'ប្រុស' : 'ស្រី' }}</td>
-                                                <td>{{ $patient->date_of_birth ? \Carbon\Carbon::parse($patient->date_of_birth)->format('Y-m-d') : '-' }}
-                                                </td>
-                                                <td>{{ $patient->phone ?? '-' }}</td>
-                                                <td>{{ $patient->created_at ? $patient->created_at->format('d/m/Y') : '-' }}
-                                                </td>
-                                                <td>
-                                                    <div class="dropdown">
-                                                        <button type="button" class="btn btn-sm btn-light"
-                                                            data-toggle="dropdown" aria-haspopup="true"
-                                                            aria-expanded="false" title="សកម្មភាព">
-                                                            <i class="fas fa-ellipsis-h"></i>
-                                                        </button>
-                                                        <div class="dropdown-menu dropdown-menu-right">
-                                                            <a href="{{ route('patients.show', $patient->patient_id) }}"
-                                                                class="dropdown-item">
-                                                                <i class="fas fa-eye mr-2 text-info"></i> មើលព័ត៌មាន
-                                                            </a>
-                                                            <a href="{{ route('patients.print', $patient->patient_id) }}"
-                                                                target="_blank" class="dropdown-item">
-                                                                <i class="fas fa-print mr-2 text-success"></i> បោះពុម្ព
-                                                            </a>
-                                                            <a href="{{ route('patients.edit', $patient->patient_id) }}"
-                                                                class="dropdown-item">
-                                                                <i class="fas fa-edit mr-2 text-primary"></i> កែប្រែ
-                                                            </a>
-                                                            <button type="button"
-                                                                class="dropdown-item text-danger btn-delete-patient"
-                                                                data-id="{{ $patient->patient_id }}"
-                                                                data-name="{{ $patient->full_name }}" data-toggle="modal"
-                                                                data-target="#modalDeletePatient">
-
-                                                                <i class="fas fa-trash mr-2"></i> លុប
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="7" class="text-center text-muted py-4">
-                                                    មិនទាន់មានទិន្នន័យអ្នកជំងឺឡើយ</td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="d-flex justify-content-end mt-2">
-                                {{ $patients->appends(request()->query())->links() }}
+                            <div id="patientTableWrap">
+                                @include('form.patient.partials.table')
                             </div>
                         </div>
                     </div>
@@ -310,8 +245,9 @@
                                         <small class="text-muted"><i class="fas fa-id-badge mr-1"></i>
                                             {{ $record->patient->patient_code ?? 'N/A' }}</small>
                                     </div>
-                                    <span
-                                        class="badge badge-success px-2 py-1">{{ $record->created_at ? $record->created_at->diffForHumans() : '' }}</span>
+                                    <span class="badge badge-success px-2 py-1">
+                                        {{ $record->created_at ? $record->created_at->format('H:i') : '' }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -447,36 +383,68 @@
         const searchInput = document.getElementById('searchInput');
         const dateInput = document.getElementById('dateInput');
         const genderInput = document.getElementById('genderInput');
+        const wrap = document.getElementById('patientTableWrap');
+        const resetBtn = document.getElementById('resetFilterBtn');
 
-        let timer;
+        let timer, controller;
 
-        if (searchInput) {
-            searchInput.addEventListener('input', function () {
-                clearTimeout(timer);
-                timer = setTimeout(function () {
-                    form.submit();
-                }, 500);
-            });
+        function buildUrl() {
+            const params = new URLSearchParams();
+            new FormData(form).forEach((v, k) => { if (v) params.append(k, v); });
+            const qs = params.toString();
+            return form.action + (qs ? '?' + qs : '');
+        }
 
-            if (searchInput.value) {
-                const val = searchInput.value;
-                searchInput.focus();
-                searchInput.value = '';
-                searchInput.value = val;
+        async function load(url, push = true) {
+            if (controller) controller.abort();      // cancel stale requests
+            controller = new AbortController();
+            wrap.style.opacity = 0.5;
+
+            try {
+                const res = await fetch(url, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    signal: controller.signal
+                });
+                if (!res.ok) throw new Error(res.status);
+                wrap.innerHTML = await res.text();
+                if (push) history.pushState({}, '', url);
+
+                const hasFilter = searchInput.value || dateInput.value || genderInput.value;
+                resetBtn.classList.toggle('d-none', !hasFilter);
+                wrap.style.opacity = 1;
+            } catch (e) {
+                if (e.name === 'AbortError') return;  // a newer request took over
+                window.location.href = url;           // fallback: normal page load
             }
         }
 
-        if (dateInput) {
-            dateInput.addEventListener('change', function () {
-                form.submit();
-            });
-        }
+        // Typing: wait 300ms after the last keystroke
+        searchInput.addEventListener('input', () => {
+            clearTimeout(timer);
+            timer = setTimeout(() => load(buildUrl()), 300);
+        });
+        dateInput.addEventListener('change', () => load(buildUrl()));
+        genderInput.addEventListener('change', () => load(buildUrl()));
+        form.addEventListener('submit', e => { e.preventDefault(); load(buildUrl()); });
 
-        if (genderInput) {
-            genderInput.addEventListener('change', function () {
-                form.submit();
-            });
-        }
+        // Pagination links (event delegation, works after every table swap)
+        wrap.addEventListener('click', function (e) {
+            const link = e.target.closest('.pagination a');
+            if (!link) return;
+            e.preventDefault();
+            load(link.href);
+        });
+
+        // Reset
+        resetBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            form.reset();
+            searchInput.value = dateInput.value = genderInput.value = '';
+            load(this.href);
+        });
+
+        // Browser back/forward
+        window.addEventListener('popstate', () => location.reload());
     });
 
     (function () {

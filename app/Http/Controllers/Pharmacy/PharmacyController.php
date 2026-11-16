@@ -35,12 +35,7 @@ class PharmacyController extends Controller
             'medicines'
         ));
     }
-    // public function show(Medicine $medicine)
-    // {
-    //     $medicine->load('batches.supplier');
 
-    //     return view('form.phamacy.show', compact('medicine'));
-    // }
     public function stats()
     {
         return response()->json($this->dashboardStats());

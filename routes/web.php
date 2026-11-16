@@ -46,7 +46,7 @@ Auth::routes([
 ]);
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-   // Public branding assets (needed on login / 2FA pages)
+// Public branding assets (needed on login / 2FA pages)
 Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
 Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
 
@@ -251,10 +251,10 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::delete('/{medicine}', [PharmacyController::class, 'destroy'])->name('pharmacy.destroy');
     Route::post('/{medicine}/restock', [PharmacyController::class, 'addBatch'])->name('pharmacy.restock');
     Route::get('/{medicine}/details', [PharmacyController::class, 'details'])->name('pharmacy.details');
-    // Route::get('/{medicine}/show', [PharmacyController::class, 'show'])
-    //     ->name('pharmacy.show');
 
     Route::post('/suppliers', [SupplierController::class, 'store'])->name('pharmacy.suppliers.store');
+    Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('pharmacy.suppliers.list');
+    Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('pharmacy.suppliers.update');
 
     // Pharmacy Point-of-Sale / Direct Sales
     Route::get('/sell', [PharmacySaleController::class, 'index'])->name('pharmacy.sell.index');

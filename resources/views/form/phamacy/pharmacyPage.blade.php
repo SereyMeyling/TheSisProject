@@ -6,21 +6,28 @@
 
 <div class="toast-container-custom" id="toastContainer"></div>
 
-<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-    <h2 class="page-title mb-0">
 
-    </h2>
+<div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+
+    <h2 class="page-title mb-0"></h2>
+
     <div id="stockActionBtns">
-        <button class="btn btn-outline-green mr-2" data-toggle="modal" data-target="#modalSupplier">
-            <i class="fas fa-truck"></i>
+
+        {{-- Add Supplier --}}
+        <button type="button" class="btn btn-primary mr-2 mb-2" data-toggle="modal" data-target="#modalSupplier">
+            <i class="fas fa-plus mr-1"></i>
             បន្ថែម Supplier
         </button>
-        <button class="btn btn-primary btn-add" data-toggle="modal" data-target="#modalCreate">
+
+        {{-- Add Medicine --}}
+        <button type="button" class="btn btn-primary btn-add mb-2" data-toggle="modal" data-target="#modalCreate">
             <i class="fas fa-plus-circle"></i>
             បន្ថែមថ្នាំ
         </button>
+
     </div>
 </div>
+
 
 <div class="card shadow-sm">
 
@@ -401,14 +408,23 @@
     </div>
 </div>
 
+
 {{-- ====== Supplier Modal ====== --}}
 <div class="modal fade" id="modalSupplier" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content border-0 shadow-lg">
             <div class="modal-header modal-header-custom text-white">
-                <h5 class="modal-title font-weight-bold"><i class="fas fa-truck mr-2"></i> បន្ថែម Supplier ថ្មី</h5>
-                <button type="button" class="close text-white" data-dismiss="modal"
-                    aria-label="Close"><span>&times;</span></button>
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-truck mr-2"></i> បន្ថែម Supplier ថ្មី
+                </h5>
+                <div class="d-flex align-items-center">
+                    <button type="button" class="btn btn-outline-light btn-sm mr-3" id="btnOpenSupplierList">
+                        <i class="fas fa-list mr-1"></i> បញ្ជី Supplier
+                    </button>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
             </div>
             <form id="supplierForm">
                 @csrf
@@ -424,16 +440,76 @@
                         <input type="text" name="phone" class="form-control" placeholder="ឧ. 012 345 678">
                     </div>
                     <div class="form-group mb-3">
-                        <label class="font-weight-bold">អ៊ីមែល</label>
-                        <input type="email" name="email" class="form-control" placeholder="supplier@example.com">
+                        <label class="font-weight-bold">អាសយដ្ឋាន</label>
+                        <input type="text" name="address" class="form-control" placeholder="ឧ. ភ្នំពេញ">
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">បោះបង់</button>
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> រក្សាទុក
-                        Supplier</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> រក្សាទុក Supplier
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+
+{{-- ====== Supplier List Modal ====== --}}
+<div class="modal fade" id="modalSupplierList" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable modal-mobile-fit">
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header modal-header-custom text-white">
+                <h5 class="modal-title font-weight-bold">
+                    <i class="fas fa-truck mr-2"></i>
+                    បញ្ជី Supplier
+                </h5>
+
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+
+            <div class="modal-body p-3">
+
+                <div class="search-box mb-3" style="width:100%">
+                    <i class="fas fa-search"></i>
+
+                    <input type="text" id="supplierSearch" class="form-control" placeholder="ស្វែងរក Supplier...">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover mb-0">
+
+                        <thead class="thead-light">
+                            <tr>
+                                <th style="width:50px">ល.ខ</th>
+                                <th>ឈ្មោះ</th>
+                                <th>ទូរស័ព្ទ</th>
+                                <th>អាសយដ្ឋាន</th>
+                                <th class="text-right" style="width:110px">
+                                    សកម្មភាព
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="supplierListBody">
+                            {{-- Loaded by AJAX --}}
+                        </tbody>
+
+                    </table>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-dismiss="modal">
+                    បិទ
+                </button>
+            </div>
+
         </div>
     </div>
 </div>
@@ -626,13 +702,14 @@
         supplierStore: "{{ route('pharmacy.suppliers.store') }}",
         stats: "{{ route('pharmacy.stats') }}",
         detailsBase: "{{ url('pharmacy') }}",
+        supplierList: "{{ route('pharmacy.suppliers.list') }}",
+        supplierUpdateBase: "{{ url('pharmacy/suppliers') }}",
 
     };
 
 
     $(function () {
         const $stockActionBtns = $('#stockActionBtns');
-
 
 
         $.extend(true, $.fn.dataTable.defaults, {
@@ -655,6 +732,129 @@
                 }
             }, 400);
         });
+
+
+        // ===== Supplier list + inline edit =====
+        let suppliersCache = [];
+
+        const esc = s => $('<div>').text(s ?? '').html().replace(/"/g, '&quot;');
+
+        function renderSuppliers() {
+            const q = ($('#supplierSearch').val() || '').toLowerCase();
+            const list = suppliersCache.filter(s =>
+                (s.name || '').toLowerCase().includes(q) ||
+                (s.phone || '').toLowerCase().includes(q) ||
+                (s.address || '').toLowerCase().includes(q)
+            );
+
+            const html = list.map((s, i) => `
+        <tr data-id="${s.supplier_id}">
+            <td>${i + 1}</td>
+            <td>${esc(s.name)}</td>
+            <td>${esc(s.phone) || '-'}</td>
+          <td>${esc(s.address) || '-'}</td>
+            <td class="text-right">
+                <button type="button" class="btn btn-sm btn-light btn-sup-edit" title="កែប្រែ">
+                    <i class="fas fa-edit text-primary"></i>
+                </button>
+            </td>
+        </tr>`).join('');
+
+            $('#supplierListBody').html(html ||
+                '<tr><td colspan="5" class="text-center text-muted py-3">គ្មានទិន្នន័យ</td></tr>');
+        }
+
+        // Keep the supplier dropdowns in the Create/Restock modals in sync
+        function refreshSupplierSelects() {
+            $('select[name="supplier_id"]').each(function () {
+                const current = $(this).val();
+                let opts = '<option value="">មិនកំណត់</option>';
+                suppliersCache.forEach(s => {
+                    opts += `<option value="${s.supplier_id}">${esc(s.name)}</option>`;
+                });
+                $(this).html(opts).val(current);
+            });
+        }
+
+        function loadSuppliers() {
+            $('#supplierListBody').html(
+                '<tr><td colspan="5" class="text-center text-muted py-3">កំពុងផ្ទុក...</td></tr>');
+            $.get(routes.supplierList, function (res) {
+                suppliersCache = res.data;
+                renderSuppliers();
+                refreshSupplierSelects();
+            }).fail(function () {
+                showToast('ផ្ទុកបញ្ជី Supplier មិនបាន', 'error');
+            });
+        }
+
+        $('#modalSupplierList').on('shown.bs.modal', function () {
+            $('#supplierSearch').val('');
+            loadSuppliers();
+        });
+
+        $('#supplierSearch').on('input', renderSuppliers);
+
+        // Switch a row to edit mode
+        $(document).on('click', '.btn-sup-edit', function () {
+            const $tr = $(this).closest('tr');
+            const s = suppliersCache.find(x => x.supplier_id == $tr.data('id'));
+            $tr.html(`
+        <td></td>
+        <td><input type="text" class="form-control form-control-sm sup-name" value="${esc(s.name)}"></td>
+        <td><input type="text" class="form-control form-control-sm sup-phone" value="${esc(s.phone)}"></td>
+       <td><input type="text" class="form-control form-control-sm sup-address" value="${esc(s.address)}"></td>
+        <td class="text-right text-nowrap">
+            <button type="button" class="btn btn-sm btn-success btn-sup-save" title="រក្សាទុក"><i class="fas fa-check"></i></button>
+            <button type="button" class="btn btn-sm btn-light btn-sup-cancel" title="បោះបង់"><i class="fas fa-times"></i></button>
+        </td>`);
+            $tr.find('.sup-name').focus();
+        });
+
+        $(document).on('click', '.btn-sup-cancel', renderSuppliers);
+
+        $(document).on('click', '.btn-sup-save', function () {
+            const $btn = $(this).prop('disabled', true);
+            const $tr = $btn.closest('tr');
+            const id = $tr.data('id');
+
+            $.ajax({
+                url: routes.supplierUpdateBase + '/' + id,
+                method: 'POST',
+                data: {
+                    _token: csrf,
+                    _method: 'PUT',
+                    name: $tr.find('.sup-name').val(),
+                    phone: $tr.find('.sup-phone').val(),
+                    address: $tr.find('.sup-address').val()
+                }
+            }).done(function (res) {
+                const idx = suppliersCache.findIndex(x => x.supplier_id == id);
+                suppliersCache[idx] = res.data;
+                suppliersCache.sort((a, b) => a.name.localeCompare(b.name));
+                renderSuppliers();
+                refreshSupplierSelects();
+                showToast(res.message, 'success');
+            }).fail(function (xhr) {
+                const errs = xhr.responseJSON && xhr.responseJSON.errors;
+                showToast(errs ? Object.values(errs)[0][0] : 'កែប្រែមិនបាន', 'error');
+                $btn.prop('disabled', false);
+            });
+        });
+        // Close the Add Supplier modal first, then open the list (Bootstrap 4 can't stack modals)
+        $(document).on('click', '#btnOpenSupplierList', function () {
+            $('#modalSupplier')
+                .one('hidden.bs.modal', function () {
+                    $('#modalSupplierList').modal('show');
+                })
+                .modal('hide');
+        });
+
+        $(document).on('keydown', '#supplierListBody input', function (e) {
+            if (e.key === 'Enter') $(this).closest('tr').find('.btn-sup-save').click();
+            if (e.key === 'Escape') renderSuppliers();
+        });
+
 
 
         // Auto-open detail modal if arriving from a notification link (?detail=ID)
