@@ -352,7 +352,7 @@ return [
             'text' => 'បន្ទប់',
             'url' => 'room',
             'icon' => 'fas fa-procedures',
-            'can' => 'manage-rooms',
+            'can' => 'manage-system-settings',
         ],
         [
             'text' => 'ការណាត់ជួប',
