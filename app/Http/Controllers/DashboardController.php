@@ -54,6 +54,10 @@ class DashboardController extends Controller
 
     private function adminDashboard()
     {
+        // Resolve selected month from URL (?month=YYYY-MM)
+        $month = $this->resolveMonth(request('month'));
+        $selectedMonth = $month->format('Y-m');
+        //------------------------------------
         $totalPatients = Patient::count();
         $totalUsers = User::count();
         $totalusers = User::count();
@@ -98,10 +102,17 @@ class DashboardController extends Controller
             'percent' => $admittedTotal > 0 ? round($row->total / $admittedTotal * 100) : 0,
         ])->sortByDesc('total')->values()->toArray();
 
-        // Last 6 months income/expense chart data
+
+        // Finance chart data based on selected month
         $finance = [
-            'yearly' => $this->monthlyFinance(now()->startOfYear(), now()->endOfYear()),
-            'monthly' => $this->monthlyFinance(now()->startOfMonth()->subMonths(5), now()->endOfMonth()),
+            'yearly' => $this->monthlyFinance(
+                $month->copy()->startOfYear(),
+                $month->copy()->endOfYear()
+            ),
+            'monthly' => $this->monthlyFinance(
+                $month->copy()->subMonths(5)->startOfMonth(),
+                $month->copy()->endOfMonth()
+            ),
         ];
 
         $patientSeries = [
@@ -111,8 +122,8 @@ class DashboardController extends Controller
 
 
         // ---------- Admin dashboard phase 1 ----------
-        $monthStart = now()->startOfMonth();
-        $monthEnd = now()->endOfMonth();
+        $monthStart = $month->copy()->startOfMonth();
+        $monthEnd = $month->copy()->endOfMonth();
 
         // Pending = unpaid + partial invoices (Excel "Pending")
         $unpaidCount = Invoice::whereIn('status', ['unpaid', 'partial'])->count();
@@ -153,8 +164,7 @@ class DashboardController extends Controller
             ->toArray();
 
         // Disease + visit-type statistics for the selected month (?month=YYYY-MM)
-        $month = $this->resolveMonth(request('month'));
-        $selectedMonth = $month->format('Y-m');
+
         $diseaseStats = $this->diseaseStats($month);
         $visitTypeStats = $this->visitTypeStats($month);
 

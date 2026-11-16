@@ -4,6 +4,7 @@ use App\Http\Controllers\Appointment\AppointmentReminderController;
 use App\Http\Controllers\Auth\TwoFactorController;
 use App\Http\Controllers\Billing\BillingController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DashboardExportController;
 use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
@@ -58,7 +59,7 @@ Route::middleware(['auth'])->group(function () {
 // ------------------ All Authenticated Roles --------------------
 Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    Route::get('/dashboard/export', [DashboardExportController::class, 'export'])->name('dashboard.export');
     Route::group(['prefix' => 'support'], function () {
         Route::get('/', [SupportController::class, 'index'])->name('support.index');
     });
@@ -108,8 +109,8 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     });
 
     // Public branding assets (needed on login / 2FA pages)
-        Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
-        Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
+    Route::get('/settings/general/logo', [GeneralSettingsController::class, 'logo'])->name('settingsgeneral.logo');
+    Route::get('/settings/general/favicon', [GeneralSettingsController::class, 'favicon'])->name('settingsgeneral.favicon');
 
     // System Settings & Backup
     Route::group(['prefix' => 'settings'], function () {

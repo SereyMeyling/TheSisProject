@@ -5,6 +5,24 @@
 @section('content')
 
 <div class="container-fluid dash-wrap">
+
+    {{-- MONTH FILTER + EXCEL EXPORT --}}
+    <div class="filter-bar mb-3">
+        <label class="mb-0 mr-2 font-weight-bold">ជ្រើសរើសខែ</label>
+        <form method="GET" class="mb-0 mr-3">
+            <input type="month" name="month" class="form-control form-control-sm month-input"
+                value="{{ $selectedMonth }}" max="{{ now()->format('Y-m') }}" onchange="this.form.submit()">
+        </form>
+        <a href="{{ route('dashboard.export', ['month' => $selectedMonth, 'scope' => 'month']) }}"
+            class="btn btn-sm btn-success mr-2">
+            <i class="fas fa-file-excel"></i> Export Excel ({{ $selectedMonth }})
+        </a>
+        <a href="{{ route('dashboard.export', ['month' => $selectedMonth, 'scope' => 'year']) }}"
+            class="btn btn-sm btn-outline-success">
+            <i class="fas fa-file-excel"></i> Export ទាំងឆ្នាំ ({{ substr($selectedMonth, 0, 4) }}) – 12 sheets
+        </a>
+    </div>
+
     {{-- STAT CARDS --}}
     <div class="row stat-row">
 
@@ -116,7 +134,7 @@
             <div class="stat-card">
                 <div class="d-flex justify-content-between align-items-start">
                     <span class="stat-icon icon-teal"><i class="fas fa-balance-scale"></i></span>
-                    <span class="stat-trend up"><i class="fas fa-calendar-alt"></i> ខែនេះ</span>
+                    <span class="stat-trend up"><i class="fas fa-calendar-alt"></i> {{ $selectedMonth }}</span>
                 </div>
                 <div class="stat-label">ចំណូលសុទ្ធ (ចំណូល − ចំណាយ)</div>
                 <div class="stat-value {{ ($monthIncome - $monthExpense) < 0 ? 'text-danger' : '' }}">
@@ -163,13 +181,6 @@
                         <div class="today-label">ការណាត់ជួប</div>
                     </div>
                 </div>
-                <!-- <div class="today-row">
-                    <span class="today-icon bg-soft-red"><i class="fas fa-notes-medical"></i></span>
-                    <div class="today-text">
-                        <div class="today-value">{{ $emergencyCases }}</div>
-                        <div class="today-label">ករណីបន្ទាន់</div>
-                    </div>
-                </div> -->
                 <div class="today-row">
                     <span class="today-icon bg-soft-blue"><i class="fas fa-bed"></i></span>
                     <div class="today-text">
@@ -206,43 +217,77 @@
 
     </div>
 
-    {{-- PAYMENT METHODS / VISIT TYPES / MONTH SUMMARY --}}
+
+    {{-- PAYMENT METHODS + FINANCIAL SUMMARY + DISEASE STATISTICS --}}
     <div class="row mb-3">
 
+        {{-- DISEASE STATISTICS --}}
         <div class="col-lg-4 mb-3 mb-lg-0">
             <div class="panel h-100">
-                <h3 class="panel-title mb-3">វិធីទូទាត់ (ខែនេះ)</h3>
+                <h3 class="panel-title mb-3">
+                    ស្ថិតិជំងឺតាមភេទ ({{ $selectedMonth }})
+                </h3>
+
+                <div class="chart-holder h-260">
+                    <canvas id="diseaseChart"></canvas>
+                </div>
+
+                <div class="chart-legend">
+                    <span>
+                        <i class="legend-dot dot-blue"></i>
+                        ប្រុស {{ $diseaseStats['maleTotal'] }}
+                    </span>
+                    <span>
+                        <i class="legend-dot dot-pink"></i>
+                        ស្រី {{ $diseaseStats['femaleTotal'] }}
+                    </span>
+                    <span>
+                        សរុប {{ $diseaseStats['maleTotal'] + $diseaseStats['femaleTotal'] }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {{-- PAYMENT METHODS --}}
+        <div class="col-lg-4 mb-3 mb-lg-0">
+            <div class="panel h-100">
+                <h3 class="panel-title mb-3">
+                    វិធីទូទាត់ ({{ $selectedMonth }})
+                </h3>
+
                 @if(count($paymentMix))
-                    <div class="chart-holder h-220"><canvas id="paymentChart"></canvas></div>
+                    <div class="chart-holder h-220">
+                        <canvas id="paymentChart"></canvas>
+                    </div>
                 @else
-                    <p class="text-muted small mb-0">មិនទាន់មានការទូទាត់ក្នុងខែនេះ</p>
+                    <p class="text-muted small mb-0">
+                        មិនទាន់មានការទូទាត់ក្នុងខែនេះ
+                    </p>
                 @endif
             </div>
         </div>
 
-        <div class="col-lg-4 mb-3 mb-lg-0">
-            <div class="panel h-100">
-                <h3 class="panel-title mb-3">ប្រភេទមកពិនិត្យ</h3>
-                @if(array_sum($visitTypeStats['data']) > 0)
-                    <div class="chart-holder h-220"><canvas id="visitTypeChart"></canvas></div>
-                    <p class="text-muted small mt-2 mb-0">MF = Meet follow-up · BF = Before follow-up · FU = Follow-up</p>
-                @else
-                    <p class="text-muted small mb-0">មិនទាន់មានទិន្នន័យ (ត្រូវជ្រើសប្រភេទមកពិនិត្យក្នុងកំណត់ត្រាពេទ្យ)</p>
-                @endif
-            </div>
-        </div>
-
+        {{-- FINANCIAL SUMMARY --}}
         <div class="col-lg-4">
             <div class="panel h-100">
-                <h3 class="panel-title mb-3">សង្ខេបហិរញ្ញវត្ថុ (ខែនេះ)</h3>
+                <h3 class="panel-title mb-3">
+                    សង្ខេបហិរញ្ញវត្ថុ ({{ $selectedMonth }})
+                </h3>
+
                 <div class="money-row">
                     <span class="money-label">ចំណូល</span>
-                    <span class="money-value in">${{ number_format($monthIncome, 2) }}</span>
+                    <span class="money-value in">
+                        ${{ number_format($monthIncome, 2) }}
+                    </span>
                 </div>
+
                 <div class="money-row">
                     <span class="money-label">ចំណាយ (ថ្នាំ + ផ្សេងៗ)</span>
-                    <span class="money-value out">${{ number_format($monthExpense, 2) }}</span>
+                    <span class="money-value out">
+                        ${{ number_format($monthExpense, 2) }}
+                    </span>
                 </div>
+
                 <div class="money-row">
                     <span class="money-label">សុទ្ធ</span>
                     <span class="money-value {{ ($monthIncome - $monthExpense) < 0 ? 'out' : 'in' }}">
@@ -254,45 +299,6 @@
 
     </div>
 
-    {{-- DISEASE STATISTICS + ADMITTED BY DEPARTMENT --}}
-    <div class="row mb-3">
-
-        <div class="col-lg-7 mb-3 mb-lg-0">
-            <div class="panel h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h3 class="panel-title">ស្ថិតិជំងឺតាមភេទ</h3>
-                    <input type="month" id="diseaseMonth" class="form-control form-control-sm month-input"
-                        value="{{ $selectedMonth }}" max="{{ now()->format('Y-m') }}">
-                </div>
-                <div class="chart-holder h-260"><canvas id="diseaseChart"></canvas></div>
-                <div class="chart-legend">
-                    <span><i class="legend-dot dot-blue"></i> ប្រុស {{ $diseaseStats['maleTotal'] }}</span>
-                    <span><i class="legend-dot dot-pink"></i> ស្រី {{ $diseaseStats['femaleTotal'] }}</span>
-                    <span>សរុប {{ $diseaseStats['maleTotal'] + $diseaseStats['femaleTotal'] }}</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-lg-5">
-            <div class="panel h-100">
-                <h3 class="panel-title mb-3">អ្នកជំងឺនៅរដ្ឋបាលតាមផ្នែក</h3>
-
-                @forelse($departmentBreakdown as $dept)
-                    <div class="dept-row">
-                        <span class="dept-icon bg-soft-rose"><i class="fas fa-heartbeat"></i></span>
-                        <div class="dept-text">
-                            <div class="dept-name">{{ $dept['name'] }}</div>
-                            <div class="dept-sub">{{ $dept['total'] }} នាក់កំពុងសម្រាក</div>
-                        </div>
-                        <div class="dept-percent">{{ $dept['percent'] }}%</div>
-                    </div>
-                @empty
-                    <p class="text-muted small">មិនទាន់មានទិន្នន័យ (ត្រូវកំណត់ department ទៅបន្ទប់សិន)</p>
-                @endforelse
-            </div>
-        </div>
-
-    </div>
 
     {{-- TODAY'S PATIENTS + PHARMACY ALERTS --}}
     <div class="row mb-3">
@@ -330,10 +336,12 @@
                                     <td class="font-weight-bold">{{ $v->patient->patient_code ?? '-' }}</td>
                                     <td>{{ $v->patient->full_name ?? '-' }}</td>
                                     <td>{{ $sex === 'male' ? 'ប្រុស' : ($sex === 'female' ? 'ស្រី' : '-') }}</td>
-                                    <td>{{ \App\Models\MedicalRecord::DIAGNOSIS_GROUPS[$v->diagnosis_group] ?? ($v->diagnosis ?: '-') }}</td>
+                                    <td>{{ \App\Models\MedicalRecord::DIAGNOSIS_GROUPS[$v->diagnosis_group] ?? ($v->diagnosis ?: '-') }}
+                                    </td>
                                     <td>
                                         @if($v->visit_type)
-                                            <span class="visit-badge vt-{{ $v->visit_type }}">{{ \App\Models\MedicalRecord::VISIT_TYPES[$v->visit_type] ?? strtoupper($v->visit_type) }}</span>
+                                            <span
+                                                class="visit-badge vt-{{ $v->visit_type }}">{{ \App\Models\MedicalRecord::VISIT_TYPES[$v->visit_type] ?? strtoupper($v->visit_type) }}</span>
                                         @else
                                             -
                                         @endif
@@ -341,7 +349,8 @@
                                     <td class="text-right">
                                         @if($pay)
                                             ${{ number_format($pay->total, 2) }}
-                                            <small class="text-muted">{{ strtoupper(str_replace(',', '/', $pay->methods)) }}</small>
+                                            <small
+                                                class="text-muted">{{ strtoupper(str_replace(',', '/', $pay->methods)) }}</small>
                                         @else
                                             -
                                         @endif
@@ -358,14 +367,17 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-3">មិនទាន់មានអ្នកជំងឺមកពិនិត្យថ្ងៃនេះ</td>
+                                    <td colspan="8" class="text-center text-muted py-3">មិនទាន់មានអ្នកជំងឺមកពិនិត្យថ្ងៃនេះ
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
                 @if($todayVisits['total'] > $todayVisits['visits']->count())
-                    <p class="text-muted small mt-2 mb-0">បង្ហាញ {{ $todayVisits['visits']->count() }} ចុងក្រោយ ក្នុងចំណោម {{ $todayVisits['total'] }}</p>
+                    <p class="text-muted small mt-2 mb-0">បង្ហាញ {{ $todayVisits['visits']->count() }} ចុងក្រោយ ក្នុងចំណោម
+                        {{ $todayVisits['total'] }}
+                    </p>
                 @endif
             </div>
         </div>
@@ -425,7 +437,9 @@
                 <div class="today-row">
                     <span class="today-icon bg-soft-blue"><i class="fas fa-database"></i></span>
                     <div class="today-text">
-                        <div class="today-value">{{ $lastBackup && $lastBackup->created_at ? $lastBackup->created_at->format('d/m/Y H:i') : 'មិនទាន់មាន' }}</div>
+                        <div class="today-value">
+                            {{ $lastBackup && $lastBackup->created_at ? $lastBackup->created_at->format('d/m/Y H:i') : 'មិនទាន់មាន' }}
+                        </div>
                         <div class="today-label">Backup ចុងក្រោយ</div>
                     </div>
                 </div>
@@ -811,6 +825,18 @@
         border-radius: 10px;
     }
 
+    .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px 0;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 12px 16px;
+        box-shadow: 0 2px 10px rgba(31, 42, 36, .04);
+    }
+
     /* finance summary */
     .money-row {
         display: flex;
@@ -958,7 +984,8 @@
 
 @section('js')
 @parent
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="{{ asset('vendor/chartjs/chart.umd.js') }}"></script>
+<script>window.Chart || document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.js"><\/script>');</script>
 <script>
     const finance = @json($finance);
     const patientSeries = @json($patientSeries);
@@ -968,6 +995,16 @@
     const diseaseStats = @json($diseaseStats);
 
     $(document).ready(function () {
+
+        // Chart.js could not be downloaded (offline / blocked CDN)
+        if (typeof Chart === 'undefined') {
+            $('.chart-holder').html('<p class="text-danger small mb-0">មិនអាចផ្ទុក Chart.js បាន (ពិនិត្យឯកសារ public/vendor/chartjs/chart.umd.js)</p>');
+            return;
+        }
+
+        const sum = a => (a || []).reduce((x, y) => x + Number(y), 0);
+        const noData = id => $('#' + id).closest('.chart-holder')
+            .after('<p class="text-muted small text-center mt-2 mb-0">មិនទាន់មានទិន្នន័យ</p>');
 
         // ----- income / expense -----
         const ieChart = new Chart(document.getElementById('incomeExpenseChart'), {
@@ -1002,6 +1039,8 @@
                 maintainAspectRatio: false
             }
         });
+
+        if (sum(finance.yearly.income) + sum(finance.yearly.expense) === 0) { noData('incomeExpenseChart'); }
 
         $('.income-range-btn').on('click', function () {
             $('.income-range-btn').removeClass('active');
@@ -1045,6 +1084,8 @@
                 maintainAspectRatio: false
             }
         });
+
+        if (sum(patientSeries.weekly.data) === 0) { noData('weeklyChart'); }
 
         $('.patient-range-btn').on('click', function () {
             $('.patient-range-btn').removeClass('active');
@@ -1119,11 +1160,7 @@
             });
         }
 
-        $('#diseaseMonth').on('change', function () {
-            if (this.value) {
-                window.location = window.location.pathname + '?month=' + encodeURIComponent(this.value);
-            }
-        });
+        if (sum(diseaseStats.male) + sum(diseaseStats.female) === 0) { noData('diseaseChart'); }
     });
 </script>
 @stop
