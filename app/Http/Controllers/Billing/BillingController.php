@@ -101,7 +101,13 @@ class BillingController extends Controller
 
         // Stats summary
         $totalInvoices = Invoice::count();
-        $totalRevenue = Invoice::sum('paid_amount');
+        $todayCashRevenue = InvoicePayment::whereDate('paid_at', today())
+            ->where('payment_method', 'cash')
+            ->sum('amount');
+
+        $todayKhqrRevenue = InvoicePayment::whereDate('paid_at', today())
+            ->where('payment_method', 'khqr')
+            ->sum('amount');
         $totalUnpaid = Invoice::where('status', '!=', 'cancelled')->sum('balance');
 
         $patients = Patient::select(['patient_id', 'full_name', 'phone', 'patient_code'])->get();
@@ -115,12 +121,13 @@ class BillingController extends Controller
             return response()->json([
                 'html' => view('form.billing.partials.table', compact('invoices'))->render(),
                 'totalInvoices' => $totalInvoices,
-                'totalRevenue' => number_format($totalRevenue, 2),
+                'todayCashRevenue' => number_format($todayCashRevenue, 2),
+                'todayKhqrRevenue' => number_format($todayKhqrRevenue, 2),
                 'totalUnpaid' => number_format($totalUnpaid, 2),
             ]);
         }
 
-        return view('form.billing.index', compact('invoices', 'totalInvoices', 'totalRevenue', 'totalUnpaid', 'patients', 'admissions', 'billing'));
+        return view('form.billing.index', compact('invoices', 'totalInvoices', 'todayCashRevenue', 'todayKhqrRevenue', 'totalUnpaid', 'patients', 'admissions', 'billing'));
     }
 
     /**

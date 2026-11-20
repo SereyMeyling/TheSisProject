@@ -49,13 +49,13 @@
                                 <hr>
                                 <p>
                                     <i class="fas fa-phone"></i>
-                                    012 345 678
+                                    0719899290
                                 </p>
                                 <p>
                                     <i class="fas fa-envelope"></i>
-                                    meyling@gmail.com
+                                    sereymeyling57@gmail.com
                                 </p>
-                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
+                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="0719899290">
                                     Copy Phone
                                 </button>
                             </div>
@@ -71,13 +71,13 @@
                                 <hr>
                                 <p>
                                     <i class="fas fa-phone"></i>
-                                    012 345 678
+                                    0968538510
                                 </p>
                                 <p>
                                     <i class="fas fa-envelope"></i>
-                                    dany@gmail.com
+                                    danychan48@gmail.com
                                 </p>
-                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
+                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="0968538510">
                                     Copy Phone
                                 </button>
                             </div>

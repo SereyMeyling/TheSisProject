@@ -111,15 +111,7 @@
         z-index: 2;
     }
 
-    /* Hover */
-    .btn-outline-indigo:hover {
-        color: #006D36;
-        ;
-        background-color: #006D36;
-        ;
-        border-color: #818cf8 !important;
-    }
-
+   
     /* Focus */
     .btn-outline-indigo:focus-within {
         outline: none;
@@ -154,7 +146,7 @@
 
     <!-- Stats Overview Cards -->
     <div class="row mb-4">
-        <div class="col-md-4 mb-3">
+        <div class="col-md-3 mb-3">
             <div class="stat-card-billing">
                 <div class="stat-icon bg-icon-primary">
                     <i class="fas fa-file-invoice"></i>
@@ -165,19 +157,39 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
-            <div class="stat-card-billing">
-                <div class="stat-icon bg-icon-success">
-                    <i class="fas fa-hand-holding-usd"></i>
-                </div>
-                <div>
-                    <small class="text-muted font-weight-bold d-block">ចំណូលទទួលបានសរុប</small>
-                    <h3 id="statTotalRevenue" class="m-0 font-weight-bold text-success">
-                        ${{ number_format($totalRevenue, 2) }}</h3>
+
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0" style="border-radius: 16px;">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-circle mr-3 text-success"
+                        style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: #e8f5e9;">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">ប្រាក់ស្រស់ថ្ងៃនេះ (Cash Today)</div>
+                        <div class="h3 font-weight-bold mb-0 text-success">${{ number_format($todayCashRevenue, 2) }}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-3">
+
+        <div class="col-md-3 mb-3">
+            <div class="card h-100 shadow-sm border-0" style="border-radius: 16px;">
+                <div class="card-body d-flex align-items-center">
+                    <div class="icon-circle mr-3 text-primary"
+                        style="width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; background: #e3f2fd;">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <div>
+                        <div class="text-muted small">KHQR ថ្ងៃនេះ (KHQR Today)</div>
+                        <div class="h3 font-weight-bold mb-0 text-primary">${{ number_format($todayKhqrRevenue, 2) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
             <div class="stat-card-billing">
                 <div class="stat-icon bg-icon-danger">
                     <i class="fas fa-exclamation-circle"></i>
