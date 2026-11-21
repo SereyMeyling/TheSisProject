@@ -3,6 +3,7 @@ $(document).ready(function () {
     const $search = $("#search");
     const $statusFilter = $("#statusFilter");
     const $visitTypeFilter = $("#visitTypeFilter");
+    let pendingChargesXhr = null;
     let debounceTimer;
 
     $(function () {
@@ -48,6 +49,12 @@ $(document).ready(function () {
         $("#btnSubmitCreateInvoice")
             .prop("disabled", false)
             .html('<i class="fas fa-save mr-1"></i> រក្សាទុកវិក្កយបត្រ');
+
+        if (pendingChargesXhr) {
+            pendingChargesXhr.abort();
+            pendingChargesXhr = null;
+        }
+        $("#pendingChargesStatus").empty();
     }
 
     $("#modalCreateInvoice").on("show.bs.modal hidden.bs.modal", function () {
@@ -138,13 +145,14 @@ $(document).ready(function () {
         },
     );
 
-    // Existing patient selection auto-fill
+    // Existing patient selection: auto-fill name/phone and load the patient's pending charges
     $("#select_patient_id").on("change", function () {
         const $opt = $(this).find(":selected");
         if ($opt.val()) {
             $("#create_patient_name").val($opt.data("name"));
             $("#create_patient_phone").val($opt.data("phone"));
         }
+        loadPendingCharges($opt.val() || "");
     });
 
     // Visit Type toggle: OPD vs IPD
@@ -165,6 +173,7 @@ $(document).ready(function () {
             $("#create_patient_name").val($opt.data("name"));
             $("#create_patient_phone").val($opt.data("phone"));
             $("#select_patient_id").val($opt.data("patient-id"));
+            loadPendingCharges($opt.data("patient-id"));
         }
     });
 
@@ -182,7 +191,7 @@ $(document).ready(function () {
                             <option value="service" ${isSelected("service")}>សេវាកម្ម</option>
                             <option value="room" ${isSelected("room")}>បន្ទប់សម្រាក</option>
                             <option value="medicine" ${isSelected("medicine")}>ថ្នាំពេទ្យ</option>
-                            <option value="lab" ${isSelected("lab")}>មន្ទីរពិសោធន៍</option>
+                           <option value="lab_test" ${isSelected("lab_test")}>មន្ទីរពិសោធន៍</option>
                         </select>
                     </td>
                     <td>
@@ -242,6 +251,146 @@ $(document).ready(function () {
         });
         $("#createGrandTotal").text(total.toFixed(2));
     }
+    // ── Pending charges (auto-fill from the patient's unbilled charges) ──
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    const chargeTypeLabels = {
+        medicine: "ថ្នាំពេទ្យ",
+        lab_test: "មន្ទីរពិសោធន៍",
+        room: "បន្ទប់សម្រាក",
+    };
+
+    // Display-only row: no input names except the hidden charge id,
+    // so the browser can never send a price for a charge.
+    function chargeRowHtml(it) {
+        const qty = parseInt(it.quantity, 10) || 1;
+        const price = parseFloat(it.unit_price) || 0;
+        return `
+            <tr class="item-row charge-row" data-charge-id="${it.charge_id}">
+                <td>
+                    <input type="hidden" name="charge_ids[]" value="${it.charge_id}">
+                    <span class="badge badge-info">${escapeHtml(chargeTypeLabels[it.item_type] || it.item_type)}</span>
+                </td>
+                <td><input type="text" class="form-control form-control-sm item-desc bg-light" value="${escapeHtml(it.description)}" readonly></td>
+                <td><input type="number" class="form-control form-control-sm item-qty text-center bg-light" value="${qty}" readonly></td>
+                <td><input type="number" step="0.01" class="form-control form-control-sm item-price text-right bg-light" value="${price.toFixed(2)}" readonly></td>
+                <td><input type="text" class="form-control form-control-sm item-subtotal text-right bg-light" value="${(qty * price).toFixed(2)}" readonly></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-charge" style="border-radius: 6px;" title="មិនដាក់ក្នុងវិក្កយបត្រនេះ"><i class="fas fa-times"></i></button>
+                </td>
+            </tr>`;
+    }
+
+    function setChargesStatus(html) {
+        $("#pendingChargesStatus").html(html || "");
+    }
+
+    function loadPendingCharges(patientId) {
+        if (pendingChargesXhr) {
+            pendingChargesXhr.abort();
+            pendingChargesXhr = null;
+        }
+
+        // Always start clean so rows never pile up when the patient changes
+        $("#invoiceItemsTbody .charge-row").remove();
+        recalculateGrandTotal();
+        setChargesStatus("");
+
+        if (!patientId) return;
+
+        setChargesStatus(
+            '<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>កំពុងទាញយកការគិតលុយ...</span>',
+        );
+
+        const request = $.ajax({
+            url: window.billingConfig.baseUrl + "/pending-charges/" + patientId,
+            method: "GET",
+            headers: {
+                "X-Requested-With": "XMLHttpRequest",
+                Accept: "application/json",
+            },
+            success: function (res) {
+                // Ignore a late answer if another patient was picked meanwhile
+                if (String($("#select_patient_id").val()) !== String(patientId))
+                    return;
+
+                const items = res.items || [];
+                $("#invoiceItemsTbody").prepend(
+                    items.map(chargeRowHtml).join(""),
+                );
+                recalculateGrandTotal();
+
+                let msg = items.length
+                    ? '<span class="text-success"><i class="fas fa-check-circle mr-1"></i>បានបញ្ចូលការគិតលុយ ' +
+                      items.length +
+                      " មុខ សរុប $" +
+                      Number(res.total || 0).toFixed(2) +
+                      " — អាចដកមុខណាមួយចេញបាន</span>"
+                    : '<span class="text-muted">' +
+                      escapeHtml(res.message || "គ្មានការគិតលុយដែលមិនទាន់បង់") +
+                      "</span>";
+
+                (res.warnings || []).forEach(function (w) {
+                    msg +=
+                        '<div class="text-warning">' + escapeHtml(w) + "</div>";
+                });
+                setChargesStatus(msg);
+
+                // Room charges mean an inpatient invoice: switch to IPD when the admission is selectable
+                if (
+                    res.admission_id &&
+                    items.some((i) => i.source_type === "room")
+                ) {
+                    const $opt = $(
+                        "#create_admission_id option[value='" +
+                            res.admission_id +
+                            "']",
+                    );
+                    if ($opt.length) {
+                        $("#labelVisitIpd").addClass("active");
+                        $("#labelVisitOpd").removeClass("active");
+                        $('input[name="visit_type"][value="ipd"]')
+                            .prop("checked", true)
+                            .trigger("change");
+                        $("#create_admission_id").val(String(res.admission_id));
+                    }
+                }
+            },
+            error: function (jq, status) {
+                if (status === "abort") return;
+                setChargesStatus(
+                    '<span class="text-danger"><i class="fas fa-exclamation-triangle mr-1"></i>' +
+                        escapeHtml(
+                            jq.responseJSON?.message ||
+                                "មិនអាចទាញយកការគិតលុយបានទេ",
+                        ) +
+                        "</span>",
+                );
+            },
+            complete: function () {
+                if (pendingChargesXhr === request) pendingChargesXhr = null;
+            },
+        });
+        pendingChargesXhr = request;
+    }
+
+    // Leave one charge out of this invoice (it stays pending for later)
+    $(document).on(
+        "click",
+        "#invoiceItemsTbody .btn-remove-charge",
+        function () {
+            $(this).closest("tr").remove();
+            recalculateGrandTotal();
+        },
+    );
 
     // Submit Create Invoice
     $(document).on("submit", "#formCreateInvoice", function (e) {
@@ -940,8 +1089,9 @@ $(document).ready(function () {
                     <td>
                         <select name="items[${idx}][item_type]" class="form-control form-control-sm item-type" required>
                             <option value="" disabled ${!item.item_type ? "selected" : ""}>-- ជ្រើសរើសប្រភេទសេវា --</option>
-                            <option value="consultation" ${item.item_type === "consultation" ? "selected" : ""}>ពិគ្រោះជំងឺ (Consultation)</option>
-                            <option value="prescription" ${item.item_type === "prescription" ? "selected" : ""}>ថ្នាំពេទ្យ (Medicine)</option>
+
+                            <option value="service" ${item.item_type === "service" ? "selected" : ""}>សេវាកម្ម (Service)</option>
+                            <option value="medicine" ${item.item_type === "medicine" ? "selected" : ""}>ថ្នាំពេទ្យ (Medicine)</option>
                             <option value="lab_test" ${item.item_type === "lab_test" ? "selected" : ""}>មន្ទីរពិសោធន៍ (Lab Test)</option>
                             <option value="room" ${item.item_type === "room" ? "selected" : ""}>បន្ទប់សម្រាក (Room Fee)</option>
                             <option value="other" ${item.item_type === "other" ? "selected" : ""}>ផ្សេងៗ (Other)</option>
@@ -1034,6 +1184,17 @@ $(document).ready(function () {
                     },
                 );
                 recalculateEditGrandTotal();
+                // Invoices built from charges keep their items; only name/phone/notes can change
+                const locked = (inv.charges_count || 0) > 0;
+                $("#editChargesNotice").toggleClass("d-none", !locked);
+                $("#btnAddEditInvoiceItem").toggleClass("d-none", locked);
+                $("#editInvoiceItemsTbody").toggleClass("items-locked", locked);
+                if (locked) {
+                    $("#editInvoiceItemsTbody input").prop("readonly", true);
+                    $("#editInvoiceItemsTbody .btn-remove-item").addClass(
+                        "d-none",
+                    );
+                }
 
                 $("#editInvoiceForm").attr(
                     "action",

@@ -42,4 +42,8 @@ class Patient extends Model
     {
         return $this->hasMany(Invoice::class, 'patient_id', 'patient_id');
     }
+    public function charges()
+    {
+        return $this->hasMany(\App\Models\Billing\PatientCharge::class, 'patient_id', 'patient_id');
+    }
 }

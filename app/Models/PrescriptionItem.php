@@ -37,4 +37,25 @@ class PrescriptionItem extends Model
     {
         return $this->belongsTo(Medicine::class, 'medicine_id', 'medicine_id');
     }
+    public function dispenses()
+    {
+        return $this->hasMany(PrescriptionItemDispense::class, 'prescription_item_id', 'prescription_item_id');
+    }
+
+
+
+    /** Quantity still to dispense (never negative). */
+    public function getRemainingToDispenseAttribute(): int
+    {
+        return max(0, (int) $this->quantity - $this->dispensed_quantity);
+    }
+    /** Total quantity dispensed so far (sum of all dispense events). */
+    public function getDispensedQuantityAttribute(): int
+    {
+        if ($this->relationLoaded('dispenses')) {
+            return (int) $this->dispenses->sum('quantity');
+        }
+
+        return (int) $this->dispenses()->sum('quantity');
+    }
 }

@@ -18,6 +18,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('appointments:send-reminders')
             ->hourly()
             ->between('7:00', '18:00');
+        $schedule->command('billing:accrue-room-charges')
+            ->hourly()
+            ->withoutOverlapping();
     }
     /**
      * Register the commands for the application.

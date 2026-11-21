@@ -14,6 +14,8 @@ use App\Helpers\NotifiesRoles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use App\Models\PrescriptionItemDispense;
+use App\Services\Billing\PatientChargeService;
 
 class PrescriptionController extends Controller
 {
@@ -27,8 +29,8 @@ class PrescriptionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Prescription::with(['medicalRecord.patient', 'medicalRecord.doctor', 'items.medicine']);
 
+        $query = Prescription::with(['medicalRecord.patient', 'medicalRecord.doctor', 'items.medicine', 'items.dispenses']);
         if ($request->filled('search')) {
             $searchTerm = '%' . $request->search . '%';
             $query->where(function ($q) use ($searchTerm) {
@@ -113,62 +115,107 @@ class PrescriptionController extends Controller
     /**
      * Dispense a prescription and deduct batch stock.
      */
+    /**
+     * Dispense (fully or partially) a prescription, deduct batch stock,
+     * and create one pending patient charge per dispensed item.
+     * Expects items[<prescription_item_id>] = quantity to dispense now.
+     */
     public function dispense(Request $request, $id)
     {
-        $prescription = Prescription::with(['items.medicine'])->find($id);
+        $requested = [];
+        foreach ((array) $request->input('items', []) as $itemId => $qty) {
+            if ($qty === null || $qty === '') {
+                continue;
+            }
+            if (!ctype_digit((string) $qty)) {
+                return redirect()->back()->with([
+                    'error' => 'ចំនួនត្រូវតែជាលេខគត់វិជ្ជមាន',
+                ]);
+            }
+            if ((int) $qty > 0) {
+                $requested[(int) $itemId] = (int) $qty;
+            }
+        }
 
-        if (!$prescription) {
+        if (empty($requested)) {
             return redirect()->back()->with([
-                'error' => 'រកមិនឃើញវេជ្ជបញ្ជាទេ'
+                'error' => 'សូមបញ្ចូលចំនួនថ្នាំដែលត្រូវចេញយ៉ាងហោចណាស់មួយមុខ',
             ]);
         }
 
-        // Prevent dispensing the same prescription twice
-        if ($prescription->status === 'dispensed') {
-            return redirect()->back()->with([
-                'error' => 'វេជ្ជបញ្ជានេះបានចេញថ្នាំរួចហើយ'
-            ]);
-        }
+        $chargeService = app(PatientChargeService::class);
 
         DB::beginTransaction();
 
         try {
+            // Lock the prescription so two dispenses cannot run at the same time.
+            $prescription = Prescription::with(['items.medicine', 'items.dispenses', 'medicalRecord'])
+                ->whereKey($id)
+                ->lockForUpdate()
+                ->first();
 
-            foreach ($prescription->items as $item) {
+            if (!$prescription) {
+                DB::rollBack();
+                return redirect()->back()->with(['error' => 'រកមិនឃើញវេជ្ជបញ្ជាទេ']);
+            }
 
-                $qtyNeeded = (int) $item->quantity;
+            if ($prescription->status === 'dispensed') {
+                DB::rollBack();
+                return redirect()->back()->with([
+                    'error' => 'វេជ្ជបញ្ជានេះបានចេញថ្នាំរួចហើយ',
+                ]);
+            }
+
+            $record = $prescription->medicalRecord;
+            if (!$record) {
+                throw new \Exception('រកមិនឃើញកំណត់ត្រាវេជ្ជសាស្ត្រនៃវេជ្ជបញ្ជានេះទេ');
+            }
+
+            $items = $prescription->items->keyBy('prescription_item_id');
+
+            foreach ($requested as $itemId => $qty) {
+                if (!$items->has($itemId)) {
+                    throw new \Exception('ថ្នាំមួយមុខមិនមែនជារបស់វេជ្ជបញ្ជានេះទេ');
+                }
+            }
+
+            foreach ($requested as $itemId => $qty) {
+                $item = $items[$itemId];
+                $medicine = $item->medicine;
+                $medicineName = $medicine->medicine_name ?? 'Unknown';
+
+                if ($qty > $item->remaining_to_dispense) {
+                    throw new \Exception(
+                        'ថ្នាំ ' . $medicineName . ' នៅសល់ត្រូវចេញត្រឹម ' . $item->remaining_to_dispense . ' ប៉ុណ្ណោះ'
+                    );
+                }
+
+                if (!$medicine || (float) $medicine->selling_price <= 0) {
+                    throw new \Exception(
+                        'ថ្នាំ ' . $medicineName . ' មិនទាន់មានតម្លៃលក់ សូមកំណត់តម្លៃសិន'
+                    );
+                }
+
+                // Deduct stock, oldest expiry first. remaining_quantity is the source of truth.
+                $qtyNeeded = $qty;
 
                 $batches = MedicineBatch::where('medicine_id', $item->medicine_id)
-                    ->where(function ($q) {
-                        $q->where('quantity_remaining', '>', 0)
-                            ->orWhere('remaining_quantity', '>', 0);
-                    })
+                    ->where('remaining_quantity', '>', 0)
                     ->orderBy('expiry_date', 'asc')
                     ->lockForUpdate()
                     ->get();
 
                 foreach ($batches as $batch) {
-
                     if ($qtyNeeded <= 0) {
                         break;
                     }
 
-                    $available = $batch->quantity_remaining
-                        ?? $batch->remaining_quantity
-                        ?? 0;
-
-                    $available = (int) $available;
-
-                    if ($available <= 0) {
-                        continue;
-                    }
-
+                    $available = (int) $batch->remaining_quantity;
                     $deduct = min($qtyNeeded, $available);
-
                     $newQuantity = $available - $deduct;
 
-                    $batch->quantity_remaining = $newQuantity;
                     $batch->remaining_quantity = $newQuantity;
+                    $batch->quantity_remaining = $newQuantity;
                     $batch->save();
 
                     MedicineStockMovement::create([
@@ -183,19 +230,40 @@ class PrescriptionController extends Controller
                     $qtyNeeded -= $deduct;
                 }
 
-                // Not enough stock
                 if ($qtyNeeded > 0) {
                     throw new \Exception(
-                        'ថ្នាំ ' .
-                        ($item->medicine->medicine_name ?? 'Unknown') .
-                        ' មានស្តុកមិនគ្រប់គ្រាន់។ ខ្វះចំនួន ' .
-                        $qtyNeeded
+                        'ថ្នាំ ' . $medicineName . ' មានស្តុកមិនគ្រប់គ្រាន់។ ខ្វះចំនួន ' . $qtyNeeded
                     );
                 }
+
+                // Record this dispense event, then bill exactly what was dispensed.
+                $dispense = PrescriptionItemDispense::create([
+                    'prescription_item_id' => $item->prescription_item_id,
+                    'quantity' => $qty,
+                    'dispensed_by' => auth()->id(),
+                    'dispensed_at' => now(),
+                ]);
+
+                $chargeService->create([
+                    'patient_id' => $record->patient_id,
+                    'medical_record_id' => $record->record_id,
+                    'source_type' => 'medicine',
+                    'source_id' => $dispense->dispense_id,
+                    'source_key' => PatientChargeService::medicineKey($dispense->dispense_id),
+                    'description' => trim($medicineName . ' ' . ($medicine->strength ?? '')),
+                    'quantity' => $qty,
+                    'unit_price' => $medicine->selling_price,
+                    'charge_date' => now()->toDateString(),
+                ]);
             }
 
-            // Mark prescription as dispensed
-            $prescription->status = 'dispensed';
+            // Fully dispensed only when every item has been given in full.
+            $prescription->load('items.dispenses');
+            $allDone = $prescription->items->every(function ($it) {
+                return $it->remaining_to_dispense === 0;
+            });
+
+            $prescription->status = $allDone ? 'dispensed' : 'partial';
             $prescription->dispensed_at = now();
             $prescription->dispensed_by = auth()->id();
             $prescription->save();
@@ -203,15 +271,15 @@ class PrescriptionController extends Controller
             DB::commit();
 
             return redirect()->back()->with([
-                'success' => 'បានចេញថ្នាំតាមវេជ្ជបញ្ជាដោយជោគជ័យ'
+                'success' => $allDone
+                    ? 'បានចេញថ្នាំតាមវេជ្ជបញ្ជាគ្រប់ចំនួនដោយជោគជ័យ'
+                    : 'បានចេញថ្នាំមួយផ្នែក វេជ្ជបញ្ជានៅមានថ្នាំត្រូវចេញបន្ត',
             ]);
-
         } catch (\Exception $e) {
-
             DB::rollBack();
 
             return redirect()->back()->with([
-                'error' => 'មានបញ្ហាក្នុងការចេញថ្នាំ៖ ' . $e->getMessage()
+                'error' => 'មានបញ្ហាក្នុងការចេញថ្នាំ៖ ' . $e->getMessage(),
             ]);
         }
     }

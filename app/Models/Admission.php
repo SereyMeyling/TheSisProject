@@ -52,4 +52,8 @@ class Admission extends Model
     {
         return $this->belongsTo(Department::class, 'department_id', 'department_id');
     }
+    public function charges()
+    {
+        return $this->hasMany(\App\Models\Billing\PatientCharge::class, 'admission_id', 'admission_id');
+    }
 }

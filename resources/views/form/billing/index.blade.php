@@ -111,10 +111,16 @@
         z-index: 2;
     }
 
-   
+
     /* Focus */
     .btn-outline-indigo:focus-within {
         outline: none;
+    }
+
+    /* Edit modal: items of a charge-backed invoice are read-only */
+    .items-locked select {
+        pointer-events: none;
+        background-color: #e9ecef;
     }
 </style>
 
@@ -345,6 +351,7 @@
                     </div>
 
                     <table class="table table-bordered align-middle mb-3" id="invoiceItemsTable">
+                        <div id="pendingChargesStatus" class="small mb-2"></div>
                         <thead class="bg-light">
                             <tr>
                                 <th style="width: 24%;">ប្រភេទសេវា <span class="text-danger">*</span></th>
@@ -364,7 +371,7 @@
                                         <option value="service">សេវាកម្ម</option>
                                         <option value="room">បន្ទប់សម្រាក</option>
                                         <option value="medicine">ថ្នាំពេទ្យ</option>
-                                        <option value="lab">មន្ទីរពិសោធន៍</option>
+                                        <option value="lab_test">មន្ទីរពិសោធន៍</option>
                                     </select>
                                 </td>
                                 <td>
@@ -607,6 +614,10 @@
                 @csrf
                 <div class="modal-body p-4">
                     <div class="alert alert-danger d-none" id="editInvoiceAlert"></div>
+                    <div class="alert alert-info d-none" id="editChargesNotice">
+                        វិក្កយបត្រនេះបង្កើតពីការគិតលុយដែលមានស្រាប់ មុខសេវាមិនអាចកែប្រែបានទេ។
+                        អ្នកអាចកែបានតែឈ្មោះ លេខទូរស័ព្ទ និងចំណាំ។ បើត្រូវកែមុខសេវា សូមលុបចោលវិក្កយបត្រ រួចបង្កើតថ្មី។
+                    </div>
 
                     <div class="row mb-3">
                         <div class="col-md-4">

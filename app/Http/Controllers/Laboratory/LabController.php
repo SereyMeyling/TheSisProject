@@ -12,6 +12,7 @@ use App\Helpers\NotifiesRoles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use App\Services\Billing\LabChargeService;
 
 class LabController extends Controller
 {
@@ -296,10 +297,19 @@ class LabController extends Controller
                 }
             }
 
+
+
+            $wasPending = $order->status === 'pending';
+
             $order->update([
                 'status' => 'completed'
             ]);
 
+            // Bill the tests only the first time the order becomes completed,
+            // so re-saving an old completed order can never create new charges.
+            if ($wasPending) {
+                app(LabChargeService::class)->chargeCompletedOrder($order);
+            }
             DB::commit();
 
             // Notify ordering doctor + admins + nurses
@@ -421,6 +431,19 @@ class LabController extends Controller
     {
         $test = LabTest::findOrFail($id);
 
+        if ($test->results()->exists()) {
+            $message = 'មិនអាចលុបតេស្តនេះបានទេ ព្រោះបានប្រើក្នុងការកម្មង់ពិនិត្យរួចហើយ';
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 409);
+            }
+
+            return back()->with('error', $message);
+        }
+
         $test->delete();
 
         if ($request->ajax()) {
@@ -435,7 +458,6 @@ class LabController extends Controller
             'តេស្តពិសោធន៍ត្រូវបានលុបដោយជោគជ័យ'
         );
     }
-
 
     public function showResult($id)
     {

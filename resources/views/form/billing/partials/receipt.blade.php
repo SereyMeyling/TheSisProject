@@ -10,9 +10,9 @@
     $logo        = data_get($setting, 'logo');
     $logoUrl     = $logo ? (str_starts_with($logo, 'http') ? $logo : asset('storage/' . $logo)) : null;
 
-    $typeLabels   = ['service' => 'សេវាកម្ម', 'room' => 'បន្ទប់សម្រាក', 'medicine' => 'ថ្នាំពេទ្យ', 'lab' => 'មន្ទីរពិសោធន៍'];
+    $typeLabels   = ['service' => 'សេវាកម្ម', 'room' => 'បន្ទប់សម្រាក', 'medicine' => 'ថ្នាំពេទ្យ', 'lab' => 'មន្ទីរពិសោធន៍', 'lab_test' => 'មន្ទីរពិសោធន៍', 'consultation' => 'ពិគ្រោះជំងឺ', 'prescription' => 'ថ្នាំពេទ្យ', 'other' => 'ផ្សេងៗ'];
     $statusLabels = ['paid' => 'បានទូទាត់រួច', 'partial' => 'បង់ខ្លះ', 'unpaid' => 'មិនទាន់បង់', 'cancelled' => 'បានលុបចោល'];
-    $methodLabels = ['cash' => 'សាច់ប្រាក់', 'online' => 'Online / KHQR'];
+    $methodLabels = ['cash' => 'សាច់ប្រាក់', 'online' => 'Online / KHQR', 'khqr' => 'KHQR'];
 
     $isIpd  = !empty($invoice->admission_id);
     $room   = optional(optional($invoice->admission)->room)->room_number;

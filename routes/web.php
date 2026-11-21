@@ -256,19 +256,6 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
     Route::get('/suppliers/list', [SupplierController::class, 'list'])->name('pharmacy.suppliers.list');
     Route::put('/suppliers/{id}', [SupplierController::class, 'update'])->name('pharmacy.suppliers.update');
 
-    // Pharmacy Point-of-Sale / Direct Sales
-    Route::get('/sell', [PharmacySaleController::class, 'index'])->name('pharmacy.sell.index');
-    Route::get('/sell/search', [PharmacySaleController::class, 'search'])->name('pharmacy.sell.search');
-    Route::get('/sell/history', [PharmacySaleController::class, 'history'])->name('pharmacy.sell.history');
-    Route::post('/sell', [PharmacySaleController::class, 'store'])->name('pharmacy.sell.store');
-    Route::get('/sell/{sale}/receipt', [PharmacySaleController::class, 'receipt'])
-        ->name('pharmacy.sell.receipt');
-
-
-
-    // Patient search for POS
-    Route::get('/sell/patients/search', [PharmacySaleController::class, 'patientSearch'])
-        ->name('pharmacy.patients.search');
 
     Route::get('/stats', [PharmacyController::class, 'stats'])->name('pharmacy.stats');
 
@@ -284,6 +271,11 @@ Route::group(['prefix' => 'pharmacy', 'middleware' => ['auth', '2fa', 'role:admi
 // Billing management, payment collection, KHQR, receipts
 // =========================================================================
 Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin|cashier']], function () {
+
+    // Pending charges for one patient (feeds the "create invoice" form)
+    Route::get('/pending-charges/{patient}', [BillingController::class, 'pendingCharges'])
+        ->whereNumber('patient')
+        ->name('billing.pendingCharges');
     Route::get('/', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');

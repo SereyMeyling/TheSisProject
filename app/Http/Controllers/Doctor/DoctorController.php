@@ -17,6 +17,7 @@ use App\Models\Prescription;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\Billing\RoomChargeService;
 
 use App\Models\User;
 
@@ -263,6 +264,9 @@ class DoctorController extends Controller
     protected function syncPrescription(MedicalRecord $record, array $items): void
     {
         $prescription = Prescription::where('record_id', $record->record_id)->first();
+        if ($prescription && $prescription->status !== 'pending') {
+            throw new \Exception('វេជ្ជបញ្ជានេះបានចេញថ្នាំរួច ឬកំពុងចេញថ្នាំ មិនអាចកែប្រែបានទេ។');
+        }
 
         if (empty($items)) {
             if ($prescription) {
@@ -389,6 +393,8 @@ class DoctorController extends Controller
             $admission->save();
 
             $room->update(['status' => 'occupied']);
+            // Charge the admission day right away (inside the same transaction).
+            app(RoomChargeService::class)->accrueForAdmission($admission);
 
             DB::commit();
             return redirect()->back()->with('success', 'បានបញ្ចូលអ្នកជំងឺឱ្យសម្រាកព្យាបាល (Admitted as Inpatient) រួចរាល់!');

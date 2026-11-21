@@ -15,33 +15,39 @@ class StoreInvoiceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'patient_name'        => ['required', 'string', 'max:100'],
-            'patient_phone'       => ['nullable', 'string', 'max:30'],
-            'patient_id'          => ['nullable', 'exists:patients,patient_id'],
+            'patient_name' => ['required', 'string', 'max:100'],
+            'patient_phone' => ['nullable', 'string', 'max:30'],
+            'patient_id' => ['nullable', 'exists:patients,patient_id'],
 
             // NULL = OPD invoice. When present, must be a real admission.
-            'admission_id'        => ['nullable', 'exists:admissions,admission_id'],
+            'admission_id' => ['nullable', 'exists:admissions,admission_id'],
 
-            'items'               => ['required', 'array', 'min:1'],
-            'items.*.item_type'   => ['required', 'string', 'in:consultation,prescription,lab_test,room,service,medicine,lab,other'],
+            // Manual rows. Optional when the invoice is built from pending charges.
+            'items' => ['required_without:charge_ids', 'nullable', 'array'],
+            'items.*.item_type' => ['required', 'string', 'in:service,room,medicine,lab_test,consultation,prescription,other'],
             'items.*.description' => ['required', 'string', 'max:255'],
-            'items.*.qty'         => ['required', 'integer', 'min:1'],
-            'items.*.unit_price'  => ['required', 'numeric', 'min:0'],
-            'notes'               => ['nullable', 'string', 'max:1000'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'items.*.unit_price' => ['required', 'numeric', 'min:0'],
+
+            // Pending charges picked by the cashier. Prices are read from the database.
+            'charge_ids' => ['nullable', 'array'],
+            'charge_ids.*' => ['integer', 'distinct'],
+
+            'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
-
     public function messages(): array
     {
         return [
-            'patient_name.required'        => 'សូមបញ្ចូលឈ្មោះអ្នកជំងឺ (Patient name is required).',
-            'admission_id.exists'          => 'ការចូលសម្រាកព្យាបាលនេះមិនត្រឹមត្រូវទេ (Selected admission is invalid).',
-            'items.required'               => 'សូមបញ្ចូលយ៉ាងហោចណាស់ធាតុទូទាត់មួយ (At least one invoice item is required).',
-            'items.*.item_type.required'   => 'សូមជ្រើសរើសប្រភេទសេវា (Service type is required).',
-            'items.*.item_type.in'         => 'ប្រភេទសេវាមិនត្រឹមត្រូវទេ (Selected service type is invalid).',
+            'patient_name.required' => 'សូមបញ្ចូលឈ្មោះអ្នកជំងឺ (Patient name is required).',
+            'admission_id.exists' => 'ការចូលសម្រាកព្យាបាលនេះមិនត្រឹមត្រូវទេ (Selected admission is invalid).',
+            'items.required' => 'សូមបញ្ចូលយ៉ាងហោចណាស់ធាតុទូទាត់មួយ (At least one invoice item is required).',
+            'items.*.item_type.required' => 'សូមជ្រើសរើសប្រភេទសេវា (Service type is required).',
+            'items.*.item_type.in' => 'ប្រភេទសេវាមិនត្រឹមត្រូវទេ (Selected service type is invalid).',
             'items.*.description.required' => 'សូមបញ្ចូលបរិយាយសេវាកម្ម (Item description is required).',
-            'items.*.qty.min'              => 'ចំនួនត្រូវតែធំជាង 0 (Quantity must be at least 1).',
-            'items.*.unit_price.min'       => 'តម្លៃត្រូវតែធំជាង ឬស្មើ 0 (Unit price must be at least 0).',
+            'items.*.qty.min' => 'ចំនួនត្រូវតែធំជាង 0 (Quantity must be at least 1).',
+            'items.*.unit_price.min' => 'តម្លៃត្រូវតែធំជាង ឬស្មើ 0 (Unit price must be at least 0).',
+            'items.required_without' => 'សូមបញ្ចូលយ៉ាងហោចណាស់ធាតុទូទាត់មួយ (At least one invoice item is required).',
         ];
     }
 

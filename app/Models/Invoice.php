@@ -28,8 +28,8 @@ class Invoice extends Model
 
     protected $casts = [
         'total_amount' => 'float',
-        'paid_amount'  => 'float',
-        'balance'      => 'float',
+        'paid_amount' => 'float',
+        'balance' => 'float',
         'cancelled_at' => 'datetime',
     ];
 
@@ -115,5 +115,9 @@ class Invoice extends Model
     public function isCancellable(): bool
     {
         return $this->isEditable();
+    }
+    public function charges()
+    {
+        return $this->hasMany(\App\Models\Billing\PatientCharge::class, 'invoice_id', 'id');
     }
 }
