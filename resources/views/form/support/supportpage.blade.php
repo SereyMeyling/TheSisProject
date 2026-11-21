@@ -93,13 +93,13 @@
                                 <hr>
                                 <p>
                                     <i class="fas fa-phone"></i>
-                                    012 345 678
+                                    0962041416
                                 </p>
                                 <p>
                                     <i class="fas fa-envelope"></i>
-                                    thavy@gmail.com
+                                    doeurn.thavy22@gmail.com
                                 </p>
-                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
+                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="0962041416">
                                     Copy Phone
                                 </button>
                             </div>
@@ -137,13 +137,13 @@
                                 <hr>
                                 <p>
                                     <i class="fas fa-phone"></i>
-                                    012 345 678
+                                    070393435
                                 </p>
                                 <p>
                                     <i class="fas fa-envelope"></i>
-                                    chentra@gmail.com
+                                    chetraphen00@gmail.com
                                 </p>
-                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="012345678">
+                                <button class="btn btn-outline-success btn-sm copy-phone" data-copy="070393435">
                                     Copy Phone
                                 </button>
                             </div>
