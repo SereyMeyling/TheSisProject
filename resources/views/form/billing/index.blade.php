@@ -362,51 +362,14 @@
                                 <th style="width: 45px;" class="text-center"><i class="fas fa-trash-alt"></i></th>
                             </tr>
                         </thead>
-                        <tbody id="invoiceItemsTbody">
-                            <tr class="item-row">
-                                <td>
-                                    <select name="items[0][item_type]" class="form-control form-control-sm item-type"
-                                        required>
-                                        <option value="" disabled selected>-- ជ្រើសរើសប្រភេទសេវា --</option>
-                                        <option value="service">សេវាកម្ម</option>
-                                        <option value="room">បន្ទប់សម្រាក</option>
-                                        <option value="medicine">ថ្នាំពេទ្យ</option>
-                                        <option value="lab_test">មន្ទីរពិសោធន៍</option>
-                                    </select>
-                                </td>
-                                <td>
-                                    <input type="text" name="items[0][description]"
-                                        class="form-control form-control-sm item-desc" placeholder="បរិយាយសេវា"
-                                        value="ថ្លៃពិគ្រោះជំងឺទូទៅ" required>
-                                </td>
-                                <td>
-                                    <input type="number" name="items[0][qty]"
-                                        class="form-control form-control-sm item-qty text-center" value="1" min="1"
-                                        required>
-                                </td>
-                                <td>
-                                    <input type="number" step="0.01" name="items[0][unit_price]"
-                                        class="form-control form-control-sm item-price text-right" value="15.00" min="0"
-                                        required>
-                                </td>
-                                <td>
-                                    <input type="text"
-                                        class="form-control form-control-sm item-subtotal text-right bg-light"
-                                        value="15.00" readonly>
-                                </td>
-                                <td class="text-center">
-                                    <button type="button" class="btn btn-sm btn-outline-danger btn-remove-item"
-                                        style="border-radius: 6px;"><i class="fas fa-trash-alt"></i></button>
-                                </td>
-                            </tr>
-                        </tbody>
+                        <tbody id="invoiceItemsTbody"></tbody>
                     </table>
 
                     <div class="d-flex justify-content-end align-items-center">
                         <div class="text-right">
                             <span class="text-muted font-weight-bold">តម្លៃសរុប៖ </span>
                             <h4 class="d-inline font-weight-bold text-primary ml-2 mb-0">$<span
-                                    id="createGrandTotal">15.00</span></h4>
+                                    id="createGrandTotal">0.0</span></h4>
                         </div>
                     </div>
                 </div>

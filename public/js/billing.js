@@ -33,9 +33,9 @@ $(document).ready(function () {
         $("#error_create_patient_name").text("");
         $("#error_create_admission_id").text("");
 
-        itemIndex = 1;
-        $("#invoiceItemsTbody").html(defaultCreateItemRowHtml(0));
-        $("#createGrandTotal").text("15.00");
+        itemIndex = 0;
+        $("#invoiceItemsTbody").empty();
+        $("#createGrandTotal").text("0.00");
 
         $("#select_patient_id").val("");
 
@@ -178,7 +178,7 @@ $(document).ready(function () {
     });
 
     // ── Dynamic Invoice Item Rows (Create) ────────────────────────────
-    let itemIndex = 1;
+    let itemIndex = 0;
 
     function itemRowHtml(idx, opts = {}) {
         const { desc = "", qty = 1, price = "0.00", item_type = "" } = opts;
@@ -227,11 +227,9 @@ $(document).ready(function () {
         recalculateGrandTotal();
     });
 
-    $(document).on("click", ".btn-remove-item", function () {
-        if ($("#invoiceItemsTbody .item-row").length > 1) {
-            $(this).closest("tr").remove();
-            recalculateGrandTotal();
-        }
+    $(document).on("click", "#invoiceItemsTbody .btn-remove-item", function () {
+        $(this).closest("tr").remove();
+        recalculateGrandTotal();
     });
 
     $(document).on("input", ".item-qty, .item-price", function () {
@@ -401,6 +399,14 @@ $(document).ready(function () {
 
         $form.find(".form-control, .custom-select").removeClass("is-invalid");
         $alert.addClass("d-none").text("");
+        if ($("#invoiceItemsTbody .item-row").length === 0) {
+            $alert
+                .removeClass("d-none")
+                .text(
+                    "សូមជ្រើសរើសអ្នកជំងឺដែលមានការគិតលុយ ឬបន្ថែមមុខសេវាយ៉ាងហោចណាស់មួយ",
+                );
+            return;
+        }
         $btn.prop("disabled", true).html(
             '<i class="fas fa-spinner fa-spin mr-1"></i> កំពុងរក្សាទុក...',
         );
