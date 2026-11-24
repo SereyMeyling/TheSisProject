@@ -17,6 +17,7 @@ use App\Models\Prescription;
 use App\Models\Room;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\Billing\RoomChargeService;
 
 use App\Models\User;
@@ -105,13 +106,13 @@ class DoctorController extends Controller
             $nurseuser = auth()->user();
             $nurseuser->load('department');
             $doctoruser = User::role('doctor')->first();
-            $assignedDocName = $doctoruser ? $doctoruser->full_name : 'Dr. Julian Vance';
+            $assignedDocName = $doctoruser ? $doctoruser->name : 'Dr. Julian Vance';
             if (!str_starts_with($assignedDocName, 'Dr.')) {
                 $assignedDocName = 'Dr. ' . $assignedDocName;
             }
 
             $nurseShift = [
-                'name' => $nurseuser ? $nurseuser->full_name : ($user->name ?? 'Nurse Workspace'),
+                'name' => $nurseuser->name ?? 'Nurse Workspace',
                 'department' => $nurseuser->department->department_name ?? 'Emergency & Outpatient Triage',
                 'shift' => 'Morning Shift (07:00 AM - 05:00 PM)',
                 'assigned_doctor' => $assignedDocName,
@@ -135,6 +136,12 @@ class DoctorController extends Controller
         $activeRecord = null;
         if ($request->filled('record_id')) {
             $activeRecord = MedicalRecord::with(['patient', 'doctor'])->find($request->record_id);
+
+            // A doctor may only open unassigned records or their own.
+            if ($activeRecord && !$this->canDoctorEditRecord($activeRecord)) {
+                return redirect()->route('doctor.index')
+                    ->with('error', 'អ្នកមិនមានសិទ្ធិបើកកំណត់ត្រានេះទេ។ (You are not allowed to open this record.)');
+            }
         }
 
         if (!$activeRecord) {
@@ -162,7 +169,7 @@ class DoctorController extends Controller
         $labTests = LabTest::orderBy('test_name', 'asc')->get();
         $availableRooms = Room::where('status', 'available')->orderBy('room_number', 'asc')->get();
 
-        $docName = $doctoruser->full_name ?? $doctoruser->name ?? 'Dr. Julian Vance';
+        $docName = $doctoruser->name ?? 'Dr. Julian Vance';
 
         if (!str_starts_with($docName, 'Dr.')) {
             $docName = 'Dr. ' . $docName;
@@ -203,6 +210,9 @@ class DoctorController extends Controller
         $request->validate([
             'diagnosis' => 'required|string',
             'status_destination' => 'required|in:admit,pharmacy,done',
+            'heart_rate' => 'nullable|integer|between:20,300',
+            'temperature' => 'nullable|numeric|between:30,45',
+            'spo2' => 'nullable|numeric|between:0,100',
             'items' => 'nullable|array',
             'items.*.medicine_id' => 'required|distinct|exists:medicines,medicine_id',
             'items.*.quantity' => 'required|integer|min:1',
@@ -211,13 +221,24 @@ class DoctorController extends Controller
             'items.*.duration_days' => 'required|integer|min:1',
         ]);
 
+        $record = MedicalRecord::with('prescription')->findOrFail($id);
+
+        if (!$this->canDoctorEditRecord($record)) {
+            return redirect()->route('doctor.index')
+                ->with('error', 'អ្នកមិនមានសិទ្ធិកែប្រែកំណត់ត្រានេះទេ។ (You are not allowed to edit this record.)');
+        }
+
+        if ($this->isRecordFinalized($record)) {
+            return redirect()->route('doctor.index')
+                ->with('error', 'កំណត់ត្រានេះត្រូវបានបញ្ចប់រួចហើយ មិនអាចកែប្រែបានទេ។ (This record is already finalized.)');
+        }
+
         try {
-            $record = MedicalRecord::findOrFail($id);
-            $doctoruser = auth()->user();
-            $empId = $doctoruser ? $doctoruser->id : auth()->id();
+            $empId = auth()->id();
 
             $updateData = [
-                'user_id' => $empId,
+                // keep the original doctor when an admin edits; otherwise assign to the current doctor
+                'user_id' => $record->user_id ?? $empId,
                 'diagnosis' => $request->diagnosis,
                 'notes' => $request->notes ?? $record->notes,
                 'prescription_notes' => $request->prescription_notes,
@@ -236,8 +257,14 @@ class DoctorController extends Controller
             }
 
             DB::transaction(function () use ($record, $updateData, $request) {
-                $record->update($updateData);
-                $this->syncPrescription($record, $request->input('items', []));
+                // re-check under lock so two concurrent submits can't both pass
+                $locked = MedicalRecord::where('record_id', $record->record_id)->lockForUpdate()->firstOrFail();
+                if (!$this->canDoctorEditRecord($locked) || $this->isRecordFinalized($locked)) {
+                    throw new \DomainException('កំណត់ត្រានេះមិនអាចកែប្រែបានទេ។ (This record can no longer be edited.)');
+                }
+
+                $locked->update($updateData);
+                $this->syncPrescription($locked, $request->input('items', []));
             });
 
             $message = 'កត់ត្រាការព្យាបាល និងចេញវេជ្ជបញ្ជាជោគជ័យ!';
@@ -253,9 +280,42 @@ class DoctorController extends Controller
             }
 
             return redirect()->route('doctor.index')->with('success', $message);
+        } catch (\DomainException $e) {
+            // business-rule messages written by us, safe to show
+            return redirect()->back()->with('error', $e->getMessage())->withInput();
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'មានបញ្ហា៖ ' . $e->getMessage())->withInput();
+            Log::error('Doctor consultation update failed', ['record_id' => $id, 'error' => $e->getMessage()]);
+            return redirect()->back()
+                ->with('error', 'មានបញ្ហាក្នុងការរក្សាទុក សូមព្យាយាមម្តងទៀត។ (Failed to save, please try again.)')
+                ->withInput();
         }
+    }
+
+    /**
+     * Admin may edit any record; others only unassigned records or their own (M7).
+     */
+    protected function canDoctorEditRecord(MedicalRecord $record): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+        return $record->user_id === null || (int) $record->user_id === (int) $user->id;
+    }
+
+    /**
+     * A record is final once marked "done", or once its prescription has left the "pending" state.
+     */
+    protected function isRecordFinalized(MedicalRecord $record): bool
+    {
+        if ($record->status_destination === 'done') {
+            return true;
+        }
+        $prescription = Prescription::where('record_id', $record->record_id)->first();
+        return $prescription && $prescription->status !== 'pending';
     }
 
     /**
@@ -265,7 +325,7 @@ class DoctorController extends Controller
     {
         $prescription = Prescription::where('record_id', $record->record_id)->first();
         if ($prescription && $prescription->status !== 'pending') {
-            throw new \Exception('វេជ្ជបញ្ជានេះបានចេញថ្នាំរួច ឬកំពុងចេញថ្នាំ មិនអាចកែប្រែបានទេ។');
+            throw new \DomainException('វេជ្ជបញ្ជានេះបានចេញថ្នាំរួច ឬកំពុងចេញថ្នាំ មិនអាចកែប្រែបានទេ។');
         }
 
         if (empty($items)) {
@@ -330,6 +390,7 @@ class DoctorController extends Controller
         $request->validate([
             'record_id' => 'required|exists:medical_records,record_id',
             'test_ids' => 'required|array|min:1',
+            'test_ids.*' => 'required|distinct|exists:lab_tests,test_id',
         ]);
 
         DB::beginTransaction();
@@ -354,7 +415,8 @@ class DoctorController extends Controller
             return redirect()->back()->with('success', 'បានបញ្ជូនទៅពិនិត្យមន្ទីរពិសោធន៍ (Refer to Lab Test) ដោយជោគជ័យ!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបញ្ជូនទៅ Lab៖ ' . $e->getMessage());
+            Log::error('Lab order creation failed', ['record_id' => $request->record_id, 'error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបញ្ជូនទៅ Lab សូមព្យាយាមម្តងទៀត។ (Failed to create lab order.)');
         }
     }
 
@@ -373,7 +435,8 @@ class DoctorController extends Controller
             // lock the room row so two doctors can't take the same room
             $room = Room::where('room_id', $request->room_id)->lockForUpdate()->firstOrFail();
 
-            if ($room->status !== 'available') {
+            $roomInUse = Admission::where('room_id', $room->room_id)->where('status', 'admitted')->exists();
+            if ($room->status !== 'available' || $roomInUse) {
                 DB::rollBack();
                 return redirect()->back()->with('error', 'បន្ទប់នេះមិនទំនេរទេ សូមជ្រើសរើសបន្ទប់ផ្សេង។');
             }
@@ -386,6 +449,8 @@ class DoctorController extends Controller
             $admission = new Admission([
                 'patient_id' => $request->patient_id,
                 'room_id' => $request->room_id,
+                // department: the room's department, otherwise the admitting doctor's (M13)
+                'department_id' => $room->department_id ?? optional(auth()->user())->department_id,
                 'admission_date' => now(),
                 'status' => 'admitted',
             ]);
@@ -400,7 +465,8 @@ class DoctorController extends Controller
             return redirect()->back()->with('success', 'បានបញ្ចូលអ្នកជំងឺឱ្យសម្រាកព្យាបាល (Admitted as Inpatient) រួចរាល់!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបញ្ចូលសម្រាកព្យាបាល៖ ' . $e->getMessage());
+            Log::error('Admission failed', ['patient_id' => $request->patient_id, 'room_id' => $request->room_id, 'error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'មានបញ្ហាក្នុងការបញ្ចូលសម្រាកព្យាបាល សូមព្យាយាមម្តងទៀត។ (Failed to admit patient.)');
         }
     }
 
@@ -425,10 +491,11 @@ class DoctorController extends Controller
         $request->validate([
             'record_id' => 'required|exists:medical_records,record_id',
             'blood_pressure' => 'nullable|string|max:50',
-            'heart_rate' => 'nullable|numeric',
-            'temperature' => 'nullable|numeric',
-            'spo2' => 'nullable|numeric',
-            'weight' => 'nullable|numeric',
+            // same ranges as MedicalRecordController (column sizes: INT, DECIMAL(5,2), DECIMAL(8,2))
+            'heart_rate' => 'nullable|integer|between:20,300',
+            'temperature' => 'nullable|numeric|between:30,45',
+            'spo2' => 'nullable|numeric|between:0,100',
+            'weight' => 'nullable|numeric|between:0,500',
         ]);
 
         $record = MedicalRecord::findOrFail($request->record_id);

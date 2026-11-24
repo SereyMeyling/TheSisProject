@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\AppointmentNotification;
 use App\Helpers\NotifiesRoles;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -21,20 +23,67 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Check if the doctor already has an appointment in the same hour.
+     * Length of one appointment slot in minutes. Two scheduled appointments of the same
+     * doctor closer than this are a double-booking.
      */
-    protected function hasConflict($userId, $appointmentDate, $excludeId = null)
+    public const SLOT_MINUTES = 30;
+
+    protected const CONFLICT_MESSAGE = 'វេជ្ជបណ្ឌិតរូបនេះមានការណាត់ជួបផ្សេងទៀតក្នុងចន្លោះពេលនេះរួចហើយ សូមជ្រើសរើសម៉ោងផ្សេង។ (The doctor already has an appointment within this time slot.)';
+
+    /**
+     * Check if the doctor has another scheduled appointment within ±SLOT_MINUTES.
+     * Must be called inside a transaction: it locks the doctor's row and that day's
+     * appointments so two requests can't book the same slot at the same time.
+     */
+    protected function hasConflict($userId, $appointmentDate, $excludeId = null): bool
     {
         $date = Carbon::parse($appointmentDate);
+        $windowStart = $date->copy()->subMinutes(self::SLOT_MINUTES);
+        $windowEnd = $date->copy()->addMinutes(self::SLOT_MINUTES);
+
+        // Serialize bookings per doctor (works even when the day has no rows yet).
+        User::whereKey($userId)->lockForUpdate()->first();
+
+        Appointment::where('user_id', $userId)
+            ->whereBetween('appointment_date', [
+                $windowStart->copy()->startOfDay(),
+                $windowEnd->copy()->endOfDay(),
+            ])
+            ->lockForUpdate()
+            ->get(['appointment_id']);
 
         return Appointment::where('user_id', $userId)
             ->where('status', 'scheduled')
-            ->whereDate('appointment_date', $date->toDateString())
-            ->whereTime('appointment_date', $date->format('H:i:00'))
+            ->where('appointment_date', '>', $windowStart)
+            ->where('appointment_date', '<', $windowEnd)
             ->when($excludeId, function ($query) use ($excludeId) {
                 $query->where('appointment_id', '!=', $excludeId);
             })
             ->exists();
+    }
+
+    /**
+     * Validation rule: user_id must belong to a user with the doctor role.
+     */
+    protected function doctorRule(): \Closure
+    {
+        return function ($attribute, $value, $fail) {
+            if (!User::role('doctor')->whereKey($value)->exists()) {
+                $fail('សូមជ្រើសរើសវេជ្ជបណ្ឌិតដែលត្រឹមត្រូវ។ (Please select a valid doctor.)');
+            }
+        };
+    }
+
+    /**
+     * Admin and nurse manage all appointments; a doctor only their own.
+     */
+    protected function canManage(Appointment $appointment): bool
+    {
+        $user = auth()->user();
+        if ($user->hasAnyRole(['admin', 'nurse'])) {
+            return true;
+        }
+        return (int) $appointment->user_id === (int) $user->id;
     }
     /**
      * Display appointments with search, filters and statistics.
@@ -152,7 +201,7 @@ class AppointmentController extends Controller
         }
         $validator = Validator::make($request->all(), [
             'patient_id' => ['required', 'exists:patients,patient_id'],
-            'user_id' => ['required', 'exists:users,id'],
+            'user_id' => ['required', 'integer', $this->doctorRule()],
             'appointment_date' => ['required', 'date', 'after_or_equal:now'],
             'status' => ['required', 'in:scheduled,completed,cancelled'],
             'reason' => ['nullable', 'string', 'max:255'],
@@ -166,14 +215,25 @@ class AppointmentController extends Controller
 
         $validated = $validator->validated();
 
-        if ($this->hasConflict($validated['user_id'], $validated['appointment_date'])) {
+        try {
+            $appointment = DB::transaction(function () use ($validated) {
+                if ($validated['status'] === 'scheduled'
+                    && $this->hasConflict($validated['user_id'], $validated['appointment_date'])) {
+                    return null;
+                }
+                return Appointment::create($validated);
+            });
+        } catch (\Throwable $e) {
+            Log::error('Appointment create failed', ['error' => $e->getMessage()]);
             return redirect()->back()->withInput()->with(
                 'error',
-                'វេជ្ជបណ្ឌិតរូបនេះមានការណាត់ជួបផ្សេងទៀតនៅក្នុងម៉ោងដដែលនេះរួចហើយ សូមជ្រើសរើសម៉ោងផ្សេង។'
+                'មិនអាចបង្កើតការណាត់ជួបបានទេ សូមព្យាយាមម្តងទៀត។ (Failed to create the appointment.)'
             );
         }
 
-        $appointment = Appointment::create($validated);
+        if (!$appointment) {
+            return redirect()->back()->withInput()->with('error', self::CONFLICT_MESSAGE);
+        }
 
         // Notify the assigned doctor AND everyone with the admin role
 
@@ -221,6 +281,11 @@ class AppointmentController extends Controller
                 'error' => 'រកមិនឃើញការណាត់ជួបទេ',
             ], 404);
         }
+        if (!$this->canManage($appointment)) {
+            return response()->json([
+                'error' => 'អ្នកអាចកែប្រែបានតែការណាត់ជួបរបស់អ្នកប៉ុណ្ណោះ។ (You can only edit your own appointments.)',
+            ], 403);
+        }
 
         return response()->json([
             'appointment_id' => $appointment->appointment_id,
@@ -241,16 +306,23 @@ class AppointmentController extends Controller
     public function update(Request $request, $id)
     {
         $appointment = Appointment::find($id);
-        if ($this->isDoctorOnly()) {
-            $request->merge(['user_id' => $appointment->user_id]);
-        }
         if (!$appointment) {
             return redirect()->back()->with('error', 'រកមិនឃើញការណាត់ជួបទេ');
+        }
+        if (!$this->canManage($appointment)) {
+            return redirect()->back()->with(
+                'error',
+                'អ្នកអាចកែប្រែបានតែការណាត់ជួបរបស់អ្នកប៉ុណ្ណោះ។ (You can only edit your own appointments.)'
+            );
+        }
+        if ($this->isDoctorOnly()) {
+            // a doctor cannot hand the appointment over to another doctor
+            $request->merge(['user_id' => $appointment->user_id]);
         }
 
         $validator = Validator::make($request->all(), [
             'patient_id' => ['required', 'exists:patients,patient_id'],
-            'user_id' => ['required', 'exists:users,id'],
+            'user_id' => ['required', 'integer', $this->doctorRule()],
             'appointment_date' => ['required', 'date'],
             'status' => ['required', 'in:scheduled,completed,cancelled'],
             'reason' => ['nullable', 'string', 'max:255'],
@@ -262,26 +334,37 @@ class AppointmentController extends Controller
 
         $validated = $validator->validated();
 
-        if ($this->hasConflict($validated['user_id'], $validated['appointment_date'], $appointment->appointment_id)) {
+        try {
+            $saved = DB::transaction(function () use ($appointment, $validated) {
+                if ($validated['status'] === 'scheduled'
+                    && $this->hasConflict($validated['user_id'], $validated['appointment_date'], $appointment->appointment_id)) {
+                    return false;
+                }
+
+                $dateChanged = !$appointment->appointment_date
+                    || !$appointment->appointment_date->equalTo(Carbon::parse($validated['appointment_date']));
+
+                $appointment->update($validated);
+
+                if ($dateChanged) {
+                    $appointment->forceFill([
+                        'reminder_sent_at' => null,
+                        'reminder_called_at' => null,
+                        'reminder_called_by' => null,
+                    ])->save();
+                }
+                return true;
+            });
+        } catch (\Throwable $e) {
+            Log::error('Appointment update failed', ['appointment_id' => $id, 'error' => $e->getMessage()]);
             return redirect()->back()->withInput()->with(
                 'error',
-                'វេជ្ជបណ្ឌិតរូបនេះមានការណាត់ជួបផ្សេងទៀតនៅក្នុងម៉ោងដដែលនេះរួចហើយ សូមជ្រើសរើសម៉ោងផ្សេង។'
+                'មិនអាចកែប្រែការណាត់ជួបបានទេ សូមព្យាយាមម្តងទៀត។ (Failed to update the appointment.)'
             );
         }
 
-        $oldStatus = $appointment->status;
-
-        $dateChanged = !$appointment->appointment_date
-            || !$appointment->appointment_date->equalTo(Carbon::parse($validated['appointment_date']));
-
-        $appointment->update($validated);
-
-        if ($dateChanged) {
-            $appointment->forceFill([
-                'reminder_sent_at' => null,
-                'reminder_called_at' => null,
-                'reminder_called_by' => null,
-            ])->save();
+        if (!$saved) {
+            return redirect()->back()->withInput()->with('error', self::CONFLICT_MESSAGE);
         }
 
         // Notify the assigned doctor AND everyone with the admin role
@@ -303,6 +386,12 @@ class AppointmentController extends Controller
                     'error',
                     'រកមិនឃើញការណាត់ជួបទេ'
                 );
+        }
+        if (!$this->canManage($appointment)) {
+            return redirect()->back()->with(
+                'error',
+                'អ្នកអាចលុបបានតែការណាត់ជួបរបស់អ្នកប៉ុណ្ណោះ។ (You can only delete your own appointments.)'
+            );
         }
 
         $appointment->delete();

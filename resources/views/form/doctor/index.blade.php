@@ -231,8 +231,11 @@
                 {{-- Patient Identity Card --}}
                 <div class="card-modern p-4 mb-4">
                     <div class="d-flex align-items-center mb-3">
-                        <img src="https://ui-avatars.com/api/?name={{ urlencode($activeRecord->patient->full_name ?? 'Patient') }}&background=006D36&color=fff&bold=true"
-                            class="avatar-circle mr-3" alt="Patient Avatar">
+                        {{-- Local initials avatar (don't send patient names to a third-party service) --}}
+                        <div class="avatar-circle mr-3 d-flex align-items-center justify-content-center font-weight-bold text-white"
+                            style="background:#006D36;" aria-label="Patient Avatar">
+                            {{ mb_strtoupper(mb_substr(trim($activeRecord->patient->full_name ?? 'P'), 0, 1)) }}
+                        </div>
                         <div>
                             <h5 class="font-weight-bold text-dark mb-1">
                                 {{ $activeRecord->patient->full_name ?? 'លោក ពាក់ មី' }}
@@ -252,7 +255,7 @@
                         <div class="col-6 mb-2">
                             <span class="d-block text-secondary font-weight-bold">ភេទ / Gender</span>
                             <span
-                                class="text-dark font-weight-bold">{{ ($activeRecord->patient->sex ?? '') == 'Female' ? 'ស្រី (Female)' : 'ប្រុស (Male)' }}</span>
+                                class="text-dark font-weight-bold">{{ ['male' => 'ប្រុស (Male)', 'female' => 'ស្រី (Female)', 'other' => 'ផ្សេងៗ (Other)'][strtolower($activeRecord->patient->sex ?? '')] ?? '-' }}</span>
                         </div>
                         <div class="col-6 mb-2">
                             <span class="d-block text-secondary font-weight-bold">ទូរស័ព្ទ / Phone</span>

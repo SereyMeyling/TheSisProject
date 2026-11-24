@@ -14,6 +14,7 @@ class Admission extends Model
     protected $fillable = [
         'patient_id',
         'room_id',
+        'department_id',
         'admission_date',
         'discharge_date',
         'status',

@@ -59,4 +59,19 @@ class Room extends Model
     {
         return $this->hasMany(Admission::class, 'room_id', 'room_id');
     }
+
+    /**
+     * The admission currently using this room (status "admitted"), if any.
+     */
+    public function activeAdmission()
+    {
+        return $this->hasOne(Admission::class, 'room_id', 'room_id')
+            ->where('status', 'admitted')
+            ->latest('admission_date');
+    }
+
+    public function hasActiveAdmission(): bool
+    {
+        return $this->admissions()->where('status', 'admitted')->exists();
+    }
 }

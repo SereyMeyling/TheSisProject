@@ -25,7 +25,9 @@
                     @endforelse
                 </td>
                 <td>
-                    @if ($u->google2fa_secret)
+                    @if ($u->isTwoFactorLocked())
+                        <span class="badge badge-danger" title="2FA secret cannot be decrypted — reset required">ត្រូវ Reset (Locked)</span>
+                    @elseif ($u->hasTwoFactorSecretStored())
                         <span class="badge badge-success">បានបើក</span>
                     @else
                         <span class="badge badge-secondary">មិនទាន់កំណត់</span>
@@ -61,7 +63,7 @@
             </button>
 
             {{-- Reset 2FA --}}
-            @if ($u->google2fa_secret)
+            @if ($u->hasTwoFactorSecretStored())
                 <button
                     type="button"
                     class="dropdown-item btn-reset-2fa"

@@ -63,6 +63,11 @@
                     @endif
                 </td>
                 <td>
+                    @php
+                        $__canManage = auth()->user()->hasAnyRole(['admin', 'nurse'])
+                            || (int) $app->user_id === (int) auth()->id();
+                    @endphp
+                    @if($__canManage)
                     <div class="dropdown">
                         <button type="button" class="btn btn-sm btn-light" data-toggle="dropdown"
                             aria-haspopup="true" aria-expanded="false" title="សកម្មភាព">
@@ -83,6 +88,7 @@
                             </button>
                         </div>
                     </div>
+                    @endif
                 </td>
             </tr>
         @empty

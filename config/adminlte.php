@@ -352,7 +352,8 @@ return [
             'text' => 'បន្ទប់',
             'url' => 'room',
             'icon' => 'fas fa-procedures',
-            'can' => 'manage-system-settings',
+            // admin (manage-system-settings) + doctors/nurses (manage-inpatient-rooms)
+            'can' => ['manage-system-settings', 'manage-inpatient-rooms'],
         ],
         [
             'text' => 'ការណាត់ជួប',

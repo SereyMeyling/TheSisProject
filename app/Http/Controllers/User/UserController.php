@@ -14,6 +14,31 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
+    private const ADMIN_ROLE = 'admin';
+
+    /**
+     * Number of users currently holding the admin role.
+     */
+    private function adminCount(): int
+    {
+        return User::role(self::ADMIN_ROLE)->count();
+    }
+
+    /**
+     * Uniform "action not allowed" response (JSON for AJAX, flash otherwise).
+     */
+    private function refuse(Request $request, string $message)
+    {
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => false,
+                'message' => $message,
+            ], 422);
+        }
+
+        return redirect()->route('user.index')->with('error', $message);
+    }
+
     /**
      * Display a paginated listing of users with their assigned roles.
      *
@@ -96,6 +121,18 @@ class UserController extends Controller
      */
     public function updateRole(UpdateUserRoleRequest $request, User $user)
     {
+        // Prevent lock-out: an admin may not demote themselves, and the
+        // last remaining admin may not lose the admin role.
+        if ($user->hasRole(self::ADMIN_ROLE) && $request->role !== self::ADMIN_ROLE) {
+            if ($user->is($request->user())) {
+                return $this->refuse($request, 'អ្នកមិនអាចដកតួនាទី Admin ពីខ្លួនឯងបានទេ។ / You cannot remove your own admin role.');
+            }
+
+            if ($this->adminCount() <= 1) {
+                return $this->refuse($request, 'មិនអាចដកតួនាទី Admin ចុងក្រោយបានទេ។ / You cannot remove the last admin.');
+            }
+        }
+
         // Replace all existing roles with the selected role
         $user->syncRoles([$request->role]);
 
@@ -119,6 +156,32 @@ class UserController extends Controller
      */
     public function destroy(Request $request, User $user)
     {
+        if ($user->is($request->user())) {
+            return $this->refuse($request, 'អ្នកមិនអាចលុបគណនីខ្លួនឯងបានទេ។ / You cannot delete your own account.');
+        }
+
+        if ($user->hasRole(self::ADMIN_ROLE) && $this->adminCount() <= 1) {
+            return $this->refuse($request, 'មិនអាចលុប Admin ចុងក្រោយបានទេ។ / You cannot delete the last admin.');
+        }
+
+        // On the production DB these foreign keys are ON DELETE CASCADE, so deleting
+        // a doctor would silently delete their medical records/appointments/sales
+        // (or crash on lab_orders). Never delete staff who have clinical history.
+        $linked = [];
+        foreach (['medical_records' => 'medical records', 'appointments' => 'appointments', 'sales' => 'sales'] as $table => $label) {
+            if (\Illuminate\Support\Facades\Schema::hasTable($table)
+                && \Illuminate\Support\Facades\DB::table($table)->where('user_id', $user->id)->exists()) {
+                $linked[] = $label;
+            }
+        }
+        if ($linked) {
+            return $this->refuse(
+                $request,
+                'មិនអាចលុបអ្នកប្រើនេះបានទេ ព្រោះមានទិន្នន័យពាក់ព័ន្ធ។ / This user cannot be deleted because they have '
+                . implode(', ', $linked) . '. Remove their role instead.'
+            );
+        }
+
         $userName = $user->name;
         $user->delete();
 

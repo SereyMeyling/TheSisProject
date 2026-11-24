@@ -25,7 +25,7 @@
                 <ul class="list-group list-group-flush text-left">
                     <li class="list-group-item d-flex justify-content-between">
                         <span class="text-muted">ភេទ:</span>
-                        <span class="font-weight-bold">{{ $patient->sex == 'Male' ? 'ប្រុស' : 'ស្រី' }}</span>
+                        <span class="font-weight-bold">{{ ['male' => 'ប្រុស', 'female' => 'ស្រី', 'other' => 'ផ្សេងៗ'][strtolower($patient->sex ?? '')] ?? '-' }}</span>
                     </li>
                    <li class="list-group-item d-flex justify-content-between">
                         <span class="text-muted">ថ្ងៃកំណើត:</span>

@@ -182,10 +182,12 @@
         </div>
 
         <div>
+            @role('admin')
             <button class="btn btn-outline-primary mr-2" data-toggle="modal" data-target="#modalCreateTest"
                 style="border-radius: 10px; font-weight: 600;">
                 <i class="fas fa-microscope mr-1"></i> បន្ថែមតេស្តថ្មី
             </button>
+            @endrole
             <button class="btn btn-primary" data-toggle="modal" data-target="#modalCreateOrder"
                 style="border-radius: 10px; font-weight: 600;">
                 <i class="fas fa-plus-circle mr-1"></i> បង្កើតការកម្មង់ថ្មី
@@ -384,6 +386,7 @@
                 <div class="modal-body p-4">
                     <div class="alert alert-info mb-3">
                         <strong>អ្នកជំងឺ៖ </strong><span id="resPatientName" class="font-weight-bold"></span>
+                        <small class="d-block mt-1">ទុកលទ្ធផលទទេ ប្រសិនបើតេស្តនោះមិនទាន់មានលទ្ធផល (Leave a result blank if it is not ready yet)</small>
                     </div>
 
                     <div id="resultsInputsContainer"></div>
@@ -576,7 +579,7 @@
 
         /* ---------- toast ---------- */
         function showToast(message, type = 'success') {
-            const $t = $('<div class="toast-custom ' + type + '">' + message + '</div>');
+            const $t = $('<div class="toast-custom ' + type + '"></div>').text(message);
             $('#toastContainer').append($t);
             setTimeout(() => $t.fadeOut(300, function () { $(this).remove(); }), 3000);
         }
@@ -699,30 +702,36 @@
             $('#resPatientName').text($(this).data('patient'));
             $('#formEnterResults').attr('action', "{{ url('lab/orders') }}/" + orderId + "/results");
 
+            // Escape every value: results come from user input (stored XSS otherwise).
+            const esc = s => $('<div>').text(s ?? '').html().replace(/"/g, '&quot;');
+
             let html = '';
             results.forEach((r, idx) => {
+                const testName = r.lab_test ? r.lab_test.test_name : 'Test #' + r.test_id;
+                const value = r.result_value && r.result_value !== 'Pending' ? r.result_value : '';
+                const range = r.normal_range || (r.lab_test ? r.lab_test.normal_range : '') || '';
                 html += `
             <div class="card mb-3 border shadow-sm">
                 <div class="card-header bg-light font-weight-bold">
-                    ${r.lab_test ? r.lab_test.test_name : 'Test #' + r.test_id}
+                    ${esc(testName)}
                 </div>
                 <div class="card-body p-3">
-                    <input type="hidden" name="results[${idx}][result_id]" value="${r.result_id}">
+                    <input type="hidden" name="results[${idx}][result_id]" value="${esc(r.result_id)}">
                     <div class="row">
                         <div class="col-md-6 mb-2">
-                            <label class="small font-weight-bold">លទ្ធផល <span class="text-danger">*</span></label>
+                            <label class="small font-weight-bold">លទ្ធផល</label>
                             <input type="text" name="results[${idx}][result_value]" class="form-control form-control-sm"
-                                   value="${r.result_value && r.result_value !== 'Pending' ? r.result_value : ''}" required>
+                                   maxlength="100" value="${esc(value)}">
                         </div>
                         <div class="col-md-6 mb-2">
                             <label class="small font-weight-bold">កម្រិតធម្មតា</label>
                             <input type="text" name="results[${idx}][normal_range]" class="form-control form-control-sm"
-                                   value="${r.normal_range || (r.lab_test ? r.lab_test.normal_range : '') || ''}">
+                                   maxlength="100" value="${esc(range)}">
                         </div>
                         <div class="col-md-12">
                             <label class="small font-weight-bold">ចំណាំ</label>
                             <input type="text" name="results[${idx}][remark]" class="form-control form-control-sm"
-                                   value="${r.remark || ''}">
+                                   maxlength="255" value="${esc(r.remark)}">
                         </div>
                     </div>
                 </div>

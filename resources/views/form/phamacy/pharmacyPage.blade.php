@@ -867,17 +867,17 @@
 
                 const rows = data.batches.map(function (b) {
                     const outsHtml = b.outs.length
-                        ? b.outs.map(o => `${o.date} (-${o.quantity})`).join('<br>')
+                        ? b.outs.map(o => `${esc(o.date)} (-${esc(o.quantity)})`).join('<br>')
                         : '-';
                     return `
                 <tr>
-                    <td>${b.batch_number}</td>
-                    <td>${b.date_in}</td>
-                    <td class="text-right">${b.quantity_initial}</td>
-                    <td>${b.expiry_date}</td>
-                    <td class="text-right">$${parseFloat(b.purchase_price).toFixed(2)}</td>
+                    <td>${esc(b.batch_number)}</td>
+                    <td>${esc(b.date_in)}</td>
+                    <td class="text-right">${esc(b.quantity_initial)}</td>
+                    <td>${esc(b.expiry_date)}</td>
+                    <td class="text-right">$${(parseFloat(b.purchase_price) || 0).toFixed(2)}</td>
                     <td>${outsHtml}</td>
-                    <td class="text-right">${b.remaining_quantity}</td>
+                    <td class="text-right">${esc(b.remaining_quantity)}</td>
                 </tr>`;
                 }).join('');
 

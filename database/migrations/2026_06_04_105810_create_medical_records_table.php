@@ -21,7 +21,7 @@ class CreateMedicalRecordsTable extends Migration
 
             $table->foreignId('user_id')
                 ->nullable()
-                ->constrained('users', 'user_id')
+                ->constrained('users')
                 ->nullOnDelete();
 
             $table->dateTime('visit_date');

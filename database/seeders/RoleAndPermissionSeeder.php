@@ -78,9 +78,11 @@ class RoleAndPermissionSeeder extends Seeder
             'Billing & Payments' => [
                 'view-invoices',
                 'create-invoices',
+                'edit-invoices',
                 'process-payments',
                 'cancel-invoices',
                 'print-receipts',
+                'manage-billing-settings',
             ],
         ];
 
@@ -106,18 +108,17 @@ class RoleAndPermissionSeeder extends Seeder
                 'reset-2fa',
                 'manage-system-settings',
                 'manage-backups',
-                'view-users',
-                'create-users',
-                'edit-users',
-                'delete-users',
                 'manage-departments',
                 'manage-rooms',
                 'view-patients',
+                'view-medical-records',
                 'view-doctors',
                 'view-appointments',
                 'view-lab-results',
                 'view-medicines',
                 'view-invoices',
+                'edit-invoices',
+                'manage-billing-settings',
             ],
             'doctor' => [
                 'view-patients',
@@ -141,13 +142,16 @@ class RoleAndPermissionSeeder extends Seeder
                 'view-patients',
                 'create-patients',
                 'edit-patients',
-                'view-medical-records',
+                // no 'view-medical-records': those pages are doctor-only
                 'record-vitals',
                 'view-doctors',
                 'view-appointments',
                 'create-appointments',
                 'view-lab-results',
                 'manage-inpatient-rooms',
+            ],
+            'lab_technician' => [
+                'view-lab-results',
             ],
             'pharmacist' => [
                 'view-medicines',
@@ -161,9 +165,11 @@ class RoleAndPermissionSeeder extends Seeder
             'cashier' => [
                 'view-invoices',
                 'create-invoices',
+                'edit-invoices',
                 'process-payments',
                 'cancel-invoices',
                 'print-receipts',
+                'manage-billing-settings',
             ],
         ];
 

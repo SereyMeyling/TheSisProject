@@ -9,7 +9,6 @@ use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Pharmacy\PharmacyController;
-use App\Http\Controllers\Pharmacy\PharmacySaleController;
 use App\Http\Controllers\Pharmacy\PrescriptionController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RolePermissionController;
@@ -119,15 +118,16 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
         Route::post('/general', [GeneralSettingsController::class, 'update'])->name('settingsgeneral.update');
         Route::get('/qrcode', [SettingsController::class, 'qrcodeindex'])->name('settingsqrcode.index');
         Route::post('/qrcode', [SettingsController::class, 'qrcodeUpdate'])->name('settingsqrcode.update');
-
-        Route::get('/backup', [SettingsController::class, 'backupindex'])->name('settingsbackup.index');
     });
 
     Route::group(['prefix' => 'settings/backup'], function () {
         Route::get('/', [BackupController::class, 'index'])->name('settingsbackup.index');
         Route::get('/list', [BackupController::class, 'list'])->name('settingsbackup.list');
         Route::post('/create', [BackupController::class, 'store'])->name('settingsbackup.store');
-        Route::get('/download/{filename}', [BackupController::class, 'download'])->name('settingsbackup.download');
+        // Re-enter password before downloading a full database dump
+        Route::get('/download/{filename}', [BackupController::class, 'download'])
+            ->middleware('password.confirm')
+            ->name('settingsbackup.download');
         Route::delete('/{filename}', [BackupController::class, 'destroy'])->name('settingsbackup.destroy');
         Route::post('/restore', [BackupController::class, 'restore'])->name('settingsbackup.restore');
     });
@@ -179,6 +179,7 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::get('/room/edit/{id}', [RoomController::class, 'edit'])->name('room.edit');
     Route::put('/room/update/{id}', [RoomController::class, 'update'])->name('room.update');
     Route::delete('/room/delete/{id}', [RoomController::class, 'destroy'])->name('room.destroy');
+    Route::post('/room/admissions/{id}/discharge', [RoomController::class, 'discharge'])->name('admissions.discharge');
 
     // Appointments
     Route::get('/appointment', [AppointmentController::class, 'index'])->name('appointment.index');
@@ -189,14 +190,23 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse']], funct
     Route::delete('/appointment/delete/{id}', [AppointmentController::class, 'destroy'])->name('appointment.destroy');
     Route::get('/appointment/{id}', [AppointmentController::class, 'show'])->name('appointment.show');
 
-    // Laboratory & Test Orders
+});
+
+// =========================================================================
+// LABORATORY (Role: admin|doctor|nurse|lab_technician)
+// Test catalog (names & prices) is admin-only.
+// =========================================================================
+Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|lab_technician']], function () {
     Route::get('/lab', [LabController::class, 'index'])->name('lab.index');
     Route::post('/lab/orders/store', [LabController::class, 'storeOrder'])->name('lab.orders.store');
     Route::post('/lab/orders/{id}/results', [LabController::class, 'storeResults'])->name('lab.results.store');
+    Route::get('/lab/results/{id}', [LabController::class, 'showResult'])->name('lab-results.show');
+});
+
+Route::group(['middleware' => ['auth', '2fa', 'role:admin']], function () {
     Route::post('/lab/tests/store', [LabController::class, 'storeTest'])->name('lab.tests.store');
     Route::put('/lab/tests/update/{id}', [LabController::class, 'updateTest'])->name('lab.tests.update');
     Route::delete('/lab/tests/delete/{id}', [LabController::class, 'destroyTest'])->name('lab.tests.destroy');
-    Route::get('/lab/results/{id}', [LabController::class, 'showResult'])->name('lab-results.show');
 });
 
 
@@ -218,10 +228,11 @@ Route::group(['middleware' => ['auth', '2fa', 'role:admin|doctor|nurse|cashier']
 });
 
 // =========================================================================
-// MEDICAL RECORDS — DOCTOR ONLY
+// MEDICAL RECORDS — DOCTORS (+ admin oversight)
+// Edit/delete limited to the author doctor or an admin (MedicalRecord::canBeModifiedBy)
 // =========================================================================
 Route::group([
-    'middleware' => ['auth', '2fa', 'role:doctor']
+    'middleware' => ['auth', '2fa', 'role:admin|doctor']
 ], function () {
     // Medical Records & Vitals
     Route::get('/medical-records', [MedicalRecordController::class, 'index'])->name('medical-records.index');
@@ -276,6 +287,7 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
     Route::get('/pending-charges/{patient}', [BillingController::class, 'pendingCharges'])
         ->whereNumber('patient')
         ->name('billing.pendingCharges');
+    Route::get('/patients/search', [BillingController::class, 'searchPatients'])->name('billing.patients.search');
     Route::get('/', [BillingController::class, 'index'])->name('billing.index');
     Route::post('/store', [BillingController::class, 'store'])->name('billing.store');
     Route::get('/{id}', [BillingController::class, 'show'])->name('billing.show');
@@ -292,7 +304,7 @@ Route::group(['prefix' => 'billing', 'middleware' => ['auth', '2fa', 'role:admin
 
 
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');

@@ -72,6 +72,36 @@ class User extends Authenticatable
     }
 
     /**
+     * True when a 2FA secret is stored in the database, whether or not it
+     * can be decrypted. Use this (not the accessor) to decide enrollment.
+     */
+    public function hasTwoFactorSecretStored(): bool
+    {
+        return ! empty($this->getAttributes()['google2fa_secret'] ?? null);
+    }
+
+    /**
+     * True when a 2FA secret is stored but cannot be decrypted (APP_KEY
+     * changed, DB restored from another environment, ...). Such an account
+     * must NOT be treated as "not enrolled" — otherwise anyone with the
+     * password could enroll their own authenticator. An admin has to reset
+     * 2FA (route user.reset2fa) before the user can log in again.
+     */
+    public function isTwoFactorLocked(): bool
+    {
+        return $this->hasTwoFactorSecretStored() && is_null($this->google2fa_secret);
+    }
+
+    /**
+     * Bilingual message shown when the account is 2FA-locked.
+     */
+    public static function twoFactorLockedMessage(): string
+    {
+        return 'មិនអាចផ្ទៀងផ្ទាត់ 2FA សម្រាប់គណនីនេះបានទេ។ សូមទាក់ទងអ្នកគ្រប់គ្រង (Admin) ដើម្បីកំណត់ 2FA ឡើងវិញ។ / '
+            . 'Two-factor authentication for this account cannot be verified. Please ask an administrator to reset your 2FA.';
+    }
+
+    /**
      * Set the google2fa_secret attribute.
      *
      * @param  string|null  $value

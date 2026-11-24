@@ -86,6 +86,34 @@ class MedicalRecord extends Model
     {
         return $this->hasOne(Prescription::class, 'record_id', 'record_id');
     }
+
+    public function prescriptions()
+    {
+        return $this->hasMany(Prescription::class, 'record_id', 'record_id');
+    }
+
+    public function labOrders()
+    {
+        return $this->hasMany(LabOrder::class, 'record_id', 'record_id');
+    }
+
+    /**
+     * Only the doctor who wrote the record, or an admin, may edit or delete it.
+     */
+    public function canBeModifiedBy($user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return $user->hasRole('doctor')
+            && !is_null($this->user_id)
+            && (int) $this->user_id === (int) $user->id;
+    }
     public function toModalData(): array
     {
         return [

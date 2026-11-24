@@ -13,3 +13,10 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+# Database dumps / backups (may contain patient data)
+*.sql
+*.sql.gz
+
+# Internal security notes
+bug.md

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use App\Models\Setting\InvoiceSetting;
 use App\Models\Setting\QrSetting;
+use App\Services\Billing\KhqrVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -142,6 +143,7 @@ class SettingsController extends Controller
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|in:KHR,USD',
             'bill_number' => 'nullable|string|max:25',
+            'invoice_id' => 'nullable|integer',
         ]);
 
         $setting = QrSetting::first();
@@ -229,6 +231,15 @@ class SettingsController extends Controller
             ], 422);
         }
 
+        // Remember which invoice/amount this QR belongs to, so the payment can be
+        // verified server-side when it is recorded (BillingController::processPayment).
+        app(KhqrVerifier::class)->remember(
+            $result->data['md5'],
+            $request->filled('invoice_id') ? (int) $request->invoice_id : null,
+            (float) $request->amount,
+            $request->currency
+        );
+
         return response()->json([
             'success' => true,
             'mode' => 'bakong',
@@ -260,16 +271,39 @@ class SettingsController extends Controller
      * GET /payment/check-status/{md5}
      * Requires BAKONG_API_TOKEN in .env (register at https://api-bakong.nbc.gov.kh/register)
      */
-    // public function checkPaymentStatus($md5)
-    // {
-    //     $bakong = new BakongKHQR(config('services.bakong.token'));
+    public function checkPaymentStatus($md5)
+    {
+        // KHQR md5 is always a 32-char hex string.
+        if (!is_string($md5) || !preg_match('/^[a-f0-9]{32}$/i', $md5)) {
+            return response()->json([
+                'paid' => false,
+                'message' => 'លេខកូដប្រតិបត្តិការមិនត្រឹមត្រូវ / Invalid transaction reference.',
+            ], 422);
+        }
 
-    //     try {
-    //         $response = $bakong->checkTransactionByMD5($md5);
-    //         $paid = $response->responseCode === 0; // 0 = transaction found/successful
-    //         return response()->json(['paid' => $paid, 'raw' => $response]);
-    //     } catch (\Throwable $e) {
-    //         return response()->json(['paid' => false, 'error' => $e->getMessage()]);
-    //     }
-    // }
+        $token = config('services.bakong.token');
+
+        if (empty($token)) {
+            return response()->json([
+                'paid' => false,
+                'message' => 'មិនទាន់កំណត់ Bakong API Token / Bakong API token is not configured.',
+            ], 503);
+        }
+
+        try {
+            $bakong = new BakongKHQR($token);
+            $response = $bakong->checkTransactionByMD5($md5);
+
+            // Bakong API: responseCode 0 = transaction found / successful
+            $paid = isset($response['responseCode']) && (int) $response['responseCode'] === 0;
+
+            return response()->json(['paid' => $paid]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('KHQR status check failed', [
+                'message' => $e->getMessage(),
+            ]);
+
+            return response()->json(['paid' => false]);
+        }
+    }
 }

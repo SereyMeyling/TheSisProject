@@ -112,7 +112,7 @@
                         <tbody>
                             @forelse($activeAdmissions as $adm)
                                 <tr>
-                                    <td class="pl-4 font-weight-bold text-dark">{{ $adm->patient->name ?? 'N/A' }}</td>
+                                    <td class="pl-4 font-weight-bold text-dark">{{ $adm->patient->full_name ?? 'N/A' }}</td>
                                     <td>
                                         <span class="badge badge-danger px-2 py-1"><i class="fas fa-door-closed"></i>
                                             {{ $adm->room->room_number ?? 'Room' }}</span>
@@ -148,9 +148,9 @@
                         @forelse($recentPatients as $pat)
                             <li class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between">
                                 <div>
-                                    <div class="font-weight-bold text-dark">{{ $pat->name }}</div>
+                                    <div class="font-weight-bold text-dark">{{ $pat->full_name }}</div>
                                     <div class="small text-muted">{{ $pat->phone ?? 'No phone' }} | Gender:
-                                        {{ ucfirst($pat->gender ?? 'N/A') }}
+                                        {{ ucfirst($pat->sex ?? 'N/A') }}
                                     </div>
                                 </div>
                                 <a href="{{ route('patients.show', $pat->patient_id) }}"

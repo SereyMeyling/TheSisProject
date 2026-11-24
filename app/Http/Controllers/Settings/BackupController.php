@@ -7,6 +7,7 @@ use App\Models\Setting\BackupLog;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
@@ -97,7 +98,20 @@ class BackupController extends Controller
     {
         $request->validate([
             'backup_file' => 'required|file|max:512000',
+            'current_password' => 'required|string',
+        ], [
+            'current_password.required' => 'សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន / Please enter your current password.',
         ]);
+
+        // Re-confirm the admin's password: a restore replaces the whole
+        // database (all patient records), so a stolen session alone must
+        // not be enough.
+        if (!Hash::check($request->input('current_password'), $request->user()->password)) {
+            return response()->json([
+                'message' => 'The given data was invalid.',
+                'errors' => ['current_password' => ['ពាក្យសម្ងាត់បច្ចុប្បន្នមិនត្រឹមត្រូវទេ / Current password is incorrect.']],
+            ], 422);
+        }
 
         set_time_limit(300);
         ini_set('memory_limit', '512M');
@@ -140,8 +154,41 @@ class BackupController extends Controller
                 copy('zip://' . $file->getRealPath() . '#' . $entry, $tempPath);
                 $sqlPath = $tempPath;
             }
+        } catch (Throwable $e) {
+            Log::warning('Restore: could not read uploaded backup', ['message' => $e->getMessage()]);
 
-            $this->runSqlFile($sqlPath);
+            if ($tempPath) {
+                @unlink($tempPath);
+            }
+
+            return $this->invalidBackupResponse();
+        }
+
+        try {
+            // Stage 1: validate the WHOLE file before touching the database.
+            if (!$this->looksLikeSqlDump($sqlPath)) {
+                return $this->invalidBackupResponse();
+            }
+
+            // Stage 2: run it.
+            $statementNo = 0;
+
+            try {
+                $this->runSqlFile($sqlPath, $statementNo);
+            } catch (Throwable $e) {
+                // Log details server-side only; never return raw SQL / DB errors.
+                Log::error('Restore failed while executing statement', [
+                    'statement_no' => $statementNo,
+                    'error_code' => $e->getCode(),
+                    'message' => mb_substr($e->getMessage(), 0, 500),
+                ]);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => "Restore បរាជ័យនៅ statement #{$statementNo}។ ទិន្នន័យអាចត្រូវបាន Restore ត្រឹមតែមួយផ្នែក — សូម Restore ពី Backup ដែលល្អម្ដងទៀត។ / "
+                        . "Restore failed at statement #{$statementNo}. The database may be partially restored — please restore again from a known-good backup.",
+                ], 500);
+            }
 
             BackupLog::create(['action' => 'restore', 'user_id' => auth()->id()]);
 
@@ -149,15 +196,14 @@ class BackupController extends Controller
 
         } catch (Throwable $e) {
             Log::error('Restore exception', [
-                'message' => $e->getMessage(),
+                'message' => mb_substr($e->getMessage(), 0, 500),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Restore failed.',
-                'debug' => config('app.debug') ? $e->getMessage() : null,
+                'message' => 'Restore មិនជោគជ័យ។ / Restore failed.',
             ], 500);
 
         } finally {
@@ -262,7 +308,30 @@ class BackupController extends Controller
         fclose($h);
     }
 
-    private function runSqlFile(string $path): void
+    /**
+     * Statement prefixes a restorable dump may contain (our own dumpDatabase()
+     * output, plus the usual mysqldump header/footer lines). Anything else
+     * (GRANT, CREATE USER, LOAD DATA, SELECT ... INTO OUTFILE, DELIMITER,
+     * triggers/procedures, ...) makes the whole file rejected.
+     * This is a sanity check that the upload is a backup dump, not a
+     * sandbox: only password-confirmed admins can reach restore at all.
+     */
+    private const ALLOWED_STATEMENT = '/^(?:'
+        . 'SET\s'
+        . '|DROP\s+TABLE\s'
+        . '|CREATE\s+TABLE\s'
+        . '|INSERT\s+INTO\s'
+        . '|LOCK\s+TABLES\s'
+        . '|UNLOCK\s+TABLES\b'
+        . '|ALTER\s+TABLE\s+`[^`]+`\s+(?:DISABLE|ENABLE)\s+KEYS\b'
+        . '|\/\*!\d+\s+(?:SET\s|ALTER\s+TABLE\s+`[^`]+`\s+(?:DISABLE|ENABLE)\s+KEYS\b)'
+        . ')/i';
+
+    /**
+     * Yields each SQL statement of the file (same splitting rules as the
+     * dump writer above: a statement ends on a line ending with ";").
+     */
+    private function readStatements(string $path): \Generator
     {
         $h = fopen($path, 'r');
         if (!$h) {
@@ -272,8 +341,6 @@ class BackupController extends Controller
         $buffer = '';
 
         try {
-            DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
-
             while (($line = fgets($h)) !== false) {
                 $trim = rtrim($line);
 
@@ -284,12 +351,81 @@ class BackupController extends Controller
                 $buffer .= $line;
 
                 if (substr($trim, -1) === ';') {
-                    DB::unprepared($buffer);
+                    yield $buffer;
                     $buffer = '';
                 }
             }
+
+            if (trim($buffer) !== '') {
+                yield $buffer; // trailing statement without ";"
+            }
         } finally {
             fclose($h);
+        }
+    }
+
+    /**
+     * Checks the uploaded file really is a table/data SQL dump before we
+     * run anything: readable text, contains at least one CREATE TABLE or
+     * INSERT, and every statement is on the allow-list.
+     */
+    private function looksLikeSqlDump(string $path): bool
+    {
+        $head = @file_get_contents($path, false, null, 0, 8192);
+        if ($head === false || trim($head) === '' || str_contains($head, "\0")) {
+            return false; // empty or binary
+        }
+
+        $hasData = false;
+
+        foreach ($this->readStatements($path) as $sql) {
+            $stmt = ltrim($sql);
+
+            if (substr(rtrim($stmt), -1) !== ';' || !preg_match(self::ALLOWED_STATEMENT, $stmt)) {
+                return false;
+            }
+
+            if (preg_match('/^(CREATE\s+TABLE|INSERT\s+INTO)\s/i', $stmt)) {
+                $hasData = true;
+            }
+        }
+
+        return $hasData;
+    }
+
+    private function invalidBackupResponse()
+    {
+        return response()->json([
+            'message' => 'The given data was invalid.',
+            'errors' => ['backup_file' => [
+                'File នេះមិនមែនជា Backup SQL ត្រឹមត្រូវទេ។ / This file is not a valid SQL backup.',
+            ]],
+        ], 422);
+    }
+
+    /**
+     * Executes the dump statement by statement.
+     *
+     * NOTE: this cannot be wrapped in a DB transaction. Every dump starts
+     * with DROP TABLE / CREATE TABLE, and in MySQL DDL statements cause an
+     * implicit COMMIT, so a ROLLBACK could never undo a half-finished
+     * restore. Instead the file is fully validated first (looksLikeSqlDump)
+     * and a failure reports which statement failed so the admin can restore
+     * again from a known-good backup.
+     *
+     * Foreign key checks are disabled for the duration of the run (tables
+     * are dropped/recreated in arbitrary order) and always re-enabled.
+     */
+    private function runSqlFile(string $path, int &$statementNo = 0): void
+    {
+        DB::unprepared('SET FOREIGN_KEY_CHECKS=0');
+
+        try {
+            foreach ($this->readStatements($path) as $sql) {
+                $statementNo++;
+                DB::unprepared($sql);
+            }
+        } finally {
             DB::unprepared('SET FOREIGN_KEY_CHECKS=1');
         }
     }

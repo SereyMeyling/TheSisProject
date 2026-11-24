@@ -11,6 +11,7 @@ use App\Notifications\LabResultNotification;
 use App\Helpers\NotifiesRoles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Notification;
 use App\Services\Billing\LabChargeService;
 
@@ -19,6 +20,9 @@ class LabController extends Controller
     public function __construct()
     {
         $this->middleware(['auth', '2fa', 'role:admin|doctor|nurse|lab_technician']);
+
+        // Only admins may change the lab test catalog (names, prices).
+        $this->middleware('role:admin')->only(['storeTest', 'updateTest', 'destroyTest']);
     }
 
     /**
@@ -234,17 +238,21 @@ class LabController extends Controller
 
             DB::rollBack();
 
+            Log::error('Lab order create failed', [
+                'record_id' => $data['record_id'],
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = 'មានបញ្ហាក្នុងការបង្កើតការកម្មង់ សូមព្យាយាមម្តងទៀត (Failed to create the lab order, please try again)';
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'មានបញ្ហាក្នុងការបង្កើតការកម្មង់៖ ' . $e->getMessage(),
+                    'message' => $message,
                 ], 500);
             }
 
-            return back()->with(
-                'error',
-                'មានបញ្ហាក្នុងការបង្កើតការកម្មង់៖ ' . $e->getMessage()
-            );
+            return back()->with('error', $message);
         }
     }
 
@@ -273,11 +281,32 @@ class LabController extends Controller
 
         $data = $request->validate([
             'results' => 'required|array',
-            'results.*.result_id' => 'required|exists:lab_results,result_id',
-            'results.*.result_value' => 'required|string|max:100',
+            'results.*.result_id' => 'required|integer',
+            'results.*.result_value' => 'nullable|string|max:100',
             'results.*.normal_range' => 'nullable|string|max:100',
             'results.*.remark' => 'nullable|string|max:255',
         ]);
+
+        // Every submitted result must belong to THIS order (no editing other orders' results).
+        $orderResults = $order->results->keyBy('result_id');
+        $submittedIds = collect($data['results'])->pluck('result_id')->map(function ($id) {
+            return (int) $id;
+        });
+
+        if ($submittedIds->contains(function ($id) use ($orderResults) {
+            return !$orderResults->has($id);
+        })) {
+            $message = 'លទ្ធផលមិនត្រឹមត្រូវសម្រាប់ការកម្មង់នេះទេ (Invalid results for this lab order)';
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                ], 403);
+            }
+
+            return back()->with('error', $message);
+        }
 
         DB::beginTransaction();
 
@@ -285,81 +314,96 @@ class LabController extends Controller
 
             foreach ($data['results'] as $resData) {
 
-                $result = LabResult::find($resData['result_id']);
+                $result = $orderResults->get((int) $resData['result_id']);
 
-                if ($result) {
-                    $result->update([
-                        'result_value' => $resData['result_value'],
-                        'normal_range' => $resData['normal_range']
-                            ?? $result->normal_range,
-                        'remark' => $resData['remark'] ?? null,
-                    ]);
-                }
-            }
+                // A blank value keeps the current one (still "Pending" if never entered).
+                $value = trim((string) ($resData['result_value'] ?? ''));
 
-
-
-            $wasPending = $order->status === 'pending';
-
-            $order->update([
-                'status' => 'completed'
-            ]);
-
-            // Bill the tests only the first time the order becomes completed,
-            // so re-saving an old completed order can never create new charges.
-            if ($wasPending) {
-                app(LabChargeService::class)->chargeCompletedOrder($order);
-            }
-            DB::commit();
-
-            // Notify ordering doctor + admins + nurses
-            $order->loadMissing(
-                'medicalRecord.doctor',
-                'medicalRecord.patient'
-            );
-
-            $doctorUser = optional($order->medicalRecord)->doctor;
-
-            $recipients = NotifiesRoles::specificUserPlusRoles(
-                $doctorUser,
-                ['admin', 'nurse']
-            );
-
-            if ($recipients->isNotEmpty()) {
-                Notification::send(
-                    $recipients,
-                    new LabResultNotification($order)
-                );
-            }
-
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'លទ្ធផលពិនិត្យមន្ទីរពិសោធន៍ត្រូវបានរក្សាទុកដោយជោគជ័យ',
+                $result->update([
+                    'result_value' => $value !== '' ? $value : $result->result_value,
+                    'normal_range' => $resData['normal_range']
+                        ?? $result->normal_range,
+                    'remark' => $resData['remark'] ?? null,
                 ]);
             }
 
-            return back()->with(
-                'success',
-                'លទ្ធផលពិនិត្យមន្ទីរពិសោធន៍ត្រូវបានរក្សាទុកដោយជោគជ័យ'
-            );
+            // Completed only when no test is still waiting for a result.
+            $hasPending = LabResult::where('lab_order_id', $order->lab_order_id)
+                ->where('result_value', 'Pending')
+                ->exists();
+
+            $order->update([
+                'status' => $hasPending ? 'pending' : 'completed'
+            ]);
+
+            // Bill every entered result. Safe on every save: charges are keyed by
+            // source_key (lab:<result_id>), so already-billed results are skipped.
+            app(LabChargeService::class)->chargeCompletedOrder($order);
+
+            DB::commit();
 
         } catch (\Exception $e) {
 
             DB::rollBack();
 
+            Log::error('Lab results save failed', [
+                'lab_order_id' => $order->lab_order_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            $message = 'មានបញ្ហាក្នុងការរក្សាទុកលទ្ធផល សូមព្យាយាមម្តងទៀត (Failed to save lab results, please try again)';
+
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'មានបញ្ហាក្នុងការរក្សាទុកលទ្ធផល៖ ' . $e->getMessage(),
+                    'message' => $message,
                 ], 500);
             }
 
-            return back()->with(
-                'error',
-                'មានបញ្ហាក្នុងការរក្សាទុកលទ្ធផល៖ ' . $e->getMessage()
-            );
+            return back()->with('error', $message);
         }
+
+        // Notify ordering doctor + admins + nurses once the order is complete.
+        // A notification failure must not report the (already saved) results as failed.
+        if ($order->status === 'completed') {
+            try {
+                $order->loadMissing(
+                    'medicalRecord.doctor',
+                    'medicalRecord.patient'
+                );
+
+                $doctorUser = optional($order->medicalRecord)->doctor;
+
+                $recipients = NotifiesRoles::specificUserPlusRoles(
+                    $doctorUser,
+                    ['admin', 'nurse']
+                );
+
+                if ($recipients->isNotEmpty()) {
+                    Notification::send(
+                        $recipients,
+                        new LabResultNotification($order)
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::warning('Lab result notification failed', [
+                    'lab_order_id' => $order->lab_order_id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'លទ្ធផលពិនិត្យមន្ទីរពិសោធន៍ត្រូវបានរក្សាទុកដោយជោគជ័យ',
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            'លទ្ធផលពិនិត្យមន្ទីរពិសោធន៍ត្រូវបានរក្សាទុកដោយជោគជ័យ'
+        );
     }
 
 
@@ -461,8 +505,11 @@ class LabController extends Controller
 
     public function showResult($id)
     {
+        // LabOrder has no patient() relation: the patient comes through the medical record.
         $labResult = LabResult::with([
-            'labOrder.patient',
+            'labTest',
+            'labOrder.medicalRecord.patient',
+            'labOrder.medicalRecord.doctor',
         ])->find($id);
 
         if (!$labResult) {

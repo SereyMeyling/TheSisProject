@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Department;
 use App\Http\Controllers\Controller;
 use App\Models\Department;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DepartmentController extends Controller
 {
@@ -42,16 +43,28 @@ class DepartmentController extends Controller
 
 
 
+    /**
+     * Shared rules for store and update; lengths match the departments table (M11).
+     */
+    protected function rules(): array
+    {
+        return [
+            'department_name' => 'required|string|max:100',
+            'description' => 'required|string|max:255',
+        ];
+    }
+
     public function store(Request $request)
     {
-        $request->validate([
-            'department_name' => 'required|string|max:150',
-            'description' => 'required|string',
-        ]);
+        $validator = Validator::make($request->all(), $this->rules());
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->with(['error' => $validator->errors()->first()]);
+        }
+        $validated = $validator->validated();
 
-        $department = Department::create([
-            'department_name' => $request->department_name,
-            'description' => $request->description,
+        Department::create([
+            'department_name' => $validated['department_name'],
+            'description' => $validated['description'],
         ]);
 
         return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានបន្ថែមដោយជោគជ័យ']);
@@ -72,9 +85,15 @@ class DepartmentController extends Controller
         if (!$department) {
             return redirect()->back()->with(['error' => 'រកមិនឃើញដេប៉ាតឺម៉ង់']);
         }
+        $validator = Validator::make($request->all(), $this->rules());
+        if ($validator->fails()) {
+            return redirect()->back()->withInput()->with(['error' => $validator->errors()->first()]);
+        }
+        $validated = $validator->validated();
+
         $department->update([
-            'department_name' => $request->department_name,
-            'description' => $request->description,
+            'department_name' => $validated['department_name'],
+            'description' => $validated['description'],
         ]);
         return redirect()->back()->with(['success' => 'ដេប៉ាតឺម៉ង់ត្រូវបានកែប្រែដោយជោគជ័យ']);
     }

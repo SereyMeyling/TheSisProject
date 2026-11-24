@@ -52,6 +52,7 @@
                     {{-- Actions --}}
                     <td class="text-right">
 
+                        @role('admin')
                         <div class="dropup">
 
                             {{-- Action Button --}}
@@ -97,6 +98,7 @@
                             </div>
 
                         </div>
+                        @endrole
 
                     </td>
 

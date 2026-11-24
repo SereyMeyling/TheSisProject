@@ -92,7 +92,7 @@
                             @forelse($todayAppointments as $app)
                                 <tr>
                                     <td class="pl-4 font-weight-bold text-dark">
-                                        {{ $app->patient->name ?? 'N/A' }}
+                                        {{ $app->patient->full_name ?? 'N/A' }}
                                     </td>
                                     <td class="small text-muted">
                                         {{ optional($app->appointment_date)->format('H:i A') ?? '-' }}</td>
@@ -140,7 +140,7 @@
                             @forelse($pendingLabOrders as $lab)
                                 <tr>
                                     <td class="pl-4 font-weight-bold">#LAB-{{ $lab->lab_order_id }}</td>
-                                    <td>{{ $lab->medicalRecord->patient->name ?? 'N/A' }}</td>
+                                    <td>{{ $lab->medicalRecord->patient->full_name ?? 'N/A' }}</td>
                                     <td class="small text-muted">{{ optional($lab->order_date)->format('Y-m-d') }}</td>
                                 </tr>
                             @empty
@@ -163,7 +163,7 @@
                         @forelse($recentMedicalRecords as $rec)
                             <li class="list-group-item px-4 py-3 d-flex align-items-center justify-content-between">
                                 <div>
-                                    <div class="font-weight-bold text-dark">{{ $rec->patient->name ?? 'Patient' }}</div>
+                                    <div class="font-weight-bold text-dark">{{ $rec->patient->full_name ?? 'Patient' }}</div>
                                     <div class="small text-muted">
                                         {{ Str::limit($rec->diagnosis ?? 'No diagnosis recorded', 35) }}</div>
                                 </div>

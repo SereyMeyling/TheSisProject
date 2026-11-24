@@ -89,9 +89,12 @@ class DashboardController extends Controller
 
         $deptNames = Department::pluck('department_name', 'department_id');
 
-        $admittedByDept = Admission::where('status', 'admitted')
-            ->selectRaw('department_id, COUNT(DISTINCT patient_id) as total')
-            ->groupBy('department_id')
+        // Older admissions have no department_id; fall back to the room's department (M13).
+        $admittedByDept = Admission::query()
+            ->leftJoin('rooms', 'rooms.room_id', '=', 'admissions.room_id')
+            ->where('admissions.status', 'admitted')
+            ->selectRaw('COALESCE(admissions.department_id, rooms.department_id) as department_id, COUNT(DISTINCT admissions.patient_id) as total')
+            ->groupByRaw('COALESCE(admissions.department_id, rooms.department_id)')
             ->get();
 
         $admittedTotal = $admittedByDept->sum('total');
@@ -214,9 +217,10 @@ class DashboardController extends Controller
 
         $todayAppointmentsCount = $todayAppointments->count();
 
+        // appointments.status is scheduled/completed/cancelled; "pending" never existed (M14)
         $pendingAppointments = Appointment::with('patient')
-            ->where('status', 'pending')
-            ->latest()
+            ->where('status', 'scheduled')
+            ->orderBy('appointment_date')
             ->take(10)
             ->get();
 

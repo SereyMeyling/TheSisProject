@@ -31,7 +31,7 @@
                 <td>
                     <div class="font-weight-bold text-primary small">
                         <i class="fas fa-user-md mr-1"></i>
-                        {{ $ord->medicalRecord && $ord->medicalRecord->doctor ? $ord->medicalRecord->doctor->first_name . ' ' . $ord->medicalRecord->doctor->last_name : '—' }}
+                        {{ $ord->medicalRecord && $ord->medicalRecord->doctor ? $ord->medicalRecord->doctor->name : '—' }}
                     </div>
                 </td>
                 <td>

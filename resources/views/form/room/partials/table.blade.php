@@ -16,7 +16,17 @@
                     <strong>{{ $room->room_number }}</strong>
                 </td>
                 <td>{{ $room->type_label }}</td>
-                <td><span class="badge badge-{{ $room->status }}">{{ $room->status_label }}</span></td>
+                <td>
+                    <span class="badge badge-{{ $room->status }}">{{ $room->status_label }}</span>
+                    @if($room->activeAdmission)
+                        <div class="small text-muted mt-1">
+                            <i class="fas fa-user-injured mr-1"></i>{{ $room->activeAdmission->patient->full_name ?? 'N/A' }}
+                            @if($room->activeAdmission->admission_date)
+                                ({{ $room->activeAdmission->admission_date->format('d/m/Y') }})
+                            @endif
+                        </div>
+                    @endif
+                </td>
                 <td>${{ number_format($room->price_per_day, 2) }}</td>
                 <td>
                     <div class="action-icons justify-content-center">
@@ -38,6 +48,17 @@
                                     <i class="fas fa-edit text-primary mr-2"></i>
                                     កែប្រែ
                                 </a>
+
+                                {{-- Discharge current patient --}}
+                                @if($room->activeAdmission)
+                                    <a href="#" class="dropdown-item btn-discharge-admission"
+                                        data-id="{{ $room->activeAdmission->admission_id }}"
+                                        data-patient="{{ $room->activeAdmission->patient->full_name ?? 'N/A' }}"
+                                        data-room="{{ $room->room_number }}">
+                                        <i class="fas fa-sign-out-alt text-success mr-2"></i>
+                                        ចេញពីមន្ទីរពេទ្យ (Discharge)
+                                    </a>
+                                @endif
 
                                 {{-- Delete --}}
                                 <a href="#" class="dropdown-item btn-delete-room" data-id="{{ $room->room_id }}"

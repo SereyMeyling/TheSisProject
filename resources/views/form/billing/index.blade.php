@@ -312,6 +312,10 @@
                     <div class="row mb-3">
                         <div class="col-md-6 mb-2">
                             <label class="font-weight-bold">ជ្រើសរើសអ្នកជំងឺដែលមានស្រាប់</label>
+                            @if(Route::has('billing.patients.search'))
+                                <input type="search" id="patient_search" class="form-control form-control-sm mb-1"
+                                    placeholder="ស្វែងរកអ្នកជំងឺ (ឈ្មោះ / លេខកូដ / ទូរស័ព្ទ) — Search patient" autocomplete="off">
+                            @endif
                             <select id="select_patient_id" name="patient_id" class="form-control custom-select">
                                 <option value="">-- ជ្រើសរើសអ្នកជំងឺ ឬបញ្ចូលឈ្មោះខាងស្តាំ --</option>
                                 @foreach($patients as $pt)
@@ -684,6 +688,7 @@
         generateKhqrUrl: "{{ route('payment.generateKhqr') }}",
         checkKhqrStatusUrlBase: "{{ url('billing/payment/check-status') }}",
         csrfToken: "{{ csrf_token() }}",
+        patientSearchUrl: @json(Route::has('billing.patients.search') ? route('billing.patients.search') : null),
         currency: "{{ $billing->currency_symbol ?? '$' }}",
         currency2: "{{ $billing->secondary_currency_symbol ?? '៛' }}",
         exchangeRate: {{ $billing->exchange_rate ?? 4100 }},

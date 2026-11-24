@@ -199,8 +199,10 @@ class PrescriptionController extends Controller
                 // Deduct stock, oldest expiry first. remaining_quantity is the source of truth.
                 $qtyNeeded = $qty;
 
+                // Never dispense expired stock.
                 $batches = MedicineBatch::where('medicine_id', $item->medicine_id)
                     ->where('remaining_quantity', '>', 0)
+                    ->whereDate('expiry_date', '>=', today())
                     ->orderBy('expiry_date', 'asc')
                     ->lockForUpdate()
                     ->get();
