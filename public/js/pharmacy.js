@@ -13,6 +13,9 @@ $(function () {
     };
     const stockLabels = { normal: "ធម្មតា", low: "ជិតអស់", out: "អស់ស្តុក" };
 
+    // Escape any server/user value before it goes into an HTML string.
+    const esc = (s) => $("<div>").text(s ?? "").html().replace(/"/g, "&quot;");
+
     // ---- Toast ----
     function showToast(message, type = "success") {
         if (!$("#toastContainer").length) {
@@ -27,7 +30,7 @@ $(function () {
                   ? "fa-times-circle"
                   : "fa-info-circle";
         const $toast = $(
-            `<div class="toast-custom ${type}"><i class="fas ${icon}"></i><span>${message}</span></div>`,
+            `<div class="toast-custom ${esc(type)}"><i class="fas ${icon}"></i><span>${esc(message)}</span></div>`,
         );
         $("#toastContainer").append($toast);
         setTimeout(() => {
@@ -71,11 +74,13 @@ $(function () {
             },
         },
         columns: [
-            { data: "medicine_name", name: "medicine_name" },
-            { data: "category", name: "category" },
+            // DataTables inserts cell data as HTML: escape plain-text columns.
+            { data: "medicine_name", name: "medicine_name", render: esc },
+            { data: "category", name: "category", render: esc },
             {
                 data: "strength_display",
                 name: "strength_display",
+                render: esc,
                 orderable: false,
                 searchable: false,
             },
@@ -92,7 +97,7 @@ $(function () {
                     return "$" + parseFloat(val).toFixed(2);
                 },
             },
-            { data: "nearest_expiry", name: "nearest_expiry" },
+            { data: "nearest_expiry", name: "nearest_expiry", render: esc },
             {
                 data: "actions",
                 name: "actions",
@@ -159,7 +164,7 @@ $(function () {
                 let val = appliedFilters[key];
                 if (key === "f_stock") val = stockLabels[val] || val;
                 if (key === "f_expiry_days") val = val + " ថ្ងៃ";
-                return `<span class="filter-chip" data-key="${key}">${filterLabels[key]}: ${val} <i class="fas fa-times" data-remove="${key}"></i></span>`;
+                return `<span class="filter-chip" data-key="${esc(key)}">${esc(filterLabels[key])}: ${esc(val)} <i class="fas fa-times" data-remove="${esc(key)}"></i></span>`;
             })
             .join("");
         $("#activeFilterChips").html(chips);
@@ -225,9 +230,9 @@ $(function () {
         const box$ = $(box);
         let msg = "មានបញ្ហា សូមព្យាយាមម្តងទៀត";
         if (xhr.responseJSON?.errors) {
-            msg = Object.values(xhr.responseJSON.errors).flat().join("<br>");
+            msg = Object.values(xhr.responseJSON.errors).flat().map(esc).join("<br>");
         } else if (xhr.responseJSON?.message) {
-            msg = xhr.responseJSON.message;
+            msg = esc(xhr.responseJSON.message);
         }
         box$.html(msg).removeClass("d-none");
     }
@@ -272,7 +277,7 @@ $(function () {
                     (med.batches || [])
                         .map(
                             (b) =>
-                                `<div>#${b.batch_number} — ${b.remaining_quantity}/${b.quantity_initial} គ្រាប់, ផុតកំណត់ ${b.expiry_date}</div>`,
+                                `<div>#${esc(b.batch_number)} — ${esc(b.remaining_quantity)}/${esc(b.quantity_initial)} គ្រាប់, ផុតកំណត់ ${esc(b.expiry_date)}</div>`,
                         )
                         .join("") || "<em>មិនទាន់មានស្តុក</em>";
                 $("#edit_batches_list").html(rows);
@@ -331,7 +336,7 @@ $(function () {
                     }
                     $("#restockLastBatchHint")
                         .html(
-                            `<i class="fas fa-info-circle mr-1"></i>លេខបាច់លើកមុន៖ <strong>#${lastBatch.batch_number}</strong> — បំពេញអ្នកផ្គត់ផ្គង់/តម្លៃពីលើកមុនរួចហើយ អាចកែបានប្រសិនចង់ប្តូរ`,
+                            `<i class="fas fa-info-circle mr-1"></i>លេខបាច់លើកមុន៖ <strong>#${esc(lastBatch.batch_number)}</strong> — បំពេញអ្នកផ្គត់ផ្គង់/តម្លៃពីលើកមុនរួចហើយ អាចកែបានប្រសិនចង់ប្តូរ`,
                         )
                         .removeClass("d-none");
                 }
@@ -382,11 +387,11 @@ $(function () {
                                       : "table-light";
                             return `<tr class="${cls}">
                     <td>${i + 1}</td>
-                    <td>${r.medicine_name}</td>
-                    <td>${r.batch_number}</td>
-                    <td class="text-right">${r.remaining_quantity}</td>
-                    <td>${r.expiry_date}</td>
-                    <td class="text-right">${r.days_left} ថ្ងៃ</td>
+                    <td>${esc(r.medicine_name)}</td>
+                    <td>${esc(r.batch_number)}</td>
+                    <td class="text-right">${esc(r.remaining_quantity)}</td>
+                    <td>${esc(r.expiry_date)}</td>
+                    <td class="text-right">${esc(r.days_left)} ថ្ងៃ</td>
                 </tr>`;
                         })
                         .join("") ||
@@ -410,7 +415,7 @@ $(function () {
                 $("#modalSupplier").modal("hide");
                 $form[0].reset();
                 $("#supplierErrors").addClass("d-none");
-                const opt = `<option value="${res.supplier.supplier_id}">${res.supplier.name}</option>`;
+                const opt = `<option value="${esc(res.supplier.supplier_id)}">${esc(res.supplier.name)}</option>`;
                 $('select[name="supplier_id"]').append(opt);
                 showToast("បន្ថែមអ្នកផ្គត់ផ្គង់ជោគជ័យ", "success");
             })
@@ -434,19 +439,19 @@ $(function () {
                                 ? b.outs
                                       .map(
                                           (o) =>
-                                              `<div>${o.date}: <span class="text-danger">-${o.quantity}</span></div>`,
+                                              `<div>${esc(o.date)}: <span class="text-danger">-${esc(o.quantity)}</span></div>`,
                                       )
                                       .join("")
                                 : '<span class="text-muted">—</span>';
 
                             return `<tr>
-                        <td>${b.batch_number}</td>
-                        <td>${b.date_in}</td>
-                        <td class="text-right">${b.quantity_initial}</td>
-                        <td>${b.expiry_date}</td>
+                        <td>${esc(b.batch_number)}</td>
+                        <td>${esc(b.date_in)}</td>
+                        <td class="text-right">${esc(b.quantity_initial)}</td>
+                        <td>${esc(b.expiry_date)}</td>
                         <td class="text-right">$${parseFloat(b.purchase_price).toFixed(2)}</td>
                         <td>${outsHtml}</td>
-                        <td class="text-right"><strong>${b.remaining_quantity}</strong></td>
+                        <td class="text-right"><strong>${esc(b.remaining_quantity)}</strong></td>
                     </tr>`;
                         })
                         .join("") ||

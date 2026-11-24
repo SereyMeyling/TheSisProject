@@ -14,14 +14,14 @@ class RolePermissionController extends Controller
      * Fetch all created roles with their associated permissions.
      *
      * @param Request $request
-     * @return \Illuminate\Contracts\View\View|JsonResponse
+     * @return RedirectResponse|JsonResponse
      */
     public function index(Request $request)
     {
-        $roles = Role::with('permissions')->get();
-        $permissions = Permission::all();
-
         if ($request->ajax() || $request->wantsJson()) {
+            $roles = Role::with('permissions')->get();
+            $permissions = Permission::all();
+
             return response()->json([
                 'success' => true,
                 'roles'       => $roles,
@@ -29,7 +29,9 @@ class RolePermissionController extends Controller
             ]);
         }
 
-        return view('roles.index', compact('roles', 'permissions'));
+        // There is no standalone roles page (no view, nothing links here);
+        // roles are managed from the user management page.
+        return redirect()->route('user.index');
     }
 
     /**

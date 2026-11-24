@@ -233,6 +233,29 @@
     </div>
 </div>
 
+{{-- ── DISCHARGE CONFIRM MODAL ─────────────────────────────────────────── --}}
+<div class="modal fade" id="modalDischarge" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content ">
+            <div class="modal-header bg-success text-white">
+                <h6 class="modal-title">ចេញពីមន្ទីរពេទ្យ (Discharge)</h6>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form id="dischargeForm" method="POST">
+                @csrf
+                <div class="modal-body">
+                    តើអ្នកពិតជាចង់ឱ្យអ្នកជំងឺ <strong id="dischargePatient" class="text-success"></strong>
+                    ចេញពីបន្ទប់ <strong id="dischargeRoom"></strong> មែនទេ?
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-light btn-sm" data-dismiss="modal">បោះបង់</button>
+                    <button type="submit" class="btn btn-success btn-sm" id="btnSubmitDischarge"><i class="fas fa-sign-out-alt mr-1"></i>Discharge</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @stop
 
 @section('css')
@@ -396,7 +419,8 @@
 
         function showToast(msg, type = 'success') {
             const icon = type === 'success' ? 'fa-check-circle' : 'fa-times-circle';
-            const $toast = $('<div class="toast-custom ' + type + '"><i class="fas ' + icon + '"></i><span>' + msg + '</span></div>');
+            const $toast = $('<div class="toast-custom ' + type + '"><i class="fas ' + icon + '"></i><span></span></div>');
+            $toast.find('span').text(msg);
             $('#toastContainer').append($toast);
             setTimeout(() => $toast.fadeOut(300, () => $toast.remove()), 4000);
         }
@@ -529,7 +553,7 @@
                     if (xhr.status === 422 && xhr.responseJSON.errors) {
                         showFieldErrors($form, 'edit_', xhr.responseJSON.errors);
                     } else {
-                        showToast('An error occurred while updating the room.', 'error');
+                        showToast((xhr.responseJSON && xhr.responseJSON.message) || 'An error occurred while updating the room.', 'error');
                     }
                 },
                 complete: function () {
@@ -559,9 +583,44 @@
                     showToast(res.message || 'Room deleted successfully');
                     loadRooms(1);
                 },
-                error: function () {
-                    showToast('An error occurred while deleting the room.', 'error');
+                error: function (xhr) {
+                    $('#modalDeleteRoom').modal('hide');
+                    showToast((xhr.responseJSON && xhr.responseJSON.message) || 'An error occurred while deleting the room.', 'error');
                 }
+            });
+        });
+
+        // ---- Discharge patient (AJAX) ----
+        $(document).on('click', '.btn-discharge-admission', function (e) {
+            e.preventDefault();
+            $('#dischargePatient').text($(this).data('patient'));
+            $('#dischargeRoom').text($(this).data('room'));
+            $('#dischargeForm').attr(
+                'action',
+                "{{ route('admissions.discharge', ['id' => '__ID__']) }}".replace('__ID__', $(this).data('id'))
+            );
+            $('#modalDischarge').modal('show');
+        });
+        $('#dischargeForm').on('submit', function (e) {
+            e.preventDefault();
+            const $btn = $('#btnSubmitDischarge');
+            $btn.prop('disabled', true);
+            $.ajax({
+                url: $(this).attr('action'),
+                method: 'POST',
+                data: $(this).serialize(),
+                headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                success: function (res) {
+                    $('#modalDischarge').modal('hide');
+                    showToast(res.message || 'Patient discharged');
+                    loadRooms(1);
+                },
+                error: function (xhr) {
+                    $('#modalDischarge').modal('hide');
+                    showToast((xhr.responseJSON && xhr.responseJSON.message) || 'An error occurred while discharging the patient.', 'error');
+                    loadRooms(1);
+                },
+                complete: function () { $btn.prop('disabled', false); }
             });
         });
     });

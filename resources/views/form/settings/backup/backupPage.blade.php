@@ -87,6 +87,13 @@
                             <small class="text-danger d-none" id="restoreFileError"></small>
                         </div>
 
+                        <div class="form-group">
+                            <label for="restorePassword">ពាក្យសម្ងាត់បច្ចុប្បន្នរបស់អ្នក / Your current password</label>
+                            <input type="password" class="form-control" id="restorePassword" name="current_password"
+                                autocomplete="current-password" required>
+                            <small class="text-danger d-none" id="restorePasswordError"></small>
+                        </div>
+
                         <button type="submit" class="btn btn-primary" id="restoreBtn">
                             <i class="fas fa-upload"></i>
                             Restore Database
@@ -282,10 +289,17 @@
             e.preventDefault();
 
             let fileInput = $('#backupFile')[0];
+            let password = $('#restorePassword').val();
             $('#restoreFileError').addClass('d-none').text('');
+            $('#restorePasswordError').addClass('d-none').text('');
 
             if (!fileInput.files.length) {
                 $('#restoreFileError').removeClass('d-none').text('សូមជ្រើសរើស File មុនសិន');
+                return;
+            }
+
+            if (!password) {
+                $('#restorePasswordError').removeClass('d-none').text('សូមបញ្ចូលពាក្យសម្ងាត់បច្ចុប្បន្ន / Please enter your current password');
                 return;
             }
 
@@ -293,6 +307,7 @@
 
             let formData = new FormData();
             formData.append('backup_file', fileInput.files[0]);
+            formData.append('current_password', password);
             formData.append('_token', '{{ csrf_token() }}');
 
             let $btn = $('#restoreBtn');
@@ -310,10 +325,18 @@
                     $('.custom-file-label').html('Choose file');
                 },
                 error: function (xhr) {
+                    $('#restorePassword').val('');
                     if (xhr.status === 422) {
-                        let errors = xhr.responseJSON.errors;
-                        let msg = Object.values(errors).flat().join(' ');
-                        $('#restoreFileError').removeClass('d-none').text(msg);
+                        let errors = xhr.responseJSON?.errors ?? {};
+                        if (errors.current_password) {
+                            $('#restorePasswordError').removeClass('d-none').text(errors.current_password.join(' '));
+                        }
+                        let fileMsg = Object.entries(errors)
+                            .filter(([k]) => k !== 'current_password')
+                            .map(([, v]) => v).flat().join(' ');
+                        if (fileMsg) {
+                            $('#restoreFileError').removeClass('d-none').text(fileMsg);
+                        }
                     } else {
                         showToast('error', xhr.responseJSON?.message ?? 'Restore មិនជោគជ័យ');
                     }

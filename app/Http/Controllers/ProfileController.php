@@ -11,6 +11,11 @@ use Illuminate\Validation\Rule;
 
 class ProfileController extends Controller
 {
+    /**
+     * Only these types are ever stored / served as the avatar Content-Type.
+     */
+    private const AVATAR_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
     public function edit()
     {
         $user = Auth::user();
@@ -56,7 +61,11 @@ class ProfileController extends Controller
                 file_get_contents($file->getRealPath())
             );
 
-            $validated['avatar_mime'] = $file->getClientMimeType();
+            // Server-detected MIME type (finfo), never the client-declared one.
+            $mime = $file->getMimeType();
+            $validated['avatar_mime'] = in_array($mime, self::AVATAR_MIMES, true)
+                ? $mime
+                : 'image/png';
 
         } else {
 
@@ -141,6 +150,10 @@ class ProfileController extends Controller
             'password' => Hash::make($request->password)
         ]);
 
+        // Sign out every other session/device that used the old password
+        // (enforced by the AuthenticateSession middleware in Kernel).
+        Auth::logoutOtherDevices($request->password);
+
         if ($request->ajax()) {
             return response()->json([
                 'message' => 'ពាក្យសម្ងាត់ត្រូវបានផ្លាស់ប្តូរដោយជោគជ័យ'
@@ -163,14 +176,16 @@ class ProfileController extends Controller
     {
         abort_unless($user->avatar, 404);
 
+        // Never trust the stored MIME blindly (older rows hold the
+        // client-declared type): only serve whitelisted image types.
+        $mime = in_array($user->avatar_mime, self::AVATAR_MIMES, true)
+            ? $user->avatar_mime
+            : 'image/png';
+
         return response(base64_decode($user->avatar))
-            ->header(
-                'Content-Type',
-                $user->avatar_mime ?: 'image/jpeg'
-            )
-            ->header(
-                'Cache-Control',
-                'private, max-age=3600'
-            );
+            ->header('Content-Type', $mime)
+            ->header('X-Content-Type-Options', 'nosniff')
+            ->header('Content-Security-Policy', 'sandbox')
+            ->header('Cache-Control', 'private, max-age=3600');
     }
 }

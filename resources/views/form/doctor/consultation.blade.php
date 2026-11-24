@@ -63,7 +63,7 @@
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">ភេទ / អាយុ:</span>
-                        <span>{{ ($record->patient->sex ?? '') == 'Male' ? 'ប្រុស' : 'ស្រី' }} | {{ $record->patient->date_of_birth ?? '-' }}</span>
+                        <span>{{ ['male' => 'ប្រុស', 'female' => 'ស្រី', 'other' => 'ផ្សេងៗ'][strtolower($record->patient->sex ?? '')] ?? '-' }} | {{ $record->patient->date_of_birth ?? '-' }}</span>
                     </div>
                     <div class="d-flex justify-content-between mb-2">
                         <span class="text-muted">លេខទូរសព្ទ:</span>

@@ -38,6 +38,7 @@ $(document).ready(function () {
         $("#createGrandTotal").text("0.00");
 
         $("#select_patient_id").val("");
+        $("#patient_search").val("");
 
         $("#labelVisitOpd").addClass("active");
         $("#labelVisitIpd").removeClass("active");
@@ -155,6 +156,59 @@ $(document).ready(function () {
         loadPendingCharges($opt.val() || "");
     });
 
+    // Patient search: the page only preloads recent/relevant patients, so any
+    // other patient is looked up on the server and added to the dropdown.
+    let patientSearchTimer = null;
+    let patientSearchXhr = null;
+    $("#patient_search").on("input", function () {
+        const term = $(this).val().trim();
+        clearTimeout(patientSearchTimer);
+        if (!window.billingConfig.patientSearchUrl || term.length < 2) return;
+
+        patientSearchTimer = setTimeout(function () {
+            if (patientSearchXhr) patientSearchXhr.abort();
+            const request = $.ajax({
+                url: window.billingConfig.patientSearchUrl,
+                method: "GET",
+                data: { q: term },
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest",
+                    Accept: "application/json",
+                },
+                success: function (res) {
+                    const $select = $("#select_patient_id");
+                    const found = res.data || [];
+                    found.forEach(function (pt) {
+                        const id = String(pt.patient_id);
+                        if ($select.find("option").filter(function () {
+                            return this.value === id;
+                        }).length) {
+                            return;
+                        }
+                        // Built with jQuery setters, so names are never parsed as HTML
+                        $("<option>")
+                            .val(id)
+                            .attr("data-name", pt.full_name ?? "")
+                            .attr("data-phone", pt.phone ?? "")
+                            .text(
+                                `${pt.full_name ?? ""} (${pt.patient_code ?? ""}) - ${pt.phone ?? ""}`,
+                            )
+                            .appendTo($select);
+                    });
+                    // One hit: select it. Several: they are now in the dropdown to pick from.
+                    if (found.length === 1) {
+                        const id = String(found[0].patient_id);
+                        if ($select.val() !== id) $select.val(id).trigger("change");
+                    }
+                },
+                complete: function () {
+                    if (patientSearchXhr === request) patientSearchXhr = null;
+                },
+            });
+            patientSearchXhr = request;
+        }, 350);
+    });
+
     // Visit Type toggle: OPD vs IPD
     $('input[name="visit_type"]').on("change", function () {
         if ($(this).val() === "ipd") {
@@ -195,7 +249,7 @@ $(document).ready(function () {
                         </select>
                     </td>
                     <td>
-                        <input type="text" name="items[${idx}][description]" class="form-control form-control-sm item-desc" placeholder="បរិយាយសេវា" value="${desc}" required>
+                        <input type="text" name="items[${idx}][description]" class="form-control form-control-sm item-desc" placeholder="បរិយាយសេវា" value="${escapeHtml(desc)}" required>
                     </td>
                     <td>
                         <input type="number" name="items[${idx}][qty]" class="form-control form-control-sm item-qty text-center" value="${qty}" min="1" required>
@@ -441,7 +495,7 @@ $(document).ready(function () {
                     const errors = xhr.responseJSON.errors;
                     $alert
                         .removeClass("d-none")
-                        .html(Object.values(errors).flat().join("<br>"));
+                        .html(Object.values(errors).flat().map(escapeHtml).join("<br>"));
                 } else {
                     $alert
                         .removeClass("d-none")
@@ -570,7 +624,7 @@ $(document).ready(function () {
                     $("#khqrStatusMessage").html(
                         '<span class="text-muted"><i class="fas fa-spinner fa-spin mr-1"></i>កំពុងរង់ចាំការទូទាត់...</span>',
                     );
-                    pollPaymentStatus(res.md5);
+                    pollPaymentStatus(res.md5, balance);
                 }
             },
         ).fail(function (xhr) {
@@ -583,7 +637,7 @@ $(document).ready(function () {
         });
     }
 
-    function pollPaymentStatus(md5) {
+    function pollPaymentStatus(md5, qrAmount) {
         clearInterval(khqrPollTimer);
         khqrPollAttempts = 0;
 
@@ -607,6 +661,8 @@ $(document).ready(function () {
                         );
                         // Record the payment on the invoice (the existing submit handler does the AJAX call)
                         $("#pay_transaction_ref").val(md5);
+                        // Record exactly the amount the QR was generated for (the server verifies it)
+                        $("#pay_amount").val(Number(qrAmount).toFixed(2));
                         $("#formPayInvoice").trigger("submit");
                     }
                 },
@@ -655,12 +711,14 @@ $(document).ready(function () {
                     '<i class="fas fa-check-circle mr-1"></i> បញ្ជាក់ការទូទាត់',
                 );
 
-                let msg =
-                    xhr.responseJSON?.message || "មានបញ្ហាក្នុងការទូទាត់ប្រាក់";
+                let msg = escapeHtml(
+                    xhr.responseJSON?.message || "មានបញ្ហាក្នុងការទូទាត់ប្រាក់",
+                );
 
                 if (xhr.status === 422 && xhr.responseJSON?.errors) {
                     msg = Object.values(xhr.responseJSON.errors)
                         .flat()
+                        .map(escapeHtml)
                         .join("<br>");
                 }
 
@@ -901,12 +959,12 @@ $(document).ready(function () {
                     <tr>
 
                         <td>
-                            ${item.description ?? "-"}
+                            ${escapeHtml(item.description ?? "-")}
                         </td>
 
                         <td>
                             <span class="badge badge-light border text-uppercase">
-                                ${item.item_type ?? "-"}
+                                ${escapeHtml(item.item_type ?? "-")}
                             </span>
                         </td>
 
@@ -966,7 +1024,7 @@ $(document).ready(function () {
                     <tr>
 
                         <td class="text-capitalize">
-                            ${p.payment_method ?? "-"}
+                            ${escapeHtml(p.payment_method ?? "-")}
                         </td>
 
                         <td>
@@ -978,7 +1036,7 @@ $(document).ready(function () {
                         </td>
 
                         <td>
-                            ${p.transaction_ref ?? "-"}
+                            ${escapeHtml(p.transaction_ref ?? "-")}
                         </td>
 
                     </tr>
@@ -1103,7 +1161,7 @@ $(document).ready(function () {
                             <option value="other" ${item.item_type === "other" ? "selected" : ""}>ផ្សេងៗ (Other)</option>
                         </select>
                     </td>
-                    <td><input type="text" name="items[${idx}][description]" class="form-control form-control-sm item-desc" value="${item.description ?? ""}" required></td>
+                    <td><input type="text" name="items[${idx}][description]" class="form-control form-control-sm item-desc" value="${escapeHtml(item.description ?? "")}" required></td>
                     <td><input type="number" name="items[${idx}][qty]" class="form-control form-control-sm item-qty text-center" value="${qty}" min="1" required></td>
                     <td><input type="number" step="0.01" name="items[${idx}][unit_price]" class="form-control form-control-sm item-price text-right" value="${price.toFixed(2)}" min="0" required></td>
                     <td><input type="text" class="form-control form-control-sm item-subtotal text-right bg-light" value="${(qty * price).toFixed(2)}" readonly></td>
@@ -1258,7 +1316,7 @@ $(document).ready(function () {
                     const errors = xhr.responseJSON.errors;
                     $alert
                         .removeClass("d-none")
-                        .html(Object.values(errors).flat().join("<br>"));
+                        .html(Object.values(errors).flat().map(escapeHtml).join("<br>"));
                 } else {
                     $alert
                         .removeClass("d-none")
@@ -1325,7 +1383,7 @@ $(document).ready(function () {
                     const errors = xhr.responseJSON.errors;
                     $alert
                         .removeClass("d-none")
-                        .html(Object.values(errors).flat().join("<br>"));
+                        .html(Object.values(errors).flat().map(escapeHtml).join("<br>"));
                 } else {
                     $alert
                         .removeClass("d-none")

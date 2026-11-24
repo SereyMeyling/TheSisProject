@@ -21,6 +21,12 @@
                 <button type="button" class="close" data-dismiss="alert">&times;</button>
             </div>
         @endif
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-3">
+                <i class="fas fa-exclamation-circle mr-2"></i> {{ session('error') }}
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+            </div>
+        @endif
     </div>
 
     <div class="card border-0 shadow-sm rounded-lg">
@@ -133,7 +139,9 @@
                         <div class="col-md-5 form-group">
                             <label class="small font-weight-bold text-secondary">ជ្រើសរើសអ្នកជំងឺ <span
                                     class="text-danger">*</span></label>
-                            <select name="patient_id" class="form-control" required>
+                            <input type="search" id="patientSearch" class="form-control form-control-sm mb-1"
+                                placeholder="ស្វែងរកឈ្មោះ ឬលេខកូដ (Search name or code)..." autocomplete="off">
+                            <select name="patient_id" id="patientSelect" class="form-control" required>
                                 <option value="" disabled selected>-- ជ្រើសរើសអ្នកជំងឺ --</option>
                                 @foreach($patients as $patient)
                                     <option value="{{ $patient->patient_id }}">
@@ -211,14 +219,9 @@
 
                     <div class="row">
                         <div class="col-md-8 form-group">
-                            <label class="small font-weight-bold text-secondary">ជ្រើសរើសអ្នកជំងឺ</label>
-                            <select name="patient_id" class="form-control" required>
-                                @foreach($patients as $patient)
-                                    <option value="{{ $patient->patient_id }}">
-                                        {{ $patient->full_name }} ({{ $patient->patient_code }})
-                                    </option>
-                                @endforeach
-                            </select>
+                            <label class="small font-weight-bold text-secondary">អ្នកជំងឺ</label>
+                            {{-- The patient of a record cannot be changed. --}}
+                            <input type="text" id="editPatient" class="form-control bg-light" readonly>
                         </div>
                         <div class="col-md-4 form-group">
                             <label class="small font-weight-bold text-secondary">គ្រូពេទ្យពិនិត្យ (Doctor)</label>
@@ -327,6 +330,32 @@
 
         $('#btnCreate').on('click', function () { openCreate(); });
 
+        // ---- CREATE: patient search (only recent patients are preloaded) ----
+        var patientTimer;
+        $('#patientSearch').on('input', function () {
+            var q = $(this).val().trim();
+            clearTimeout(patientTimer);
+            if (q.length < 2) return;
+
+            patientTimer = setTimeout(function () {
+                $.ajax({
+                    url: "{{ route('medical-records.index') }}",
+                    data: { patient_q: q },
+                    headers: { 'Accept': 'application/json' },
+                    success: function (json) {
+                        var $sel = $('#patientSelect');
+                        $sel.find('option').not(':first').remove();
+                        (json.patients || []).forEach(function (p) {
+                            $sel.append($('<option>')
+                                .val(p.patient_id)
+                                .text((p.patient_code || 'ID: ' + p.patient_id) + ' - ' + p.full_name));
+                        });
+                        if (json.patients && json.patients.length === 1) $sel.val(String(json.patients[0].patient_id));
+                    }
+                });
+            }, 350);
+        });
+
         // Opened via redirect from the old create route: ?create=1&patient_id=...
         var params = new URLSearchParams(window.location.search);
         if (params.get('create')) {
@@ -371,6 +400,7 @@
             $editForm.attr('action', d.update_url);
             $('#editTitle').text('#MR-' + d.id);
             $('#editDoctor').val(d.doctor);
+            $('#editPatient').val(d.patient_name + ' (' + d.patient_code + ')');
 
             $editForm.find('[name]').each(function () {
                 if (this.name === '_token' || this.name === '_method') return;

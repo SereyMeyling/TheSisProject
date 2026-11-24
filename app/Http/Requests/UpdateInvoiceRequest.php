@@ -13,17 +13,40 @@ class UpdateInvoiceRequest extends FormRequest
         return true;
     }
 
+    /** Cached lookup of the invoice being edited. */
+    private $invoiceModel = false;
+
+    private function invoice(): ?Invoice
+    {
+        if ($this->invoiceModel === false) {
+            $this->invoiceModel = Invoice::withCount('charges')->find($this->route('id'));
+        }
+
+        return $this->invoiceModel;
+    }
+
     public function rules(): array
     {
-        return [
+        $rules = [
             'patient_name'        => ['required', 'string', 'max:100'],
             'patient_phone'       => ['nullable', 'string', 'max:30'],
+            'notes'               => ['nullable', 'string', 'max:1000'],
+        ];
+
+        // Invoices built from patient charges keep their items (the controller
+        // ignores any submitted rows), so only the descriptive fields are validated.
+        $invoice = $this->invoice();
+        if ($invoice && $invoice->charges_count > 0) {
+            return $rules;
+        }
+
+        return $rules + [
             'items'               => ['required', 'array', 'min:1'],
-            'items.*.item_type'   => ['required', 'string', 'in:consultation,prescription,lab_test,room,other'],
+            // Same list as StoreInvoiceRequest.
+            'items.*.item_type'   => ['required', 'string', 'in:service,room,medicine,lab_test,consultation,prescription,other'],
             'items.*.description' => ['required', 'string', 'max:255'],
             'items.*.qty'         => ['required', 'integer', 'min:1'],
             'items.*.unit_price'  => ['required', 'numeric', 'min:0'],
-            'notes'               => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -48,7 +71,7 @@ class UpdateInvoiceRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator) {
-            $invoice = Invoice::find($this->route('id'));
+            $invoice = $this->invoice();
 
             if ($invoice && !$invoice->isEditable()) {
                 $validator->errors()->add(

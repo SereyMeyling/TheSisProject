@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -100,12 +102,25 @@ class LoginController extends Controller
      */
     protected function authenticated(Request $request, $user)
     {
+        // Never carry a setup secret over from a previous session/login.
+        $request->session()->forget('2fa_temp_secret');
+
+        // Stored secret that cannot be decrypted -> account locked until an
+        // admin resets 2FA. Do NOT send the user to the setup page.
+        if ($user->isTwoFactorLocked()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->with('error', User::twoFactorLockedMessage());
+        }
+
         $request->session()->put(
             '2fa_intended',
             $request->session()->get('url.intended', $this->redirectPath())
         );
 
-        if (is_null($user->google2fa_secret)) {
+        if (! $user->hasTwoFactorSecretStored()) {
             // First login ever — force setup, no dashboard access yet
             $request->session()->put('2fa_passed', false);
             return redirect()->route('2fa.setup');

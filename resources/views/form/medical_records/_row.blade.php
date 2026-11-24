@@ -14,6 +14,8 @@
     <td>{{ $record->doctor->name ?? 'N/A' }}</td>
     <td>
         <button type="button" class="btn btn-sm btn-light text-info rounded-circle btn-view"><i class="fas fa-eye"></i></button>
-        <button type="button" class="btn btn-sm btn-light text-primary rounded-circle btn-edit"><i class="fas fa-edit"></i></button>
+        @if($record->canBeModifiedBy(auth()->user()))
+            <button type="button" class="btn btn-sm btn-light text-primary rounded-circle btn-edit"><i class="fas fa-edit"></i></button>
+        @endif
     </td>
 </tr>

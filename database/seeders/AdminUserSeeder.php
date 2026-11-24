@@ -2,145 +2,60 @@
 
 namespace Database\Seeders;
 
-use App\Models\user;
+use App\Models\Department;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
+    /**
+     * Seeds one demo user per role.
+     *
+     * Passwords: taken from SEED_DEFAULT_PASSWORD in .env if set, otherwise a
+     * random password is generated and printed once to the console.
+     * Existing users keep their current password (re-running the seeder will
+     * never reset a password that someone already changed).
+     */
     public function run()
     {
         $usersData = [
-            [
-                'name' => 'Super Admin',
-                'username' => 'superadmin',
-                'email' => 'supperAdmin@gmai.com',
-                'password' => 'admin123',
-                'role' => 'admin',
-                'department_id' => 1,
-            ],
-
-            [
-                'name' => 'Doctor User',
-                'username' => 'doctor',
-                'email' => 'doctor@gmail.com',
-                'password' => 'doctor123',
-                'role' => 'doctor',
-                'department_id' => 2,
-            ],
-
-            [
-                'name' => 'Nurse User',
-                'username' => 'nurse',
-                'email' => 'nurse@gmail.com',
-                'password' => 'nurse123',
-                'role' => 'nurse',
-                'department_id' => 1,
-            ],
-
-            [
-                'name' => 'Pharmacist User',
-                'username' => 'pharmacist',
-                'email' => 'pharmacist@gmail.com',
-                'password' => 'pharmacist123',
-                'role' => 'pharmacist',
-                'department_id' => 9,
-            ],
-
-            [
-                'name' => 'Cashier User',
-                'username' => 'cashier',
-                'email' => 'cashier@gmail.com',
-                'password' => 'cashier123',
-                'role' => 'cashier',
-                'department_id' => 1,
-            ],
+            // NOTE: email kept as-is because existing installations log in with it.
+            ['name' => 'Super Admin',     'username' => 'superadmin', 'email' => 'supperAdmin@gmai.com', 'role' => 'admin',      'department_id' => 1],
+            ['name' => 'Doctor User',     'username' => 'doctor',     'email' => 'doctor@gmail.com',     'role' => 'doctor',     'department_id' => 2],
+            ['name' => 'Nurse User',      'username' => 'nurse',      'email' => 'nurse@gmail.com',      'role' => 'nurse',      'department_id' => 1],
+            ['name' => 'Pharmacist User', 'username' => 'pharmacist', 'email' => 'pharmacist@gmail.com', 'role' => 'pharmacist', 'department_id' => 9],
+            ['name' => 'Cashier User',    'username' => 'cashier',    'email' => 'cashier@gmail.com',    'role' => 'cashier',    'department_id' => 1],
         ];
 
+        $defaultPassword = env('SEED_DEFAULT_PASSWORD');
+
         foreach ($usersData as $data) {
+            $user = User::where('email', $data['email'])->first();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Create / Update User
-            |--------------------------------------------------------------------------
-            */
+            if (!$user) {
+                $plain = $defaultPassword ?: Str::random(16);
 
-            $user = User::updateOrCreate(
-                [
-                    'email' => $data['email'],
-                ],
-                [
-                    'name' => $data['name'],
-                    'username' => $data['username'],
-                    'password' => Hash::make($data['password']),
-                ]
-            );
+                $user = new User();
+                $user->email = $data['email'];
+                $user->password = Hash::make($plain);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Assign Role
-            |--------------------------------------------------------------------------
-            */
-
-            $user->syncRoles([$data['role']]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Create user
-            |--------------------------------------------------------------------------
-            |
-            | Cashier is skipped because the current users.role ENUM
-            | does not contain "cashier".
-            |
-            */
-
-            if (
-                in_array($data['role'], [
-                    'admin',
-                    'doctor',
-                    'nurse',
-                    'pharmacist',
-                ])
-            ) {
-
-                $nameParts = explode(
-                    ' ',
-                    trim($data['name']),
-                    2
-                );
-
-                user::updateOrCreate(
-                    [
-                        'user_id' => $user->id,
-                    ],
-                    [
-                        'department_id' => $data['department_id'],
-
-                        'user_code' =>
-                            'EMP-' .
-                            str_pad(
-                                $user->id,
-                                3,
-                                '0',
-                                STR_PAD_LEFT
-                            ),
-
-                        'first_name' => $nameParts[0],
-
-                        'last_name' =>
-                            $nameParts[1] ?? '',
-
-                        'role' => $data['role'],
-
-                        'specialization' => null,
-
-                        'phone' => null,
-
-                        'status' => 'active',
-                    ]
-                );
+                if ($this->command) {
+                    $this->command->info("Created {$data['email']} ({$data['role']}) with password: {$plain}");
+                }
             }
+
+            $user->name = $data['name'];
+            $user->username = $data['username'];
+
+            // Only link a department that actually exists
+            if (Department::where('department_id', $data['department_id'])->exists()) {
+                $user->department_id = $data['department_id'];
+            }
+
+            $user->save();
+            $user->syncRoles([$data['role']]);
         }
     }
 }

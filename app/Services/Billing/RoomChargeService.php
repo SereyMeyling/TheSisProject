@@ -28,15 +28,37 @@ class RoomChargeService
 
     /**
      * Admissions that may still need room charges:
-     * everyone currently admitted, plus anyone discharged in the last 7 days.
+     * everyone currently admitted, plus any discharged admission that still
+     * has fewer room charges than billable days (no matter how long ago the
+     * discharge was, so a missed cron run never loses days).
+     *
+     * Fully-charged discharged admissions are filtered out in SQL, so the
+     * set stays small; accrueForAdmission() is idempotent via source_key.
      */
     public function accruableAdmissions()
     {
-        return Admission::with('room')->where(function ($q) {
+        // Billable days for a discharged stay, mirroring billableDates():
+        // admission day .. discharge day (minus one if the discharge day is
+        // not charged), never in the future, at least 1 day.
+        // (MySQL; ".. + 1" because both ends are inclusive.)
+        $today = now()->toDateString();
+        $days = 'DATEDIFF(LEAST(DATE(admissions.discharge_date), ?), DATE(admissions.admission_date))'
+            . (self::COUNT_DISCHARGE_DAY ? ' + 1' : '');
+
+        return Admission::with('room')->where(function ($q) use ($days, $today) {
             $q->where('status', 'admitted')
-                ->orWhere(function ($q2) {
+                ->orWhere(function ($q2) use ($days, $today) {
                     $q2->where('status', 'discharged')
-                        ->where('discharge_date', '>=', now()->subDays(7));
+                        ->whereNotNull('room_id')
+                        ->whereNotNull('admission_date')
+                        ->whereNotNull('discharge_date')
+                        ->whereDate('admission_date', '<=', $today)
+                        ->whereRaw(
+                            '(SELECT COUNT(*) FROM patient_charges pc'
+                            . ' WHERE pc.admission_id = admissions.admission_id'
+                            . ' AND pc.source_type = ?) < GREATEST(' . $days . ', 1)',
+                            [PatientCharge::TYPE_ROOM, $today]
+                        );
                 });
         });
     }

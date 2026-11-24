@@ -20,7 +20,7 @@ class CreateAppointmentsTable extends Migration
                 ->constrained('patients', 'patient_id');
 
             $table->foreignId('user_id')
-                ->constrained('users', 'user_id');
+                ->constrained('users');
 
             $table->dateTime('appointment_date');
 

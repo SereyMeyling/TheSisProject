@@ -23,11 +23,19 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use App\Services\Billing\PatientChargeService;
 use App\Services\Billing\RoomChargeService;
+use App\Services\Billing\KhqrVerifier;
 use Illuminate\Support\Facades\Log;
 use App\Models\Billing\PatientCharge;
 
 class BillingController extends Controller
 {
+    /** Max patients preloaded into the create-invoice picker / returned by a search. */
+    private const PATIENT_PICKER_LIMIT = 300;
+    private const PATIENT_SEARCH_LIMIT = 20;
+
+    /** How far back "recently registered" patients are preloaded. */
+    private const RECENT_PATIENT_DAYS = 30;
+
     /**
      * Middleware check: Only Admin or Cashier (or process-payments / view-invoices) can access.
      */
@@ -47,14 +55,14 @@ class BillingController extends Controller
     /**
      * Authorization helper for edit/cancel actions.
      * Admins always pass; otherwise the specific Spatie permission is required.
-     * (Add 'edit-invoices' / 'cancel-invoices' permissions via the Role &
-     * Permission screen — they are not created automatically here.)
+     * checkPermissionTo() returns false (instead of throwing
+     * PermissionDoesNotExist) when the permission has not been seeded yet.
      */
     private function authorizeAction(string $permission): void
     {
         /** @var \App\Models\User|null $user */
         $user = auth()->user();
-        if (!$user || (!$user->hasRole('admin') && !$user->hasPermissionTo($permission))) {
+        if (!$user || (!$user->hasRole('admin') && !$user->checkPermissionTo($permission))) {
             abort(403, 'អ្នកមិនមានសិទ្ធិធ្វើសកម្មភាពនេះទេ (You do not have permission to perform this action).');
         }
     }
@@ -114,13 +122,6 @@ class BillingController extends Controller
             ->sum('amount');
         $totalUnpaid = Invoice::where('status', '!=', 'cancelled')->sum('balance');
 
-        $patients = Patient::select(['patient_id', 'full_name', 'phone', 'patient_code'])->get();
-
-        // Active (currently admitted) admissions, for the IPD invoice picker.
-        $admissions = Admission::with(['patient', 'room'])
-            ->where('status', 'admitted')
-            ->get();
-
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('form.billing.partials.table', compact('invoices'))->render(),
@@ -131,7 +132,59 @@ class BillingController extends Controller
             ]);
         }
 
+        // Patient picker: only patients the cashier is likely to bill
+        // (unbilled charges, currently admitted, or registered recently)
+        // instead of every patient in the database.
+        $patients = $this->relevantPatientsQuery()
+            ->orderBy('full_name')
+            ->limit(self::PATIENT_PICKER_LIMIT)
+            ->get();
+
+        // Active (currently admitted) admissions, for the IPD invoice picker.
+        $admissions = Admission::with(['patient', 'room'])
+            ->where('status', 'admitted')
+            ->get();
+
         return view('form.billing.index', compact('invoices', 'totalInvoices', 'todayCashRevenue', 'todayKhqrRevenue', 'totalUnpaid', 'patients', 'admissions', 'billing'));
+    }
+
+    private function relevantPatientsQuery()
+    {
+        return Patient::select(['patient_id', 'full_name', 'phone', 'patient_code'])
+            ->where(function ($q) {
+                $q->whereHas('charges', function ($c) {
+                    $c->where('status', PatientCharge::STATUS_PENDING);
+                })
+                    ->orWhereIn('patient_id', Admission::select('patient_id')->where('status', 'admitted'))
+                    ->orWhere('created_at', '>=', now()->subDays(self::RECENT_PATIENT_DAYS));
+            });
+    }
+
+    /**
+     * Patient search for the create-invoice picker (any patient, by name / code / phone).
+     * Needs route: GET /billing/patients/search -> billing.patients.search
+     */
+    public function searchPatients(Request $request): JsonResponse
+    {
+        $term = trim((string) $request->query('q', ''));
+
+        if (mb_strlen($term) < 2) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        $like = '%' . addcslashes($term, '%_\\') . '%';
+
+        $patients = Patient::select(['patient_id', 'full_name', 'phone', 'patient_code'])
+            ->where(function ($q) use ($like) {
+                $q->where('full_name', 'LIKE', $like)
+                    ->orWhere('patient_code', 'LIKE', $like)
+                    ->orWhere('phone', 'LIKE', $like);
+            })
+            ->orderBy('full_name')
+            ->limit(self::PATIENT_SEARCH_LIMIT)
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $patients]);
     }
 
 
@@ -258,7 +311,8 @@ class BillingController extends Controller
                 ->unique()
                 ->values();
 
-            $manualItems = $request->input('items', []);
+            // "items" is nullable in StoreInvoiceRequest (charges-only invoice).
+            $manualItems = $request->input('items') ?: [];
             $charges = collect();
 
             if ($chargeIds->isNotEmpty()) {
@@ -314,9 +368,9 @@ class BillingController extends Controller
             // Total = charges (from the database) + manual rows.
             $totalAmount = (float) $charges->sum('total_price');
             foreach ($manualItems as $item) {
-                $totalAmount += $item['qty'] * $item['unit_price'];
+                $totalAmount += $this->money($item['qty'] * $item['unit_price']);
             }
-            $totalAmount = round($totalAmount, 2);
+            $totalAmount = $this->money($totalAmount);
 
             $invoiceNumber = $this->generateInvoiceNumber();
 
@@ -352,7 +406,7 @@ class BillingController extends Controller
                     'description' => $item['description'],
                     'qty' => $item['qty'],
                     'unit_price' => $item['unit_price'],
-                    'subtotal' => $item['qty'] * $item['unit_price'],
+                    'subtotal' => $this->money($item['qty'] * $item['unit_price']),
                 ]);
             }
 
@@ -407,6 +461,16 @@ class BillingController extends Controller
         try {
             $invoice = Invoice::where('id', $id)->lockForUpdate()->firstOrFail();
 
+            // Authoritative re-check on the locked row: a payment or cancel may have
+            // committed between form validation and this lock.
+            if (!$invoice->isEditable()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'វិក្កយបត្រនេះលែងអាចកែប្រែបានទៀតហើយ (This invoice can no longer be edited — it may have just been paid or cancelled).',
+                ], 422);
+            }
+
             // Charge-backed invoices keep their items (prices come from patient_charges).
             // Only the descriptive fields can change.
             if ($invoice->charges()->exists()) {
@@ -427,8 +491,9 @@ class BillingController extends Controller
 
             $totalAmount = 0;
             foreach ($request->items as $item) {
-                $totalAmount += $item['qty'] * $item['unit_price'];
+                $totalAmount += $this->money($item['qty'] * $item['unit_price']);
             }
+            $totalAmount = $this->money($totalAmount);
 
             $invoice->update([
                 'patient_name' => $request->patient_name,
@@ -448,7 +513,7 @@ class BillingController extends Controller
                     'description' => $item['description'],
                     'qty' => $item['qty'],
                     'unit_price' => $item['unit_price'],
-                    'subtotal' => $item['qty'] * $item['unit_price'],
+                    'subtotal' => $this->money($item['qty'] * $item['unit_price']),
                 ]);
             }
 
@@ -490,6 +555,16 @@ class BillingController extends Controller
                     'message' => 'វិក្កយបត្រនេះមិនអាចលុបចោលបានទេ (This invoice cannot be cancelled — it is already paid, partially paid, or already cancelled).',
                 ], 422);
             }
+
+            // Mark the invoice itself cancelled first (audit trail), so it can
+            // never be paid while its charges are billed again on a new invoice.
+            $invoice->update([
+                'status' => 'cancelled',
+                'cancelled_by' => auth()->id(),
+                'cancelled_at' => now(),
+                'cancel_reason' => $request->cancel_reason,
+            ]);
+
             // Release this invoice's charges so the cashier can bill them again.
             foreach ($invoice->charges()->lockForUpdate()->get() as $charge) {
                 $charge->update([
@@ -524,6 +599,28 @@ class BillingController extends Controller
     // Process payment for an invoice
     public function processPayment(ProcessPaymentRequest $request, $id)
     {
+        // Dynamic KHQR payment: verify server-side (outside the DB lock, since it
+        // calls the Bakong API) that the md5 belongs to this invoice + amount,
+        // was not already used, and is confirmed paid by Bakong.
+        if ($request->payment_method === 'khqr' && KhqrVerifier::isMd5($request->transaction_ref)) {
+            if (InvoicePayment::where('transaction_ref', $request->transaction_ref)->exists()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'ការទូទាត់នេះត្រូវបានកត់ត្រារួចហើយ (This payment has already been recorded).',
+                ], 422);
+            }
+
+            $error = app(KhqrVerifier::class)->verifyForInvoice(
+                $request->transaction_ref,
+                (int) $id,
+                $this->money($request->amount)
+            );
+
+            if ($error) {
+                return response()->json(['success' => false, 'message' => $error], 422);
+            }
+        }
+
         DB::beginTransaction();
         try {
             // lockForUpdate() blocks any other transaction from reading this
@@ -539,12 +636,15 @@ class BillingController extends Controller
                 ], 422);
             }
 
-            $paymentAmount = (float) $request->amount;
+            // Money is kept at 2 decimals everywhere to avoid float drift
+            // (e.g. 0.10 + 0.70 = 0.7999… leaving an invoice stuck in "partial").
+            $paymentAmount = $this->money($request->amount);
+            $currentBalance = $this->money($invoice->balance);
 
             // Authoritative overpayment guard, re-checked against the
             // locked (fresh) balance rather than the balance the client
             // last saw when the form was rendered.
-            if ($paymentAmount > (float) $invoice->balance) {
+            if ($paymentAmount > $currentBalance) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
@@ -552,14 +652,16 @@ class BillingController extends Controller
                 ], 422);
             }
 
-            $newPaid = $invoice->paid_amount + $paymentAmount;
-            $newBalance = max(0, $invoice->total_amount - $newPaid);
+            $newPaid = $this->money($invoice->paid_amount + $paymentAmount);
+            $newBalance = max(0.0, $this->money($invoice->total_amount - $newPaid));
 
-            $status = 'unpaid';
-            if ($newPaid >= $invoice->total_amount) {
+            // Status follows the remaining balance.
+            if ($newBalance <= 0) {
                 $status = 'paid';
             } elseif ($newPaid > 0) {
                 $status = 'partial';
+            } else {
+                $status = 'unpaid';
             }
 
             // Record transaction
@@ -580,23 +682,6 @@ class BillingController extends Controller
             ]);
 
             DB::commit();
-
-            // Notify cashiers + admins that a payment was recorded
-            $recipients = NotifiesRoles::usersForRoles(['admin', 'cashier']);
-
-            if ($recipients->isNotEmpty()) {
-                Notification::send($recipients, new PaymentNotification($payment));
-            }
-
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'ការទូទាត់ត្រូវបានបញ្ជាក់ដោយជោគជ័យ (Payment processed successfully)',
-                    'invoice' => $invoice->fresh(['items', 'payments', 'patient', 'admission.room']),
-                ]);
-            }
-
-            return redirect()->route('billing.index')->with('success', 'Payment processed successfully.');
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Invoice not found.'], 404);
@@ -607,6 +692,39 @@ class BillingController extends Controller
                 'message' => 'Failed to process payment: ' . $e->getMessage(),
             ], 500);
         }
+
+        // The payment is committed from here on. A notification problem must
+        // never be reported as a failed payment (the cashier would retry and
+        // charge the patient twice), so it is only logged.
+        try {
+            $recipients = NotifiesRoles::usersForRoles(['admin', 'cashier']);
+
+            if ($recipients->isNotEmpty()) {
+                Notification::send($recipients, new PaymentNotification($payment));
+            }
+        } catch (\Throwable $e) {
+            Log::error('Payment notification failed', [
+                'invoice_id' => $invoice->id,
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'ការទូទាត់ត្រូវបានបញ្ជាក់ដោយជោគជ័យ (Payment processed successfully)',
+                'invoice' => $invoice->fresh(['items', 'payments', 'patient', 'admission.room']),
+            ]);
+        }
+
+        return redirect()->route('billing.index')->with('success', 'Payment processed successfully.');
+    }
+
+    /** Round a money amount to 2 decimals (all invoice totals/balances go through this). */
+    private function money($amount): float
+    {
+        return round((float) $amount, 2);
     }
 
     // useful helper to generate a unique invoice number in the format INV-YYYYMMDD-XXX

@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -193,7 +194,8 @@ class DashboardExportController extends Controller
         foreach ($rows as &$r) {
             $pt = $patients[$r['pid']] ?? null;
             $r['code'] = $pt->patient_code ?? '-';
-            $r['sex'] = $pt ? ($pt->sex === 'male' ? 'M' : ($pt->sex === 'female' ? 'F' : '')) : '';
+            $sex = strtolower((string) ($pt->sex ?? ''));
+            $r['sex'] = $sex === 'male' ? 'M' : ($sex === 'female' ? 'F' : '');
         }
         unset($r);
 
@@ -234,13 +236,13 @@ class DashboardExportController extends Controller
                 $n++;
                 $payment = $r['paid'] > 0 ? strtoupper(str_replace(',', '/', $r['methods'])) : ($r['pending'] > 0 ? 'Pending' : '');
                 $sheet->setCellValue("A{$row}", $n === 1 ? Carbon::parse($date)->format('d.m.y') : '');
-                $sheet->setCellValue("B{$row}", $r['code']);
+                $this->setText($sheet, "B{$row}", $r['code']);
                 $sheet->setCellValue("C{$row}", $r['paid'] > 0 ? round($r['paid'], 2) : '');
-                $sheet->setCellValue("D{$row}", $payment);
+                $this->setText($sheet, "D{$row}", $payment);
                 $sheet->setCellValue("E{$row}", $r['pending'] > 0 ? round($r['pending'], 2) : '');
-                $sheet->setCellValue("F{$row}", $r['dia']);
-                $sheet->setCellValue("G{$row}", $r['sex']);
-                $sheet->setCellValue("H{$row}", $r['visit']);
+                $this->setText($sheet, "F{$row}", $r['dia']);
+                $this->setText($sheet, "G{$row}", $r['sex']);
+                $this->setText($sheet, "H{$row}", $r['visit']);
                 $sheet->setCellValue("I{$row}", $n);
                 $sheet->setCellValue("J{$row}", '');
                 $dayPaid += $r['paid'];
@@ -335,11 +337,11 @@ class DashboardExportController extends Controller
             $dayTotal = 0.0;
             foreach ($items as $r) {
                 $sheet->setCellValue("A{$row}", $first ? Carbon::parse($date)->format('d.m.y') : '');
-                $sheet->setCellValue("B{$row}", $r['desc']);
+                $this->setText($sheet, "B{$row}", $r['desc']);
                 $sheet->setCellValue("C{$row}", $r['qty']);
                 $sheet->setCellValue("D{$row}", round($r['amount'], 2));
-                $sheet->setCellValue("E{$row}", $r['cat']);
-                $sheet->setCellValue("F{$row}", $r['pay']);
+                $this->setText($sheet, "E{$row}", $r['cat']);
+                $this->setText($sheet, "F{$row}", $r['pay']);
                 $dayTotal += $r['amount'];
                 $first = false;
                 $row++;
@@ -464,6 +466,15 @@ class DashboardExportController extends Controller
         } catch (\Throwable $e) {
             return now()->startOfMonth();
         }
+    }
+
+    /**
+     * Write user-entered text as a literal string so values like "=HYPERLINK(...)" are
+     * never evaluated as formulas (M15).
+     */
+    private function setText(Worksheet $sheet, string $coordinate, $value): void
+    {
+        $sheet->setCellValueExplicit($coordinate, (string) ($value ?? ''), DataType::TYPE_STRING);
     }
 
     private function cell(int $col, int $row): string

@@ -138,6 +138,31 @@ class PharmacyController extends Controller
             $base->havingRaw('nearest_expiry IS NOT NULL AND nearest_expiry <= DATE_ADD(CURDATE(), INTERVAL 30 DAY)');
         }
 
+        //-----------filter (must run before counting/paging, otherwise it has no effect)-------------
+
+        if ($request->filled('f_name')) {
+            $base->where('medicine_name', 'like', '%' . $request->f_name . '%');
+        }
+        if ($request->filled('f_price_min')) {
+            $base->where('selling_price', '>=', (float) $request->f_price_min);
+        }
+        if ($request->filled('f_price_max')) {
+            $base->where('selling_price', '<=', (float) $request->f_price_max);
+        }
+        if ($request->filled('f_stock')) {
+            if ($request->f_stock === 'out') {
+                $base->havingRaw('stock_total = 0');
+            } elseif ($request->f_stock === 'low') {
+                $base->havingRaw('stock_total > 0 AND stock_total <= medicines.reorder_level');
+            } elseif ($request->f_stock === 'normal') {
+                $base->havingRaw('stock_total > medicines.reorder_level');
+            }
+        }
+        if ($request->filled('f_expiry_days')) {
+            $base->havingRaw('nearest_expiry IS NOT NULL AND nearest_expiry <= DATE_ADD(CURDATE(), INTERVAL ? DAY)', [(int) $request->f_expiry_days]);
+        }
+        //-----------end filter-------------
+
         $recordsFiltered = (clone $base)->count();
 
         // ---- order: urgent rows always float to the top, then the requested column ----
@@ -177,30 +202,6 @@ class PharmacyController extends Controller
             ];
         });
 
-        //-----------filter-------------
-
-        if ($request->filled('f_name')) {
-            $base->where('medicine_name', 'like', '%' . $request->f_name . '%');
-        }
-        if ($request->filled('f_price_min')) {
-            $base->where('selling_price', '>=', (float) $request->f_price_min);
-        }
-        if ($request->filled('f_price_max')) {
-            $base->where('selling_price', '<=', (float) $request->f_price_max);
-        }
-        if ($request->filled('f_stock')) {
-            if ($request->f_stock === 'out') {
-                $base->havingRaw('stock_total = 0');
-            } elseif ($request->f_stock === 'low') {
-                $base->havingRaw('stock_total > 0 AND stock_total <= medicines.reorder_level');
-            } elseif ($request->f_stock === 'normal') {
-                $base->havingRaw('stock_total > medicines.reorder_level');
-            }
-        }
-        if ($request->filled('f_expiry_days')) {
-            $base->havingRaw('nearest_expiry IS NOT NULL AND nearest_expiry <= DATE_ADD(CURDATE(), INTERVAL ? DAY)', [(int) $request->f_expiry_days]);
-        }
-        //-----------end filter-------------
         return response()->json([
             'draw' => (int) $request->input('draw', 1),
             'recordsTotal' => $recordsTotal,
@@ -265,6 +266,7 @@ class PharmacyController extends Controller
                 'expiry_date' => $data['expiry_date'],
                 'quantity_initial' => $piecesTotal,
                 'remaining_quantity' => $piecesTotal,
+                'quantity_remaining' => $piecesTotal, // legacy column, kept in sync
                 'purchase_price' => $data['purchase_price'],
             ]);
 
@@ -384,6 +386,7 @@ class PharmacyController extends Controller
                 'expiry_date' => $data['expiry_date'],
                 'quantity_initial' => $piecesTotal,
                 'remaining_quantity' => $piecesTotal,
+                'quantity_remaining' => $piecesTotal, // legacy column, kept in sync
                 'purchase_price' => $data['purchase_price'],
             ]);
 
@@ -525,7 +528,11 @@ class PharmacyController extends Controller
         $start = now()->startOfMonth();
         $end = now()->endOfMonth();
 
-        $medicines = Medicine::where('is_active', true)->orderBy('medicine_name')->get();
+        // Closing stock summed in the same query (no per-medicine query in the loop).
+        $medicines = Medicine::where('is_active', true)
+            ->withSum('batches', 'remaining_quantity')
+            ->orderBy('medicine_name')
+            ->get();
 
         $movements = MedicineStockMovement::join('medicine_batches', 'medicine_batches.batch_id', '=', 'medicine_stock_movements.batch_id')
             ->whereBetween('movement_date', [$start, $end])
@@ -556,7 +563,7 @@ class PharmacyController extends Controller
             $medMovements = $movements->get($medicine->medicine_id, collect());
             $in = (int) optional($medMovements->firstWhere('movement_type', 'IN'))->total_qty;
             $out = (int) optional($medMovements->firstWhere('movement_type', 'OUT'))->total_qty;
-            $closing = (int) $medicine->batches()->sum('remaining_quantity');
+            $closing = (int) $medicine->batches_sum_remaining_quantity;
             $opening = $closing - $in + $out;
             $total = $opening + $in;
 

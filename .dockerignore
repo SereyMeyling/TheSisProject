@@ -21,3 +21,8 @@ docker-compose.yml
 docker-compose.yaml
 
 storage/app/Laravel/*
+
+# Database dumps (may contain patient data)
+*.sql
+*.sql.gz
+bug.md

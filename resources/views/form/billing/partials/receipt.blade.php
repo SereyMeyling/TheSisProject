@@ -158,8 +158,8 @@
                     <td>{{ $item->description }}</td>
                     <td class="text-c">{{ $typeLabels[$item->item_type] ?? $item->item_type }}</td>
                     <td class="text-c">{{ $item->qty }}</td>
-                    <td class="text-r">${{ number_format($item->unit_price, 2) }}</td>
-                    <td class="text-r"><b>${{ number_format($item->subtotal, 2) }}</b></td>
+                    <td class="text-r">{{ $curSym }}{{ number_format($item->unit_price, 2) }}</td>
+                    <td class="text-r"><b>{{ $curSym }}{{ number_format($item->subtotal, 2) }}</b></td>
                 </tr>
             @endforeach
             @for($k = $invoice->items->count(); $k < 5; $k++)
@@ -175,7 +175,7 @@
             @forelse($invoice->payments as $p)
                 <div class="pay-line">
                     ✓ {{ $methodLabels[$p->payment_method] ?? $p->payment_method }}
-                    ${{ number_format($p->amount, 2) }}
+                    {{ $curSym }}{{ number_format($p->amount, 2) }}
                     ({{ \Carbon\Carbon::parse($p->paid_at)->format('d/m/Y H:i') }})
                     @if($p->transaction_ref) — {{ $p->transaction_ref }} @endif
                 </div>

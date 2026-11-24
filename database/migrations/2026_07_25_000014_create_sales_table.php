@@ -18,7 +18,7 @@ class CreateSalesTable extends Migration
                 ->nullOnDelete();
 
             $table->foreignId('user_id')
-                ->constrained('users', 'user_id');
+                ->constrained('users');
 
             $table->dateTime('sale_date');
             $table->decimal('total_amount', 12, 2)->unsigned()->default(0);

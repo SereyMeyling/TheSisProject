@@ -72,7 +72,8 @@ class AddDashboardFieldsAndCreateExpensesTable extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('expenses');
+        // Do NOT drop `expenses` here: on most databases the table was created by
+        // 2026_09_09_183548_create_expenses_table, and dropping it would lose data.
 
         Schema::table('medical_records', function (Blueprint $table) {
             $table->dropIndex(['visit_date', 'diagnosis_group']);
